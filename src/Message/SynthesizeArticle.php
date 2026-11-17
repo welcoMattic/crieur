@@ -10,13 +10,15 @@ use Symfony\Component\Uid\Uuid;
  * Synthesize the chunks of an article that have no audio yet, in reading order.
  *
  * The revision is the one of the article when the message was sent: a run for an older revision
- * stops at once, because the voice or the text changed in the meantime.
+ * stops at once, because the voice or the text changed in the meantime. The run starts at
+ * $fromPosition (where the listener is, after a voice change), then comes back to the chunks before.
  */
 final readonly class SynthesizeArticle
 {
     public function __construct(
         public Uuid $articleId,
         public int $revision,
+        public int $fromPosition = 0,
     ) {
     }
 }

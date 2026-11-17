@@ -61,9 +61,10 @@ final readonly class ArticleQueue
     }
 
     /**
-     * Reads the rest of the article with another voice: the chunks are synthesized again.
+     * Reads the rest of the article with another voice: the chunks are synthesized again, starting
+     * where the listener is.
      */
-    public function changeVoice(Article $article, VoiceGender $gender): void
+    public function changeVoice(Article $article, VoiceGender $gender, int $fromPosition = 0): void
     {
         $language = $article->getLanguage();
         if (null === $language || ($gender === $article->getVoiceGender() && $article->getVoiceEngine() === $this->voices->defaultEngine()->name)) {
@@ -73,7 +74,7 @@ final readonly class ArticleQueue
         $voice = $this->voices->voice($this->voices->defaultEngine()->name, $language, $gender);
         $article->changeVoice($gender, $voice->name, $voice->engine, $this->clock->now());
         $this->articles->save($article);
-        $this->bus->dispatch(new SynthesizeArticle($article->getId(), $article->getRevision()));
+        $this->bus->dispatch(new SynthesizeArticle($article->getId(), $article->getRevision(), max(0, $fromPosition)));
     }
 
     public function remove(Article $article): void

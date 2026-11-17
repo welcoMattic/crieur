@@ -80,4 +80,25 @@ final class ArticleExtractorTest extends TestCase
             static::assertSame(ExtractionFailed::NO_TEXT, $e->reason);
         }
     }
+
+    #[Test]
+    public function itLeavesThePageFurnitureOut(): void
+    {
+        $html = '<html lang="en"><head><title>Town crier</title></head><body><main><article>'
+            .'<div role="note" class="hatnote">"Crier" redirects here.</div>'
+            .'<table class="infobox"><tr><th>Occupation</th><td>Civil service</td></tr></table>'
+            .'<h2>Duties<span class="mw-editsection">[edit]</span></h2>'
+            .str_repeat('<p>Criers dressed elaborately, by a tradition dating to the 18th century.<sup class="reference">[w 1]</sup> They rang a handbell to attract attention before every announcement.</p>', 4)
+            .'</article></main></body></html>';
+        $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse($html, ['response_headers' => ['content-type' => 'text/html']])), allowPrivateNetworks: true);
+
+        $article = $extractor->extract('https://example.org/crier');
+
+        static::assertStringNotContainsString('redirects here', $article->html);
+        static::assertStringNotContainsString('Civil service', $article->html);
+        static::assertStringNotContainsString('[edit]', $article->html);
+        static::assertStringNotContainsString('[w 1]', $article->html);
+        static::assertStringContainsString('They rang a handbell', $article->html);
+    }
+
 }

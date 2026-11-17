@@ -34,7 +34,7 @@ final readonly class HtmlBlockExtractor
      * Page furniture that readability keeps inside the article: Wikipedia hatnotes, infoboxes,
      * edit links and reference marks, screen reader only text.
      */
-    private const array BOILERPLATE_CLASSES = [
+    public const array BOILERPLATE_CLASSES = [
         'ambox', 'catlinks', 'hatnote', 'infobox', 'metadata', 'mw-editsection', 'mw-jump-link', 'navbox',
         'noprint', 'reference', 'screen-reader-text', 'shortdescription', 'sidebar', 'sr-only', 'thumbcaption',
         'toc', 'vertical-navbox', 'visually-hidden',

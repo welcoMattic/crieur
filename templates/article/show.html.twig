@@ -100,8 +100,9 @@
 
             {% if has_text or status.value != 'failed' %}
                 <div class="reader__settings">
-                    <form method="post" action="{{ path('article_voice', {id: article.id}) }}" data-controller="autosubmit">
+                    <form method="post" action="{{ path('article_voice', {id: article.id}) }}" data-controller="autosubmit" data-autosubmit-article-value="{{ article.id }}">
                         <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                        <input type="hidden" name="from" value="0" data-autosubmit-target="from">
                         <fieldset class="segmented"{% if not article.language %} disabled{% endif %}>
                             <legend class="segmented__legend">{{ icon('voice') }}{{ 'reader.voice'|trans }}</legend>
                             <div class="segmented__options">

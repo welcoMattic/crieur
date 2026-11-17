@@ -68,21 +68,23 @@ final readonly class SynthesizeArticleHandler
         $voice = $this->voices->voice($engine->name, $language, $article->getVoiceGender());
         $editing = null !== $this->editor->backend();
         $segments = array_values($article->getSegments()->toArray());
+        $from = min(max(0, $message->fromPosition), max(0, \count($segments) - 1));
+        $order = [...\array_slice($segments, $from), ...\array_slice($segments, 0, $from)];
         $startedAt = hrtime(true);
 
-        foreach ($segments as $index => $segment) {
+        foreach ($order as $index => $segment) {
             if ($segment->isReady()) {
                 continue;
             }
 
             if ((hrtime(true) - $startedAt) / 1e9 > self::SLICE_SECONDS) {
-                $this->bus->dispatch(new SynthesizeArticle($article->getId(), $message->revision));
+                $this->bus->dispatch(new SynthesizeArticle($article->getId(), $message->revision, $message->fromPosition));
 
                 return;
             }
 
-            if ($editing && !$segment->isEdited() && BlockKind::Title !== $segment->getKind()) {
-                $editing = $this->editAhead($article, $language, \array_slice($segments, $index), $engine->spellsIntegers());
+            if ($editing && !$segment->isEdited() && !$this->isOpening($segment, $segments)) {
+                $editing = $this->editAhead($article, $language, \array_slice($order, $index), $engine->spellsIntegers());
             }
 
             if ('' === trim($segment->getSpoken())) {
@@ -130,7 +132,7 @@ final readonly class SynthesizeArticleHandler
             if ($characters >= $budget || \count($batch) >= SpeechEditor::BATCH_CHUNKS) {
                 break;
             }
-            if (!$segment->isEdited() && BlockKind::Title !== $segment->getKind()) {
+            if (!$segment->isEdited() && !$this->isOpening($segment, array_values($article->getSegments()->toArray()))) {
                 $batch[$segment->getPosition()] = $segment;
                 $characters += mb_strlen($segment->getText());
             }
@@ -138,7 +140,7 @@ final readonly class SynthesizeArticleHandler
 
         $model = $this->editor->model() ?? 'rules';
         // The summary makes the answer longer: not in the first batch, which the listener waits for.
-        $isLastBatch = \count($batch) === \count(array_filter($upcoming, static fn (Segment $segment): bool => !$segment->isEdited() && BlockKind::Title !== $segment->getKind()));
+        $isLastBatch = \count($batch) === \count(array_filter($upcoming, fn (Segment $segment): bool => !$segment->isEdited() && !$this->isOpening($segment, array_values($article->getSegments()->toArray()))));
         $withSummary = null === $article->getSummary() && ($budget > SpeechEditor::FIRST_BATCH_CHARACTERS || $isLastBatch);
 
         try {
@@ -167,6 +169,27 @@ final readonly class SynthesizeArticleHandler
         $this->entityManager->flush();
 
         return true;
+    }
+
+    /**
+     * The title and the first chunk of the body are read as the rules prepared them: the listener
+     * hears them at once, while the speech editor rewrites what follows.
+     *
+     * @param list<Segment> $segments
+     */
+    private function isOpening(Segment $segment, array $segments): bool
+    {
+        if (BlockKind::Title === $segment->getKind()) {
+            return true;
+        }
+
+        foreach ($segments as $candidate) {
+            if (BlockKind::Title !== $candidate->getKind()) {
+                return $candidate === $segment;
+            }
+        }
+
+        return false;
     }
 
     private function editedCharacters(Article $article): int

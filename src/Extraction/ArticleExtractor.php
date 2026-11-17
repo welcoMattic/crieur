@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Extraction;
 
 use fivefilters\Readability\ParseException;
+use App\Text\HtmlBlockExtractor;
 use fivefilters\Readability\Readability;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
@@ -42,7 +43,7 @@ final readonly class ArticleExtractor
         [$finalUrl, $html] = $this->fetch($url);
 
         try {
-            $article = (new Readability(fixRelativeURLs: true, originalURL: $finalUrl))->parse($html);
+            $article = (new Readability(fixRelativeURLs: true, originalURL: $finalUrl, classesToPreserve: HtmlBlockExtractor::BOILERPLATE_CLASSES))->parse(self::withoutFurniture($html));
         } catch (ParseException $e) {
             throw new ExtractionFailed(ExtractionFailed::NO_TEXT, $e->getMessage(), $e);
         }
@@ -111,6 +112,24 @@ final readonly class ArticleExtractor
         } catch (ExceptionInterface $e) {
             throw new ExtractionFailed(ExtractionFailed::NETWORK, $e->getMessage(), $e);
         }
+    }
+
+    /**
+     * Page furniture (hatnotes, infoboxes, edit links, reference marks) is removed before
+     * readability runs: readability turns some of it into plain paragraphs, without the classes
+     * that tell what it is.
+     */
+    private static function withoutFurniture(string $html): \Dom\HTMLDocument
+    {
+        $document = \Dom\HTMLDocument::createFromString($html, \LIBXML_NOERROR, 'UTF-8');
+        $selector = implode(', ', [...array_map(static fn (string $class): string => '.'.$class, HtmlBlockExtractor::BOILERPLATE_CLASSES), '[role="note"]']);
+        foreach ($document->querySelectorAll($selector) as $element) {
+            if ($element->parentNode instanceof \Dom\Element && $element !== $document->body) {
+                $element->parentNode->removeChild($element);
+            }
+        }
+
+        return $document;
     }
 
     private static function toUtf8(string $html, string $contentType): string

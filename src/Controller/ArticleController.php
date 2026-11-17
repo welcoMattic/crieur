@@ -171,7 +171,7 @@ final class ArticleController extends AbstractController
         $gender = VoiceGender::tryFrom($request->getPayload()->getString('voice'))
             ?? throw new BadRequestHttpException('Expected the voice "female" or "male".');
 
-        $this->queue->changeVoice($article, $gender);
+        $this->queue->changeVoice($article, $gender, max(0, $request->getPayload()->getInt('from')));
 
         return $this->backToArticle($article);
     }
