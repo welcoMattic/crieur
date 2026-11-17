@@ -4,7 +4,18 @@
 
 Crieur (French for *town crier*) started as a macOS menu bar app. This is its web version, rebuilt on **Symfony 8.1 and Symfony AI 1.0**, for the [Symfony AI & MCP Hackathon](https://symfony.com/hackathon). It runs **entirely on your machine** with [Ollama](https://ollama.com) (Phonon voices by Gradium, Ministral as speech editor), or in the cloud with a single [Mistral AI](https://mistral.ai) key (Voxtral voices, Mistral Small as speech editor).
 
-> Demo video (90 s): _link to come_
+> Demo video (86 s): _link to come_
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/home-dark.png">
+    <img alt="The library: paste a link, articles queued from the web, the console or an AI assistant over MCP" src="docs/images/home-light.png" width="49%">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/article-dark.png">
+    <img alt="Read-along transcript with Show what the voice reads: rewrites of the speech editor are underlined" src="docs/images/article-light.png" width="49%">
+  </picture>
+</p>
 
 Tags: **MCP** (server), **Text-to-speech**, **Structured output**, **Local AI**.
 
