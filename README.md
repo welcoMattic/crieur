@@ -22,7 +22,7 @@ Tags: **MCP** (server), **Text-to-speech**, **Structured output**, **Local AI**.
 ## What it does
 
 - **Paste a link, listen in seconds.** The title and the first sentence play at once; a synthesis worker goes on chunk after chunk while an editor worker rewrites the next ones, ahead of the voice.
-- **Written for the ear.** A Symfony AI agent rewrites each batch of sentences for a voice: dates, decimals, units, version numbers, abbreviations, symbols, page leftovers. Its structured answer is checked for faithfulness: a chunk that comes back summarized or padded keeps the deterministic rules. *Show what the voice reads* reveals every rewrite.
+- **Written for the ear.** A Symfony AI agent rewrites each batch of sentences for a voice: dates, decimals, units, version numbers, abbreviations, symbols, page leftovers. Its structured answer is checked for faithfulness: a chunk that comes back summarized, padded, or with a number changed (numbers must come back in digits, or spelled exactly as the deterministic rules spell them) keeps the rules. *Show what the voice reads* reveals every rewrite.
 - **Read-along player.** The sentence being read is highlighted. Speed from 0.75x to 2x without pitch change, female or male voice, French or English, previous and next paragraph, media keys, keyboard shortcuts, position remembered per article.
 - **Your AI assistant can hand you articles.** The MCP server exposes `read_aloud`, `list_library` and `get_article`: ask Claude to find three good articles on a topic and send them to Crieur, then listen on your way home.
 - **A private podcast.** Every finished article becomes an episode of a private RSS feed (AAC with ffmpeg, WAV otherwise) for any podcast app on your network.
