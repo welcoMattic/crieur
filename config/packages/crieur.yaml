@@ -1,0 +1,26 @@
+# Crieur: voice engines, voices and pipeline settings.
+parameters:
+    crieur.voice_engine: '%env(CRIEUR_VOICE_ENGINE)%'
+    crieur.editor: '%env(CRIEUR_EDITOR)%'
+    crieur.allow_private_networks: '%env(bool:CRIEUR_ALLOW_PRIVATE_NETWORKS)%'
+    crieur.audio_dir: '%kernel.project_dir%/var/audio'
+
+    # Each engine maps a language and a gender to a voice: "id" is what the engine expects,
+    # "name" what the listener sees. Changing a voice needs no code change.
+    crieur.voice_engines:
+        phonon:
+            label: 'Phonon by Gradium, through Ollama, on this machine'
+            model: 'phonon:40m-multilingual'
+            license: 'CC BY-NC 4.0'
+            local: true
+            voices:
+                fr: { female: { id: Tiphaine, name: Tiphaine }, male: { id: Lucien, name: Lucien } }
+                en: { female: { id: Hadley, name: Hadley }, male: { id: Preston, name: Preston } }
+        voxtral:
+            label: 'Voxtral TTS by Mistral AI, in the cloud'
+            model: 'voxtral-mini-tts-latest'
+            license: 'Mistral AI terms of use'
+            local: false
+            voices:
+                fr: { female: { id: voice_592, name: Marie }, male: { id: voice_592, name: Marie } }
+                en: { female: { id: voice_478, name: Sheila }, male: { id: voice_485, name: Rob } }

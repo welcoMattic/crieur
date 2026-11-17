@@ -1,0 +1,21 @@
+ai:
+    platform:
+        # The local stack: Phonon voices (see CrieurPlatform) and an optional local speech editor.
+        ollama:
+            endpoint: '%env(OLLAMA_HOST_URL)%'
+        # The cloud stack: the speech editor, and Voxtral voices (see CrieurPlatform).
+        mistral:
+            api_key: '%env(MISTRAL_API_KEY)%'
+
+    agent:
+        # Rewrites each paragraph for the ear: numbers, units, abbreviations, symbols, lists.
+        speech_editor_mistral:
+            platform: 'ai.platform.mistral'
+            model: 'mistral-small-latest'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/speech_editor.md'
+        speech_editor_ollama:
+            platform: 'ai.platform.ollama'
+            model: 'ministral-3:8b'
+            prompt:
+                file: '%kernel.project_dir%/config/prompts/speech_editor.md'

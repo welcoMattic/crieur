@@ -1,0 +1,47 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Speech;
+
+use Symfony\AI\Platform\PlatformInterface;
+use Symfony\AI\Platform\Result\BinaryResult;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
+
+/**
+ * Turns one chunk of spoken text into audio, through the speech platform of Symfony AI.
+ *
+ * The platform routes on the model name: "phonon:..." goes to Ollama, "voxtral-..." to Mistral.
+ * The audio is cached: the same text read by the same voice is synthesized once.
+ */
+final readonly class SpeechSynthesizer
+{
+    public function __construct(
+        #[Autowire(service: 'crieur.platform.speech')]
+        private PlatformInterface $platform,
+        private AudioStore $store,
+        private AudioPostProcessor $postProcessor,
+    ) {
+    }
+
+    /**
+     * @return array{key: string, durationMs: int}
+     */
+    public function synthesize(string $spoken, Voice $voice): array
+    {
+        $key = AudioStore::key($voice, $spoken);
+        if ($this->store->has($key)) {
+            return ['key' => $key, 'durationMs' => Wav::fromBytes($this->store->read($key))->durationMs()];
+        }
+
+        $result = $this->platform->invoke($voice->model, $spoken, ['voice' => $voice->id])->getResult();
+        if (!$result instanceof BinaryResult) {
+            throw new \UnexpectedValueException(\sprintf('The speech platform answered "%s" instead of audio.', $result::class));
+        }
+
+        $wav = $this->postProcessor->process(Wav::fromBytes($result->getContent()));
+        $this->store->write($key, $wav->toBytes());
+
+        return ['key' => $key, 'durationMs' => $wav->durationMs()];
+    }
+}

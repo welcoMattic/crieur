@@ -1,0 +1,15 @@
+mcp:
+    servers:
+        default:
+            name: 'crieur'
+            description: 'Crieur reads web articles aloud. Send it a link and listen later, in French or in English.'
+            instructions: |
+                Use read_aloud to add a web article to the listening library of the user: Crieur extracts it,
+                prepares the text for the ear and synthesizes it with a natural voice. Use list_library to see
+                what is queued or ready, and get_article to follow one article or read its transcript.
+            registry: 'App\Mcp\'
+            transports:
+                stdio: true
+                http: true
+            http:
+                path: /mcp

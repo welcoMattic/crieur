@@ -1,0 +1,31 @@
+parameters:
+
+services:
+    _defaults:
+        autowire: true
+        autoconfigure: true
+
+    App\:
+        resource: '../src/'
+
+    # The speech platform of Crieur: one Symfony AI platform, two speech providers.
+    # The model name picks the provider (CatalogBasedModelRouter): "phonon:*" runs on Ollama,
+    # "voxtral-*" on Mistral AI.
+    crieur.platform.speech.ollama:
+        class: Symfony\AI\Platform\ProviderInterface
+        factory: ['App\AI\Platform\Ollama\TextToSpeech\Factory', 'createProvider']
+        arguments: ['%env(OLLAMA_HOST_URL)%', '@http_client', '@event_dispatcher']
+
+    crieur.platform.speech.mistral:
+        class: Symfony\AI\Platform\ProviderInterface
+        factory: ['App\AI\Platform\Mistral\TextToSpeech\Factory', 'createProvider']
+        arguments: ['%env(MISTRAL_API_KEY)%', '@http_client', '@event_dispatcher']
+
+    crieur.platform.speech:
+        class: Symfony\AI\Platform\Platform
+        arguments:
+            - ['@crieur.platform.speech.ollama', '@crieur.platform.speech.mistral']
+            - '@Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter'
+            - '@event_dispatcher'
+
+    Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter: ~
