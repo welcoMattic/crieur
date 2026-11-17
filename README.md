@@ -99,6 +99,7 @@ All settings are environment variables (`.env`, override in `.env.local`):
 | `CRIEUR_EDITOR` | `auto` | Speech editor: `mistral`, `ollama`, `off`, or `auto` (Mistral when a key is set, else the deterministic rules). |
 | `OLLAMA_HOST_URL` | `http://127.0.0.1:11434` | Where Ollama listens. |
 | `MISTRAL_API_KEY` | empty | Needed for Voxtral and the Mistral speech editor only. |
+| `CRIEUR_AUDIO_DIR` | `var/audio` | Where the synthesized chunks and episodes are stored (content-addressed: a sentence read by a voice is synthesized once). |
 | `CRIEUR_ALLOW_PRIVATE_NETWORKS` | `0` | Pages on private networks (localhost, 10.0.0.0/8...) are refused unless set to `1`: a URL can come from an AI assistant. |
 
 ## Architecture

@@ -3,7 +3,7 @@ parameters:
     crieur.voice_engine: '%env(CRIEUR_VOICE_ENGINE)%'
     crieur.editor: '%env(CRIEUR_EDITOR)%'
     crieur.allow_private_networks: '%env(bool:CRIEUR_ALLOW_PRIVATE_NETWORKS)%'
-    crieur.audio_dir: '%kernel.project_dir%/var/audio'
+    crieur.audio_dir: '%env(resolve:CRIEUR_AUDIO_DIR)%'
 
     # Each engine maps a language and a gender to a voice: "id" is what the engine expects,
     # "name" what the listener sees. Changing a voice needs no code change.
