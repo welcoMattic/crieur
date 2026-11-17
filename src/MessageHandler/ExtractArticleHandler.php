@@ -6,6 +6,8 @@ namespace App\MessageHandler;
 
 use App\Extraction\ArticleExtractor;
 use App\Extraction\ExtractionFailed;
+use App\Editor\SpeechEditor;
+use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
 use App\Repository\ArticleRepository;
@@ -37,6 +39,7 @@ final readonly class ExtractArticleHandler
         private ArticlePreparer $preparer,
         private VoiceCatalog $voices,
         private MessageBusInterface $bus,
+        private SpeechEditor $editor,
         private ClockInterface $clock,
         private LoggerInterface $logger,
     ) {
@@ -91,6 +94,9 @@ final readonly class ExtractArticleHandler
         }
 
         $this->bus->dispatch(new SynthesizeArticle($article->getId(), $article->getRevision()));
+        if (null !== $this->editor->backend()) {
+            $this->bus->dispatch(new EditArticle($article->getId(), $article->getRevision()));
+        }
     }
 
     /**

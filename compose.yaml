@@ -34,5 +34,23 @@ services:
     volumes:
       - crieur_var:/app/var
 
+  editor:
+    build: .
+    command: ["php", "bin/console", "messenger:consume", "edit", "--time-limit=3600", "--memory-limit=256M", "-vv"]
+    restart: unless-stopped
+    depends_on:
+      - web
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      DATABASE_URL: "sqlite:////app/var/data_prod.db"
+      DEFAULT_URI: "http://localhost:8000"
+      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - crieur_var:/app/var
+
 volumes:
   crieur_var:

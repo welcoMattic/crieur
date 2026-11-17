@@ -10,7 +10,7 @@ Tags: **MCP** (server), **Text-to-speech**, **Structured output**, **Local AI**.
 
 ## What it does
 
-- **Paste a link, listen in seconds.** The title is synthesized first and plays while the worker goes on, chunk after chunk, ahead of the voice.
+- **Paste a link, listen in seconds.** The title and the first sentence play at once; a synthesis worker goes on chunk after chunk while an editor worker rewrites the next ones, ahead of the voice.
 - **Written for the ear.** A Symfony AI agent rewrites each batch of sentences for a voice: dates, decimals, units, version numbers, abbreviations, symbols, page leftovers. Its structured answer is checked for faithfulness: a chunk that comes back summarized or padded keeps the deterministic rules. *Show what the voice reads* reveals every rewrite.
 - **Read-along player.** The sentence being read is highlighted. Speed from 0.75x to 2x without pitch change, female or male voice, French or English, previous and next paragraph, media keys, keyboard shortcuts, position remembered per article.
 - **Your AI assistant can hand you articles.** The MCP server exposes `read_aloud`, `list_library` and `get_article`: ask Claude to find three good articles on a topic and send them to Crieur, then listen on your way home.
@@ -61,7 +61,7 @@ Then check and start:
 
 ```sh
 php bin/console crieur:doctor --live   # says what is missing and how to fix it
-symfony serve                           # also starts the two queue workers
+symfony serve                           # also starts the three queue workers
 ```
 
 Open <http://127.0.0.1:8000> and paste a link.
@@ -110,8 +110,9 @@ flowchart LR
     M[MCP client] -->|read_aloud| Q
     Q -->|ExtractArticle| X[Extract worker]
     X -->|readability.php| T[Text rules: blocks, language, sentences, chunks]
+    T -->|EditArticle| E[Editor worker: Agent + structured output, Mistral or Ollama]
     T -->|SynthesizeArticle| S[Synthesis worker]
-    S -->|Agent + structured output| E[Speech editor: Mistral or Ollama]
+    E -.->|rewritten chunks, ahead of the voice| S
     S -->|Platform::invoke| P[Speech platform]
     P -->|phonon:*| O[Ollama: Phonon]
     P -->|voxtral-*| V[Mistral: Voxtral]
@@ -124,7 +125,7 @@ flowchart LR
 - `src/Text`: deterministic preparation ported from the macOS app: blocks, French and English detection, ICU sentence breaking, number normalization, chunking (120 characters for the first chunk, then 300 in French and 400 in English).
 - `src/Editor`: the speech editor and its faithfulness check.
 - `src/Speech`: voices, synthesis, audio post-processing (silence trimming, level normalization to -24 dBFS), content-addressed audio cache.
-- `src/MessageHandler`: the two Messenger workers (`extract` and `synthesize` queues, Doctrine transport on SQLite).
+- `src/MessageHandler`: the three Messenger workers (`extract`, `edit` and `synthesize` queues, Doctrine transport on SQLite): a new article never waits behind another one, and the voice never waits for a whole batch of the editor.
 - `src/Mcp`: the MCP tools.
 
 ## Development

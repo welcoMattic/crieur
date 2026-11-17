@@ -9,8 +9,11 @@ use App\Enum\ArticleSource;
 use App\Enum\ArticleStatus;
 use App\Enum\VoiceGender;
 use App\Library\ArticleQueue;
+use App\Editor\SpeechEditor;
+use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
+use App\MessageHandler\EditArticleHandler;
 use App\MessageHandler\ExtractArticleHandler;
 use App\MessageHandler\SynthesizeArticleHandler;
 use App\Repository\ArticleRepository;
@@ -21,6 +24,13 @@ use App\Text\BlockKind;
 use App\Text\Language;
 use Doctrine\ORM\EntityManagerInterface;
 use PHPUnit\Framework\Attributes\Test;
+use Psr\Log\NullLogger;
+use Symfony\AI\Agent\Agent;
+use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
+use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\Component\DependencyInjection\ServiceLocator;
+use Symfony\Component\EventDispatcher\EventDispatcher;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
@@ -71,6 +81,45 @@ final class PipelineTest extends KernelTestCase
     }
 
     #[Test]
+    public function theEditorRewritesTheTextForTheEarAheadOfTheVoice(): void
+    {
+        $this->useEditor(static function (Model $model, array|string|object $input): string {
+            \assert(\is_array($input));
+            // The platform receives the normalized messages: find the request of the editor in them.
+            $request = null;
+            array_walk_recursive($input, static function (mixed $value) use (&$request): void {
+                if (\is_string($value) && str_contains($value, '"chunks"')) {
+                    $request = json_decode($value, true, flags: \JSON_THROW_ON_ERROR);
+                }
+            });
+            \assert(\is_array($request));
+
+            return (string) json_encode([
+                'chunks' => array_map(static fn (array $chunk): array => ['id' => $chunk['id'], 'spoken' => 'Heard: '.$chunk['text']], $request['chunks']),
+                'summary' => 'An essay on listening.',
+            ]);
+        });
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline();
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        static::assertSame('mistral-small-latest', $article->getEditor());
+        static::assertSame('An essay on listening.', $article->getSummary());
+
+        $segments = array_values($article->getSegments()->toArray());
+        static::assertFalse($segments[0]->isEdited(), 'The title keeps the rules.');
+        static::assertFalse($segments[1]->isEdited(), 'The first chunk of the body keeps the rules: the voice starts at once.');
+        foreach (\array_slice($segments, 2) as $segment) {
+            static::assertTrue($segment->isEdited());
+            static::assertStringStartsWith('Heard: ', $segment->getSpoken());
+            static::assertTrue($segment->isReady());
+        }
+    }
+
+    #[Test]
     public function itReadsTheRestWithAnotherVoice(): void
     {
         $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
@@ -113,6 +162,22 @@ final class PipelineTest extends KernelTestCase
         static::assertSame('extraction.http_error', $this->reload($article)->getFailure());
     }
 
+    /**
+     * @param \Closure(Model, array<mixed>|string|object): string $answer
+     */
+    private function useEditor(\Closure $answer): void
+    {
+        $dispatcher = new EventDispatcher();
+        $dispatcher->addSubscriber(new PlatformSubscriber());
+        $agent = new Agent(MockPlatformFactory::createPlatform($answer, eventDispatcher: $dispatcher), 'mock-model');
+        self::getContainer()->set(SpeechEditor::class, new SpeechEditor(
+            new ServiceLocator(['mistral' => static fn () => $agent, 'ollama' => static fn () => $agent]),
+            'mistral',
+            'key',
+            new NullLogger(),
+        ));
+    }
+
     private function servePage(string $html): void
     {
         self::getContainer()->set('http_client', new MockHttpClient(static fn (): MockResponse => new MockResponse($html, ['response_headers' => ['content-type' => 'text/html; charset=utf-8']])));
@@ -128,27 +193,34 @@ final class PipelineTest extends KernelTestCase
      */
     private function runPipeline(): void
     {
-        $extract = self::getContainer()->get('messenger.transport.extract');
-        $synthesize = self::getContainer()->get('messenger.transport.synthesize');
-        \assert($extract instanceof InMemoryTransport && $synthesize instanceof InMemoryTransport);
+        $transports = [];
+        foreach (['extract', 'edit', 'synthesize'] as $name) {
+            $transport = self::getContainer()->get('messenger.transport.'.$name);
+            \assert($transport instanceof InMemoryTransport);
+            $transports[] = $transport;
+        }
 
-        for ($round = 0; $round < 10; ++$round) {
-            $envelopes = [...$extract->get(), ...$synthesize->get()];
-            if ([] === $envelopes) {
-                return;
+        for ($round = 0; $round < 20; ++$round) {
+            $idle = true;
+            foreach ($transports as $transport) {
+                foreach ($transport->get() as $envelope) {
+                    $idle = false;
+                    $message = $envelope->getMessage();
+                    match (true) {
+                        $message instanceof ExtractArticle => self::getContainer()->get(ExtractArticleHandler::class)($message),
+                        $message instanceof EditArticle => self::getContainer()->get(EditArticleHandler::class)($message),
+                        $message instanceof SynthesizeArticle => self::getContainer()->get(SynthesizeArticleHandler::class)($message),
+                        default => throw new \LogicException(\sprintf('Unexpected message %s.', $message::class)),
+                    };
+                    $transport->ack($envelope);
+                }
             }
-            foreach ($envelopes as $envelope) {
-                $message = $envelope->getMessage();
-                match (true) {
-                    $message instanceof ExtractArticle => self::getContainer()->get(ExtractArticleHandler::class)($message),
-                    $message instanceof SynthesizeArticle => self::getContainer()->get(SynthesizeArticleHandler::class)($message),
-                    default => throw new \LogicException(\sprintf('Unexpected message %s.', $message::class)),
-                };
-                $envelope->getMessage() instanceof ExtractArticle ? $extract->ack($envelope) : $synthesize->ack($envelope);
+            if ($idle) {
+                return;
             }
         }
 
-        static::fail('The pipeline did not settle in 10 rounds.');
+        static::fail('The pipeline did not settle in 20 rounds.');
     }
 
     private function reload(Article $article): Article

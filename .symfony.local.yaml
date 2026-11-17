@@ -10,3 +10,6 @@ workers:
     messenger_synthesize:
         cmd: ['symfony', 'console', 'messenger:consume', 'synthesize', '--time-limit=3600', '--memory-limit=512M']
         watch: ['config', 'src', 'templates', 'vendor/composer']
+    messenger_edit:
+        cmd: ['symfony', 'console', 'messenger:consume', 'edit', '--time-limit=3600', '--memory-limit=256M']
+        watch: ['config', 'src', 'templates', 'vendor/composer']

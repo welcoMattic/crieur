@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\MessageHandler;
 
-use App\Editor\EditorUnavailable;
 use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Entity\Segment;
@@ -13,9 +12,6 @@ use App\Repository\ArticleRepository;
 use App\Speech\SpeechSynthesizer;
 use App\Speech\Voice;
 use App\Speech\VoiceCatalog;
-use App\Text\BlockKind;
-use App\Text\Language;
-use App\Text\TextNormalizer;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
@@ -26,8 +22,8 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
  * Synthesizes the chunks of an article in reading order, one at a time, so that the listener can
- * start as soon as the title is ready. Ahead of the voice, the speech editor rewrites the next
- * batch of chunks for the ear.
+ * start as soon as the title is ready. Meanwhile the editor worker (EditArticleHandler) rewrites
+ * the next chunks for the ear, ahead of the voice.
  *
  * The run stops as soon as the article gets a new revision (another voice or language): the
  * message sent with that change synthesizes the rest.
@@ -43,13 +39,17 @@ final readonly class SynthesizeArticleHandler
      */
     private const float SLICE_SECONDS = 15.0;
 
+    /**
+     * How long the voice waits for the editor worker before reading the text of the rules.
+     */
+    private const float EDITOR_WAIT_SECONDS = 8.0;
+
     public function __construct(
         private ArticleRepository $articles,
         private EntityManagerInterface $entityManager,
         private VoiceCatalog $voices,
         private SpeechSynthesizer $synthesizer,
         private SpeechEditor $editor,
-        private TextNormalizer $normalizer,
         private MessageBusInterface $bus,
         private ClockInterface $clock,
         private LoggerInterface $logger,
@@ -71,8 +71,9 @@ final readonly class SynthesizeArticleHandler
         $from = min(max(0, $message->fromPosition), max(0, \count($segments) - 1));
         $order = [...\array_slice($segments, $from), ...\array_slice($segments, 0, $from)];
         $startedAt = hrtime(true);
+        $rewritten = false;
 
-        foreach ($order as $index => $segment) {
+        foreach ($order as $segment) {
             if ($segment->isReady()) {
                 continue;
             }
@@ -83,8 +84,8 @@ final readonly class SynthesizeArticleHandler
                 return;
             }
 
-            if ($editing && !$segment->isEdited() && !$this->isOpening($segment, $segments)) {
-                $editing = $this->editAhead($article, $language, \array_slice($order, $index), $engine->spellsIntegers());
+            if ($editing && !$segment->isEdited() && !EditArticleHandler::isOpening($segment, $segments)) {
+                $this->waitForEditor($segment);
             }
 
             if ('' === trim($segment->getSpoken())) {
@@ -97,8 +98,9 @@ final readonly class SynthesizeArticleHandler
                 return;
             }
 
+            $spoken = $segment->getSpoken();
             try {
-                $audio = $this->synthesize($segment->getSpoken(), $voice);
+                $audio = $this->synthesize($spoken, $voice);
             } catch (PlatformException|TransportExceptionInterface|\RuntimeException $e) {
                 $this->logger->error('Synthesis of chunk {position} of {article} failed: {message}', ['position' => $segment->getPosition(), 'article' => $article->getId()->toRfc4122(), 'message' => $e->getMessage(), 'exception' => $e]);
                 $article->fail($e instanceof TransportExceptionInterface || $e->getPrevious() instanceof TransportExceptionInterface ? 'synthesis.engine_unavailable' : 'synthesis.failed', $this->clock->now());
@@ -107,8 +109,21 @@ final readonly class SynthesizeArticleHandler
                 return;
             }
 
+            // The editor may have rewritten the chunk meanwhile: its new text gets its own audio.
+            $this->entityManager->refresh($segment);
+            if ($segment->getSpoken() !== $spoken) {
+                $rewritten = true;
+                continue;
+            }
+
             $segment->attachAudio($audio['key'], $audio['durationMs']);
             $this->entityManager->flush();
+        }
+
+        if ($rewritten) {
+            $this->bus->dispatch(new SynthesizeArticle($article->getId(), $message->revision, $message->fromPosition));
+
+            return;
         }
 
         $this->entityManager->refresh($article);
@@ -118,90 +133,23 @@ final readonly class SynthesizeArticleHandler
         }
     }
 
-    /**
-     * @param list<Segment> $upcoming the segments from the current one to the end
-     *
-     * @return bool whether the editor should be asked again for the next batches
-     */
-    private function editAhead(Article $article, Language $language, array $upcoming, bool $spellIntegers): bool
-    {
-        $budget = SpeechEditor::batchCharacters($this->editedCharacters($article));
-        $batch = [];
-        $characters = 0;
-        foreach ($upcoming as $segment) {
-            if ($characters >= $budget || \count($batch) >= SpeechEditor::BATCH_CHUNKS) {
-                break;
-            }
-            if (!$segment->isEdited() && !$this->isOpening($segment, array_values($article->getSegments()->toArray()))) {
-                $batch[$segment->getPosition()] = $segment;
-                $characters += mb_strlen($segment->getText());
-            }
-        }
 
-        $model = $this->editor->model() ?? 'rules';
-        // The summary makes the answer longer: not in the first batch, which the listener waits for.
-        $isLastBatch = \count($batch) === \count(array_filter($upcoming, fn (Segment $segment): bool => !$segment->isEdited() && !$this->isOpening($segment, array_values($article->getSegments()->toArray()))));
-        $withSummary = null === $article->getSummary() && ($budget > SpeechEditor::FIRST_BATCH_CHARACTERS || $isLastBatch);
 
-        try {
-            $edited = $this->editor->edit(
-                $language,
-                $article->getDisplayTitle(),
-                array_map(static fn (Segment $segment): string => $segment->getText(), $batch),
-                $withSummary,
-            );
-        } catch (EditorUnavailable) {
-            foreach ($batch as $segment) {
-                $segment->rewrite($segment->getSpoken());
-            }
-            $article->edit('rules', null, $this->clock->now());
-            $this->entityManager->flush();
-
-            return false;
-        }
-
-        foreach ($batch as $position => $segment) {
-            $spoken = $edited->spoken[$position] ?? null;
-            $segment->rewrite(null === $spoken ? $segment->getSpoken() : $this->normalizer->normalize($spoken, $language, $spellIntegers));
-        }
-
-        $article->edit($model, $edited->summary, $this->clock->now());
-        $this->entityManager->flush();
-
-        return true;
-    }
 
     /**
-     * The title and the first chunk of the body are read as the rules prepared them: the listener
-     * hears them at once, while the speech editor rewrites what follows.
-     *
-     * @param list<Segment> $segments
+     * Gives the editor worker a few seconds to rewrite the chunk the voice is about to read, then
+     * goes on with the text of the rules: the listener never waits for long.
      */
-    private function isOpening(Segment $segment, array $segments): bool
+    private function waitForEditor(Segment $segment): void
     {
-        if (BlockKind::Title === $segment->getKind()) {
-            return true;
-        }
-
-        foreach ($segments as $candidate) {
-            if (BlockKind::Title !== $candidate->getKind()) {
-                return $candidate === $segment;
-            }
-        }
-
-        return false;
-    }
-
-    private function editedCharacters(Article $article): int
-    {
-        $characters = 0;
-        foreach ($article->getSegments() as $segment) {
+        $deadline = hrtime(true) + (int) (self::EDITOR_WAIT_SECONDS * 1e9);
+        while (hrtime(true) < $deadline) {
+            usleep(250_000);
+            $this->entityManager->refresh($segment);
             if ($segment->isEdited()) {
-                $characters += mb_strlen($segment->getText());
+                return;
             }
         }
-
-        return $characters;
     }
 
     /**

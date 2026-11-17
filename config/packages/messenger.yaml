@@ -21,11 +21,20 @@ framework:
                 retry_strategy:
                     max_retries: 2
                     delay: 2000
+            # The speech editor works ahead of the voice, in its own worker.
+            edit:
+                dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
+                options:
+                    queue_name: edit
+                    redeliver_timeout: 300
+                retry_strategy:
+                    max_retries: 1
             failed: 'doctrine://default?queue_name=failed'
 
         routing:
             App\Message\ExtractArticle: extract
             App\Message\SynthesizeArticle: synthesize
+            App\Message\EditArticle: edit
 
 when@test:
     framework:
@@ -33,3 +42,4 @@ when@test:
             transports:
                 extract: 'in-memory://'
                 synthesize: 'in-memory://'
+                edit: 'in-memory://'
