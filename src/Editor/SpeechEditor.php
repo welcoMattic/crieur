@@ -102,7 +102,7 @@ final class SpeechEditor
         $spoken = [];
         foreach ($answer->chunks as $chunk) {
             if (\array_key_exists($chunk->id, $chunks) && self::isFaithful($chunks[$chunk->id], $chunk->spoken)) {
-                $spoken[$chunk->id] = self::clean($chunk->spoken);
+                $spoken[$chunk->id] = self::keepCase($chunks[$chunk->id], self::clean($chunk->spoken));
             }
         }
 
@@ -136,6 +136,10 @@ final class SpeechEditor
         $originalLength = mb_strlen(trim($original));
         $spokenLength = mb_strlen(trim($spoken));
 
+        if ($spokenLength > 0 && !self::keepsNumbers($original, $spoken)) {
+            return false;
+        }
+
         if (0 === $spokenLength) {
             // Dropping a chunk is allowed for short leftovers only ("Read more", "[1]").
             return $originalLength <= 60;
@@ -146,6 +150,47 @@ final class SpeechEditor
         }
 
         return $spokenLength >= 0.6 * $originalLength && $spokenLength <= 2.5 * $originalLength;
+    }
+
+    /**
+     * A model can misread a number ("18th" became "eighteen hundredth" once): the numbers stay in
+     * digits in its answer, and the rules spell them out. Only dates, times and version numbers
+     * may come back in words, and footnote marks may go.
+     */
+    public static function keepsNumbers(string $original, string $spoken): bool
+    {
+        $exempt = [
+            '~\[\d{1,3}\]~u',                              // footnote marks
+            '~\b\d{1,4}[/.\-]\d{1,2}[/.\-]\d{1,4}\b~u',      // dates
+            '~\b\d{1,2}[:h]\d{2}\b~u',                      // times
+            '~\b\p{Lu}[\p{L}\d+#]*[ \x{A0}]v?\d+(?:\.\d+)+[\w-]*|\bv\d+(?:\.\d+)+[\w-]*~u', // versions: "PHP 8.5", "v1.0.0"
+        ];
+        $numbers = static fn (string $text): array => preg_match_all('~\d+(?:[.,]\d+)*~u', $text, $matches) ? $matches[0] : [];
+
+        $required = $numbers((string) preg_replace($exempt, ' ', $original));
+        $available = $numbers($spoken);
+        foreach ($required as $number) {
+            $index = array_search($number, $available, true);
+            if (false === $index) {
+                return false;
+            }
+            unset($available[$index]);
+        }
+
+        return true;
+    }
+
+    /**
+     * A chunk that continues a sentence starts in lower case: the model tends to capitalize it.
+     */
+    private static function keepCase(string $original, string $spoken): string
+    {
+        $first = mb_substr(ltrim($original), 0, 1);
+        if ('' !== $spoken && $first === mb_strtolower($first) && $first !== mb_strtoupper($first)) {
+            return mb_strtolower(mb_substr($spoken, 0, 1)).mb_substr($spoken, 1);
+        }
+
+        return $spoken;
     }
 
     private static function clean(string $text): string

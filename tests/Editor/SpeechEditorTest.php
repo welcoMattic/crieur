@@ -41,7 +41,7 @@ final class SpeechEditorTest extends TestCase
     public function itKeepsTheFaithfulRewritesOnly(): void
     {
         $answer = json_encode(['chunks' => [
-            ['id' => 1, 'spoken' => 'Le 17 novembre 2026, les prix ont augmenté de trois virgule cinq pour cent.'],
+            ['id' => 1, 'spoken' => 'Le 17 novembre 2026, les prix ont augmenté de 3,5 %.'],
             ['id' => 2, 'spoken' => 'Résumé.'],
             ['id' => 3, 'spoken' => ''],
         ], 'summary' => 'Les prix montent.'], \JSON_THROW_ON_ERROR);
@@ -53,7 +53,7 @@ final class SpeechEditorTest extends TestCase
         ], true);
 
         static::assertSame([
-            1 => 'Le 17 novembre 2026, les prix ont augmenté de trois virgule cinq pour cent.',
+            1 => 'Le 17 novembre 2026, les prix ont augmenté de 3,5 %.',
             3 => '',
         ], $edited->spoken);
         static::assertSame('Les prix montent.', $edited->summary);
@@ -92,7 +92,11 @@ final class SpeechEditorTest extends TestCase
      */
     public static function faithfulness(): iterable
     {
-        yield 'dates written in words' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by three point five percent.', true];
+        yield 'dates written in words, numbers kept' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by 3.5%.', true];
+        yield 'a number spelled by the model' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by three point five percent.', false];
+        yield 'an ordinal misread' => ['Criers dressed by a tradition dating to the 18th century.', 'Criers dressed by a tradition dating to the eighteen hundredth century.', false];
+        yield 'a version in words' => ['PHP 8.5 runs at 120 km/h.', 'PHP eight point five runs at 120 kilometers per hour.', true];
+        yield 'a time in words' => ['The crier rang at 10:30 sharp.', 'The crier rang at half past ten sharp.', true];
         yield 'short leftover dropped' => ['Read more', '', true];
         yield 'long paragraph dropped' => [str_repeat('A real sentence. ', 10), '', false];
         yield 'summarized' => [str_repeat('A real sentence with content. ', 6), 'It is about content.', false];
@@ -112,4 +116,15 @@ final class SpeechEditorTest extends TestCase
             new NullLogger(),
         );
     }
+
+    #[Test]
+    public function aContinuedSentenceStaysInLowerCase(): void
+    {
+        $answer = json_encode(['chunks' => [['id' => 2, 'spoken' => 'Is an officer of a royal court or public authority.']], 'summary' => null], \JSON_THROW_ON_ERROR);
+
+        $edited = $this->editor($answer)->edit(Language::English, 'Town crier', [2 => 'is an officer of a royal court or public authority.'], false);
+
+        static::assertSame([2 => 'is an officer of a royal court or public authority.'], $edited->spoken);
+    }
+
 }
