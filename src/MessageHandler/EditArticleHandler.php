@@ -111,6 +111,12 @@ final readonly class EditArticleHandler
 
             $article->edit($this->editor->model() ?? 'rules', $edited->summary, $this->clock->now());
             $this->entityManager->flush();
+            if (null !== $lostAudio) {
+                // The synthesis worker may have marked the article ready meanwhile: it is not anymore.
+                $this->entityManager->refresh($article);
+                $article->resumeSynthesis($this->clock->now());
+                $this->entityManager->flush();
+            }
         }
 
         // A chunk the voice read before the editor reached it is read again, with the new text.

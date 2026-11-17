@@ -17,9 +17,10 @@ use Symfony\Component\DependencyInjection\Attribute\AutowireLocator;
  * decimals, units, abbreviations, symbols, leftovers of the page), through a Symfony AI agent with
  * structured output.
  *
- * Its answer is checked before use: a chunk that comes back missing, or much shorter or longer
- * than the original, keeps the text of the deterministic rules. The model never invents content
- * that the listener would hear.
+ * Its answer is checked before use: a chunk that comes back missing, much shorter or longer than
+ * the original, or with a number changed keeps the text of the deterministic rules. The checks
+ * catch summaries, padding and misread numbers, not every word: a synonym can slip through, and
+ * "Show what the voice reads" shows each rewrite next to the original.
  */
 final class SpeechEditor
 {

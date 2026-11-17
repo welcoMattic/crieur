@@ -383,6 +383,18 @@ class Article
         $this->touch($now);
     }
 
+    /**
+     * A ready article gets chunks to synthesize again (the editor rewrote some): it is in progress
+     * until they have their audio.
+     */
+    public function resumeSynthesis(?\DateTimeImmutable $now = null): void
+    {
+        if (ArticleStatus::Ready === $this->status) {
+            $this->status = ArticleStatus::Synthesizing;
+            $this->touch($now);
+        }
+    }
+
     public function markReady(?\DateTimeImmutable $now = null): void
     {
         $this->status = ArticleStatus::Ready;

@@ -8,6 +8,8 @@ use App\Entity\Article;
 use App\Enum\ArticleSource;
 use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
+use App\Editor\SpeechEditor;
+use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
 use App\Repository\ArticleRepository;
@@ -28,6 +30,7 @@ final readonly class ArticleQueue
         private MessageBusInterface $bus,
         private VoiceCatalog $voices,
         private ClockInterface $clock,
+        private SpeechEditor $editor,
     ) {
     }
 
@@ -75,6 +78,10 @@ final readonly class ArticleQueue
         $article->changeVoice($gender, $voice->name, $voice->engine, $this->clock->now());
         $this->articles->save($article);
         $this->bus->dispatch(new SynthesizeArticle($article->getId(), $article->getRevision(), max(0, $fromPosition)));
+        // The edits already made stay; the editor goes on with the chunks it had not reached.
+        if (null !== $this->editor->backend()) {
+            $this->bus->dispatch(new EditArticle($article->getId(), $article->getRevision()));
+        }
     }
 
     public function remove(Article $article): void

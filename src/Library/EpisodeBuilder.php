@@ -34,7 +34,9 @@ final readonly class EpisodeBuilder
      */
     public function build(Article $article): array
     {
-        $base = \sprintf('%s/episodes/%s-r%d', $this->audioDirectory, $article->getId()->toRfc4122(), $article->getRevision());
+        // Keyed on the audio of the chunks: a voice change or a rewrite gives another episode.
+        $audio = hash('xxh128', implode(',', array_map(static fn ($segment): string => (string) $segment->getAudioKey(), $article->getSegments()->toArray())));
+        $base = \sprintf('%s/episodes/%s-%s', $this->audioDirectory, $article->getId()->toRfc4122(), $audio);
         $wavPath = $base.'.wav';
         $m4aPath = $base.'.m4a';
 

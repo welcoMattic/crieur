@@ -16,6 +16,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
@@ -39,10 +40,6 @@ final readonly class SynthesizeArticleHandler
      */
     private const float SLICE_SECONDS = 5.0;
 
-    /**
-     * How long the voice waits for the editor worker before reading the text of the rules.
-     */
-    private const float EDITOR_WAIT_SECONDS = 2.5;
 
     public function __construct(
         private ArticleRepository $articles,
@@ -53,6 +50,9 @@ final readonly class SynthesizeArticleHandler
         private MessageBusInterface $bus,
         private ClockInterface $clock,
         private LoggerInterface $logger,
+        /** How long the voice waits for the editor worker before reading the text of the rules. */
+        #[Autowire(param: 'crieur.editor_wait_seconds')]
+        private float $editorWaitSeconds = 2.5,
     ) {
     }
 
@@ -142,7 +142,7 @@ final readonly class SynthesizeArticleHandler
      */
     private function waitForEditor(Segment $segment): void
     {
-        $deadline = hrtime(true) + (int) (self::EDITOR_WAIT_SECONDS * 1e9);
+        $deadline = hrtime(true) + (int) ($this->editorWaitSeconds * 1e9);
         while (hrtime(true) < $deadline) {
             usleep(250_000);
             $this->entityManager->refresh($segment);

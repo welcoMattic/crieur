@@ -4,6 +4,8 @@ parameters:
     crieur.editor: '%env(CRIEUR_EDITOR)%'
     crieur.allow_private_networks: '%env(bool:CRIEUR_ALLOW_PRIVATE_NETWORKS)%'
     crieur.audio_dir: '%env(resolve:CRIEUR_AUDIO_DIR)%'
+    # How long the voice waits for the speech editor before reading the text of the rules.
+    crieur.editor_wait_seconds: 2.5
 
     # Each engine maps a language and a gender to a voice: "id" is what the engine expects,
     # "name" what the listener sees. Changing a voice needs no code change.
@@ -28,3 +30,4 @@ parameters:
 when@test:
     parameters:
         crieur.audio_dir: '%kernel.project_dir%/var/audio_test'
+        crieur.editor_wait_seconds: 0

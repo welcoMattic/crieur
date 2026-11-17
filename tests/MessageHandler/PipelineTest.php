@@ -18,6 +18,7 @@ use App\MessageHandler\ExtractArticleHandler;
 use App\MessageHandler\SynthesizeArticleHandler;
 use App\Repository\ArticleRepository;
 use App\Speech\AudioStore;
+use App\Speech\VoiceCatalog;
 use App\Speech\Wav;
 use App\Tests\RecreatesSchema;
 use App\Text\BlockKind;
@@ -83,22 +84,7 @@ final class PipelineTest extends KernelTestCase
     #[Test]
     public function theEditorRewritesTheTextForTheEarAheadOfTheVoice(): void
     {
-        $this->useEditor(static function (Model $model, array|string|object $input): string {
-            \assert(\is_array($input));
-            // The platform receives the normalized messages: find the request of the editor in them.
-            $request = null;
-            array_walk_recursive($input, static function (mixed $value) use (&$request): void {
-                if (\is_string($value) && str_contains($value, '"chunks"')) {
-                    $request = json_decode($value, true, flags: \JSON_THROW_ON_ERROR);
-                }
-            });
-            \assert(\is_array($request));
-
-            return (string) json_encode([
-                'chunks' => array_map(static fn (array $chunk): array => ['id' => $chunk['id'], 'spoken' => 'Heard: '.$chunk['text']], $request['chunks']),
-                'summary' => 'An essay on listening.',
-            ]);
-        });
+        $this->useEditor(self::faithfulEditor());
         $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
 
         $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
@@ -116,6 +102,49 @@ final class PipelineTest extends KernelTestCase
             static::assertTrue($segment->isEdited());
             static::assertStringStartsWith('Heard: ', $segment->getSpoken());
             static::assertTrue($segment->isReady());
+        }
+    }
+
+    #[Test]
+    public function theVoiceMayOutrunTheEditorAndTheArticleStaysConsistent(): void
+    {
+        $this->useEditor(self::faithfulEditor());
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+
+        // The synthesis worker reads everything with the rules before the editor answers.
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline(['extract', 'synthesize']);
+        static::assertSame(ArticleStatus::Ready, $this->reload($article)->getStatus());
+
+        // Then the editor rewrites: the article is in progress again, until the new text has its audio.
+        $this->runPipeline(['edit']);
+        static::assertSame(ArticleStatus::Synthesizing, $this->reload($article)->getStatus());
+        $this->runPipeline(['synthesize']);
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        foreach (\array_slice(array_values($article->getSegments()->toArray()), 2) as $segment) {
+            static::assertStringStartsWith('Heard: ', $segment->getSpoken());
+            static::assertSame(AudioStore::key(self::getContainer()->get(VoiceCatalog::class)->voice('phonon', Language::English, VoiceGender::Female), $segment->getSpoken()), $segment->getAudioKey());
+        }
+    }
+
+    #[Test]
+    public function aVoiceChangeKeepsTheEditorGoing(): void
+    {
+        $this->useEditor(self::faithfulEditor());
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline(['extract', 'synthesize']);
+
+        $this->queue()->changeVoice($this->reload($article), VoiceGender::Male, 3);
+        $this->runPipeline();
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        static::assertSame('Preston', $article->getVoiceName());
+        foreach (\array_slice(array_values($article->getSegments()->toArray()), 2) as $segment) {
+            static::assertTrue($segment->isEdited(), 'The editor goes on after a voice change.');
         }
     }
 
@@ -163,6 +192,31 @@ final class PipelineTest extends KernelTestCase
     }
 
     /**
+     * An editor that answers every chunk faithfully, prefixed with "Heard: ".
+     *
+     * @return \Closure(Model, array<mixed>|string|object): string
+     */
+    private static function faithfulEditor(): \Closure
+    {
+        return static function (Model $model, array|string|object $input): string {
+            \assert(\is_array($input));
+            // The platform receives the normalized messages: find the request of the editor in them.
+            $request = null;
+            array_walk_recursive($input, static function (mixed $value) use (&$request): void {
+                if (\is_string($value) && str_contains($value, '"chunks"')) {
+                    $request = json_decode($value, true, flags: \JSON_THROW_ON_ERROR);
+                }
+            });
+            \assert(\is_array($request));
+
+            return (string) json_encode([
+                'chunks' => array_map(static fn (array $chunk): array => ['id' => $chunk['id'], 'spoken' => 'Heard: '.$chunk['text']], $request['chunks']),
+                'summary' => 'An essay on listening.',
+            ]);
+        };
+    }
+
+    /**
      * @param \Closure(Model, array<mixed>|string|object): string $answer
      */
     private function useEditor(\Closure $answer): void
@@ -191,10 +245,13 @@ final class PipelineTest extends KernelTestCase
     /**
      * Plays the role of the two queue workers until both queues are empty.
      */
-    private function runPipeline(): void
+    /**
+     * @param list<string> $queues the order in which the queues are drained in each round
+     */
+    private function runPipeline(array $queues = ['extract', 'edit', 'synthesize']): void
     {
         $transports = [];
-        foreach (['extract', 'edit', 'synthesize'] as $name) {
+        foreach ($queues as $name) {
             $transport = self::getContainer()->get('messenger.transport.'.$name);
             \assert($transport instanceof InMemoryTransport);
             $transports[] = $transport;
