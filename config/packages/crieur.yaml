@@ -24,3 +24,7 @@ parameters:
             voices:
                 fr: { female: { id: voice_592, name: Marie }, male: { id: voice_592, name: Marie } }
                 en: { female: { id: voice_478, name: Sheila }, male: { id: voice_485, name: Rob } }
+
+when@test:
+    parameters:
+        crieur.audio_dir: '%kernel.project_dir%/var/audio_test'

@@ -32,7 +32,7 @@ class ArticleRepository extends ServiceEntityRepository
     {
         /** @var list<Article> */
         return $this->createQueryBuilder('a')
-            ->orderBy('a.createdAt', 'DESC')
+            ->orderBy('a.createdAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
@@ -47,7 +47,7 @@ class ArticleRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('a')
             ->andWhere('a.status = :status')
             ->setParameter('status', ArticleStatus::Ready)
-            ->orderBy('a.readyAt', 'DESC')
+            ->orderBy('a.readyAt', \SortDirection::Descending)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
