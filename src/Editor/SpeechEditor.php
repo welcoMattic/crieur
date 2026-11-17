@@ -39,6 +39,7 @@ final class SpeechEditor
         'ollama' => ['temperature' => 0.0, 'num_ctx' => 8192, 'keep_alive' => '30m'],
     ];
 
+    public const int FIRST_BATCH_CHARACTERS = 120;
     public const int BATCH_CHARACTERS = 1200;
     public const int BATCH_CHUNKS = 16;
 
@@ -113,6 +114,17 @@ final class SpeechEditor
         $summary = null !== $answer->summary ? self::clean($answer->summary) : null;
 
         return new EditedBatch($spoken, '' === $summary ? null : $summary);
+    }
+
+    /**
+     * The size of the next batch: small at first, so that the listener does not wait after the
+     * title, then as much as is already edited (the edited text doubles at each batch), up to BATCH_CHARACTERS. A voice reads about 15
+     * characters a second and even a local model edits faster than that, so the editor keeps
+     * ahead of the voice once it has a head start.
+     */
+    public static function batchCharacters(int $alreadyEdited): int
+    {
+        return max(self::FIRST_BATCH_CHARACTERS, min(self::BATCH_CHARACTERS, $alreadyEdited));
     }
 
     /**

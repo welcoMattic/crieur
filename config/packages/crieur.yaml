@@ -18,7 +18,7 @@ parameters:
                 en: { female: { id: Hadley, name: Hadley }, male: { id: Preston, name: Preston } }
         voxtral:
             label: 'Voxtral TTS by Mistral AI, in the cloud'
-            model: 'voxtral-mini-tts-latest'
+            model: 'voxtral-mini-tts-3-0'
             license: 'Mistral AI terms of use'
             local: false
             voices:

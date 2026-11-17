@@ -8,12 +8,16 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     queue_name: extract
+                    # A worker stopped in the middle of a message hands it over after 5 minutes.
+                    redeliver_timeout: 300
                 retry_strategy:
                     max_retries: 0
             synthesize:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     queue_name: synthesize
+                    # Runs are sliced (SynthesizeArticleHandler::SLICE_SECONDS): 5 minutes is plenty.
+                    redeliver_timeout: 300
                 retry_strategy:
                     max_retries: 2
                     delay: 2000

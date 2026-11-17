@@ -106,7 +106,7 @@ class Article
      * @var Collection<int, Segment>
      */
     #[ORM\OneToMany(targetEntity: Segment::class, mappedBy: 'article', cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[ORM\OrderBy(['position' => 'ASC'])]
+    #[ORM\OrderBy(['position' => \SortDirection::Ascending])]
     private Collection $segments;
 
     public function __construct(

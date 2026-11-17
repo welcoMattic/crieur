@@ -21,6 +21,7 @@ use Psr\Clock\ClockInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Platform\Exception\ExceptionInterface as PlatformException;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
@@ -36,6 +37,12 @@ final readonly class SynthesizeArticleHandler
 {
     private const int ATTEMPTS = 2;
 
+    /**
+     * A run works this long, then hands over to the next message of the queue and sends itself
+     * again: a new article never waits for the whole synthesis of another one.
+     */
+    private const float SLICE_SECONDS = 15.0;
+
     public function __construct(
         private ArticleRepository $articles,
         private EntityManagerInterface $entityManager,
@@ -43,6 +50,7 @@ final readonly class SynthesizeArticleHandler
         private SpeechSynthesizer $synthesizer,
         private SpeechEditor $editor,
         private TextNormalizer $normalizer,
+        private MessageBusInterface $bus,
         private ClockInterface $clock,
         private LoggerInterface $logger,
     ) {
@@ -60,10 +68,17 @@ final readonly class SynthesizeArticleHandler
         $voice = $this->voices->voice($engine->name, $language, $article->getVoiceGender());
         $editing = null !== $this->editor->backend();
         $segments = array_values($article->getSegments()->toArray());
+        $startedAt = hrtime(true);
 
         foreach ($segments as $index => $segment) {
             if ($segment->isReady()) {
                 continue;
+            }
+
+            if ((hrtime(true) - $startedAt) / 1e9 > self::SLICE_SECONDS) {
+                $this->bus->dispatch(new SynthesizeArticle($article->getId(), $message->revision));
+
+                return;
             }
 
             if ($editing && !$segment->isEdited() && BlockKind::Title !== $segment->getKind()) {
@@ -108,23 +123,23 @@ final readonly class SynthesizeArticleHandler
      */
     private function editAhead(Article $article, Language $language, array $upcoming, bool $spellIntegers): bool
     {
+        $budget = SpeechEditor::batchCharacters($this->editedCharacters($article));
         $batch = [];
         $characters = 0;
-        $lastParagraph = null;
         foreach ($upcoming as $segment) {
-            $closesParagraph = null !== $lastParagraph && $segment->getParagraph() !== $lastParagraph;
-            if ($closesParagraph && ($characters >= SpeechEditor::BATCH_CHARACTERS || \count($batch) >= SpeechEditor::BATCH_CHUNKS)) {
+            if ($characters >= $budget || \count($batch) >= SpeechEditor::BATCH_CHUNKS) {
                 break;
             }
-            if (!$segment->isEdited()) {
+            if (!$segment->isEdited() && BlockKind::Title !== $segment->getKind()) {
                 $batch[$segment->getPosition()] = $segment;
                 $characters += mb_strlen($segment->getText());
             }
-            $lastParagraph = $segment->getParagraph();
         }
 
         $model = $this->editor->model() ?? 'rules';
-        $withSummary = null === $article->getSummary();
+        // The summary makes the answer longer: not in the first batch, which the listener waits for.
+        $isLastBatch = \count($batch) === \count(array_filter($upcoming, static fn (Segment $segment): bool => !$segment->isEdited() && BlockKind::Title !== $segment->getKind()));
+        $withSummary = null === $article->getSummary() && ($budget > SpeechEditor::FIRST_BATCH_CHARACTERS || $isLastBatch);
 
         try {
             $edited = $this->editor->edit(
@@ -152,6 +167,18 @@ final readonly class SynthesizeArticleHandler
         $this->entityManager->flush();
 
         return true;
+    }
+
+    private function editedCharacters(Article $article): int
+    {
+        $characters = 0;
+        foreach ($article->getSegments() as $segment) {
+            if ($segment->isEdited()) {
+                $characters += mb_strlen($segment->getText());
+            }
+        }
+
+        return $characters;
     }
 
     /**
