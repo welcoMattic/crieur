@@ -93,7 +93,9 @@ final class SpeechEditorTest extends TestCase
     public static function faithfulness(): iterable
     {
         yield 'dates written in words, numbers kept' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by 3.5%.', true];
-        yield 'a number spelled by the model' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by three point five percent.', false];
+        yield 'a number spelled as the rules spell it' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by three point five percent.', true];
+        yield 'a number spelled wrong' => ['On 11/17/2026, prices rose by 3.5%.', 'On November 17, 2026, prices rose by thirty-five percent.', false];
+        yield 'an ordinal spelled right' => ['Criers dressed by a tradition dating to the 18th century.', 'Criers dressed by a tradition dating to the eighteenth century.', true];
         yield 'an ordinal misread' => ['Criers dressed by a tradition dating to the 18th century.', 'Criers dressed by a tradition dating to the eighteen hundredth century.', false];
         yield 'a version in words' => ['PHP 8.5 runs at 120 km/h.', 'PHP eight point five runs at 120 kilometers per hour.', true];
         yield 'a time in words' => ['The crier rang at 10:30 sharp.', 'The crier rang at half past ten sharp.', true];

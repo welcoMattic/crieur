@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Editor;
 
 use App\Text\Language;
+use App\Text\TextNormalizer;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\AI\Agent\AgentInterface;
@@ -101,7 +102,7 @@ final class SpeechEditor
 
         $spoken = [];
         foreach ($answer->chunks as $chunk) {
-            if (\array_key_exists($chunk->id, $chunks) && self::isFaithful($chunks[$chunk->id], $chunk->spoken)) {
+            if (\array_key_exists($chunk->id, $chunks) && self::isFaithful($chunks[$chunk->id], $chunk->spoken, $language)) {
                 $spoken[$chunk->id] = self::keepCase($chunks[$chunk->id], self::clean($chunk->spoken));
             }
         }
@@ -131,12 +132,12 @@ final class SpeechEditor
      * Rewriting for the ear changes the length a little ("17/11" becomes "17 novembre"), never a
      * lot: a much shorter or longer answer means the model summarized or added content.
      */
-    public static function isFaithful(string $original, string $spoken): bool
+    public static function isFaithful(string $original, string $spoken, Language $language = Language::English): bool
     {
         $originalLength = mb_strlen(trim($original));
         $spokenLength = mb_strlen(trim($spoken));
 
-        if ($spokenLength > 0 && !self::keepsNumbers($original, $spoken)) {
+        if ($spokenLength > 0 && !self::keepsNumbers($original, $spoken, $language)) {
             return false;
         }
 
@@ -153,11 +154,12 @@ final class SpeechEditor
     }
 
     /**
-     * A model can misread a number ("18th" became "eighteen hundredth" once): the numbers stay in
-     * digits in its answer, and the rules spell them out. Only dates, times and version numbers
-     * may come back in words, and footnote marks may go.
+     * A model can misread a number ("18th" became "eighteen hundredth" once). Each number of the
+     * original must come back in digits, or spelled out exactly as the deterministic rules spell it
+     * ("18th" as "eighteenth", "3.5%" as "three point five percent"). Dates, times and version
+     * numbers are free, and footnote marks may go.
      */
-    public static function keepsNumbers(string $original, string $spoken): bool
+    public static function keepsNumbers(string $original, string $spoken, Language $language = Language::English): bool
     {
         $exempt = [
             '~\[\d{1,3}\]~u',                              // footnote marks
@@ -167,17 +169,32 @@ final class SpeechEditor
         ];
         $numbers = static fn (string $text): array => preg_match_all('~\d+(?:[.,]\d+)*~u', $text, $matches) ? $matches[0] : [];
 
-        $required = $numbers((string) preg_replace($exempt, ' ', $original));
+        $kept = (string) preg_replace($exempt, ' ', $original);
         $available = $numbers($spoken);
-        foreach ($required as $number) {
+        $words = self::comparable($spoken);
+        $normalizer = new TextNormalizer();
+        preg_match_all('~\d+(?:[.,]\d+)*(?:st|nd|rd|th|er|re|e|ème|[ \x{A0}\x{202F}]?[%€$£])?(?!\p{L})~u', $kept, $tokens);
+        foreach ($tokens[0] as $token) {
+            $number = $numbers($token)[0] ?? $token;
             $index = array_search($number, $available, true);
-            if (false === $index) {
+            if (false !== $index) {
+                unset($available[$index]);
+                continue;
+            }
+            if (!str_contains($words, self::comparable($normalizer->normalize($token, $language)))) {
                 return false;
             }
-            unset($available[$index]);
         }
 
         return true;
+    }
+
+    /**
+     * Lower case letters and single spaces only, to compare spellings ("Forty-two" and "forty two").
+     */
+    private static function comparable(string $text): string
+    {
+        return trim((string) preg_replace('~[^\p{L}\d]+~u', ' ', mb_strtolower($text)));
     }
 
     /**
