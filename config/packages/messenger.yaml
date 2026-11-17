@@ -16,7 +16,7 @@ framework:
                 dsn: '%env(MESSENGER_TRANSPORT_DSN)%'
                 options:
                     queue_name: synthesize
-                    # Runs are sliced (SynthesizeArticleHandler::SLICE_SECONDS): 5 minutes is plenty.
+                    # Runs are sliced (SynthesizeArticleHandler::SLICE_SECONDS, 5 seconds): 5 minutes is plenty.
                     redeliver_timeout: 300
                 retry_strategy:
                     max_retries: 2

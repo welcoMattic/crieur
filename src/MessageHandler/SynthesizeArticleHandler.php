@@ -37,7 +37,7 @@ final readonly class SynthesizeArticleHandler
      * A run works this long, then hands over to the next message of the queue and sends itself
      * again: a new article never waits for the whole synthesis of another one.
      */
-    private const float SLICE_SECONDS = 15.0;
+    private const float SLICE_SECONDS = 5.0;
 
     /**
      * How long the voice waits for the editor worker before reading the text of the rules.
