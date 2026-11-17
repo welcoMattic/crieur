@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'share.title'|trans }} · Crieur{% endblock %}
+
+{% block body %}
+    <section class="confirm" aria-labelledby="share-title">
+        <h1 class="confirm__title" id="share-title">{{ 'share.title'|trans }}</h1>
+        {% if url %}
+            <p class="confirm__url">{{ icon('link') }}<span>{{ url }}</span></p>
+        {% endif %}
+        {% if error %}
+            <p class="field-error">{{ icon('alert') }}<span>{{ error|trans(domain: 'errors') }}</span></p>
+        {% else %}
+            <p class="confirm__text">{{ 'share.text'|trans }}</p>
+        {% endif %}
+        <div class="confirm__actions">
+            {% if url and not error %}
+                <form method="post" action="{{ path('share') }}">
+                    <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                    <input type="hidden" name="url" value="{{ url }}">
+                    <button type="submit" class="button button--primary" autofocus>{{ icon('play') }}<span>{{ 'compose.submit'|trans }}</span></button>
+                </form>
+            {% endif %}
+            <a class="button button--ghost" href="{{ path('home') }}">{{ 'share.cancel'|trans }}</a>
+        </div>
+    </section>
+{% endblock %}

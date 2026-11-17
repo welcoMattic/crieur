@@ -1,0 +1,2 @@
+{%- set rewritten = segment.spoken != segment.text -%}
+<span class="seg" data-position="{{ segment.position }}" data-spoken-hash="{{ segment.spoken|spoken_hash }}"{% if rewritten %} data-rewritten{% endif %}><span class="seg__text">{{ segment.text }}</span><span class="seg__spoken"{% if segment.spoken|trim is empty %} data-skipped="{{ 'reader.skipped'|trans }}"{% endif %}>{{ segment.spoken|trim is empty ? '' : segment.spoken }}</span></span>{{ ' ' }}

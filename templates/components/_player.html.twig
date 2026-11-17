@@ -1,0 +1,97 @@
+{#
+    The player bar. It stays in the page across Turbo visits (data-turbo-permanent), so the audio
+    keeps playing while the listener browses the library. Its texts come from these labels, read
+    once by assets/controllers/player_controller.js.
+#}
+{% set placeholder_id = '00000000-0000-7000-8000-000000000000' %}
+{% set labels = {
+    locale: app.request.locale,
+    play: 'player.play'|trans,
+    pause: 'player.pause'|trans,
+    resume: 'player.resume'|trans,
+    previous: 'player.previous'|trans,
+    next: 'player.next'|trans,
+    stop: 'player.stop'|trans,
+    speed: 'player.speed'|trans,
+    speedValue: 'player.speed_value'|trans,
+    speedSpoken: 'player.speed_spoken'|trans,
+    paragraph: 'player.paragraph'|trans,
+    remaining: 'player.remaining'|trans,
+    remainingSpoken: 'player.remaining_spoken'|trans,
+    minutesSeconds: 'player.minutes_seconds'|trans,
+    seconds: 'player.seconds'|trans,
+    keySpace: 'player.key_space'|trans,
+    keyEscape: 'player.key_escape'|trans,
+    playArticle: 'player.play_article'|trans,
+    pauseArticle: 'player.pause_article'|trans,
+    states: {
+        idle: 'player.state.idle'|trans,
+        loading: 'player.state.loading'|trans,
+        queued: 'player.state.queued'|trans,
+        extracting: 'player.state.extracting'|trans,
+        preparing: 'player.state.preparing'|trans,
+        buffering: 'player.state.buffering'|trans,
+        playing: 'player.state.playing'|trans,
+        paused: 'player.state.paused'|trans,
+        finished: 'player.state.finished'|trans,
+        stopped: 'player.state.stopped'|trans,
+        error: 'player.state.error'|trans,
+        failed: 'player.state.failed'|trans,
+    },
+} %}
+<section id="player" class="player" aria-label="{{ 'player.label'|trans }}" hidden
+         data-turbo-permanent
+         data-controller="player"
+         data-player-status-url-value="{{ path('article_status', {id: placeholder_id})|replace({(placeholder_id): '__ID__'}) }}"
+         data-player-labels-value="{{ labels|json_encode }}"
+         data-state="idle">
+    <div class="player__progress" data-player-target="progress" role="progressbar" aria-label="{{ 'player.progress_label'|trans }}" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0">
+        <span class="player__progress-fill" data-player-target="progressFill"></span>
+    </div>
+    <div class="player__inner">
+        <div class="player__now">
+            <p class="player__state" aria-live="polite">
+                <span class="player__state-icon player__state-icon--playing" aria-hidden="true"><span></span><span></span><span></span><span></span></span>
+                {{ icon('pause', null, 'player__state-icon player__state-icon--paused') }}
+                {{ icon('progress', null, 'player__state-icon player__state-icon--busy spin') }}
+                {{ icon('check-circle', null, 'player__state-icon player__state-icon--finished') }}
+                {{ icon('alert', null, 'player__state-icon player__state-icon--error') }}
+                {{ icon('wave', null, 'player__state-icon player__state-icon--idle') }}
+                <span data-player-target="stateText"></span>
+            </p>
+            <a class="player__title" data-player-target="title" href="{{ path('home') }}"></a>
+            <p class="player__meta">
+                <span data-player-target="position"></span>
+                <span class="player__remaining" data-player-target="remaining"></span>
+            </p>
+        </div>
+        <div class="player__transport" role="group" aria-label="{{ 'player.transport'|trans }}">
+            <button type="button" class="icon-button" data-player-target="previous" data-action="player#previous">{{ icon('previous') }}</button>
+            <button type="button" class="play-button" data-player-target="toggle" data-action="player#toggle">
+                {{ icon('play', null, 'play-button__play') }}
+                {{ icon('pause', null, 'play-button__pause') }}
+            </button>
+            <button type="button" class="icon-button" data-player-target="next" data-action="player#next">{{ icon('next') }}</button>
+            <button type="button" class="icon-button icon-button--quiet" data-player-target="stop" data-action="player#stop">{{ icon('stop') }}</button>
+        </div>
+        <div class="player__tools">
+            <button type="button" class="speed-button" popovertarget="player-speed" data-player-target="speedButton">
+                <span data-player-target="speedLabel">1×</span>
+            </button>
+        </div>
+    </div>
+    <div id="player-speed" class="speed-panel" popover data-player-target="speedPanel">
+        <div class="speed-panel__head">
+            <label class="speed-panel__title" for="player-speed-range">{{ icon('speed') }} {{ 'player.speed'|trans }}</label>
+            <output class="speed-panel__value" for="player-speed-range" data-player-target="speedOutput">1×</output>
+        </div>
+        <input id="player-speed-range" class="speed-panel__range" type="range" min="0.75" max="2" step="0.05" value="1"
+               data-player-target="speedRange" data-action="input->player#speedInput">
+        <div class="speed-panel__presets" role="group" aria-label="{{ 'player.speed_presets'|trans }}">
+            {% for preset in [0.75, 1, 1.25, 1.5, 1.75, 2] %}
+                <button type="button" class="chip" data-player-target="speedPreset" data-action="player#speedPreset" data-player-speed-param="{{ preset }}" data-speed="{{ preset }}">{{ preset }}×</button>
+            {% endfor %}
+        </div>
+        <p class="speed-panel__hint">{{ 'player.speed_hint'|trans }}</p>
+    </div>
+</section>

@@ -1,0 +1,237 @@
+meta:
+    description: "Crieur reads web articles aloud with a natural voice."
+
+nav:
+    skip: "Skip to content"
+    label: "Main"
+    library: "Library"
+    settings: "Settings"
+    interface_language: "Language of the interface"
+
+footer:
+    voice: "Voices: %engine%"
+    personal_use: "personal use"
+
+podcast:
+    description: "The articles of your Crieur library, read aloud."
+
+engine:
+    phonon:
+        label: "Phonon by Gradium, through Ollama, on this computer"
+    voxtral:
+        label: "Voxtral TTS by Mistral AI, in the cloud"
+
+editor:
+    mistral: "Mistral AI"
+    ollama: "Ollama"
+    rules: "rules"
+
+compose:
+    title: "Paste a link. Listen to the article."
+    title_error: "check the link"
+    lede: "Crieur extracts the article, prepares the text for the ear and reads it aloud with a natural voice. Playback starts within seconds, while the rest is synthesized."
+    url:
+        label: "Link to an article"
+        placeholder: "https://… the link to an article"
+    language: "Language"
+    voice: "Voice"
+    submit: "Read aloud"
+    submitting: "Adding…"
+
+language:
+    short:
+        auto: "Auto"
+        fr: "FR"
+        en: "EN"
+    name:
+        fr: "French"
+        en: "English"
+
+voice:
+    female: "Female"
+    male: "Male"
+
+source:
+    mcp:
+        label: "MCP"
+        title: "Sent by an AI assistant over MCP"
+    bookmarklet:
+        label: "Bookmarklet"
+        title: "Added with the bookmarklet"
+    cli:
+        label: "CLI"
+        title: "Added from the command line"
+
+status:
+    queued: "Queued"
+    extracting: "Extracting"
+    preparing: "Preparing"
+    synthesizing: "Synthesizing"
+    ready: "Ready"
+    failed: "Failed"
+    synthesizing_count: "Synthesizing %ready%/%total%"
+    ready_duration: "Ready · %duration%"
+    long:
+        queued: "Waiting in the queue…"
+        extracting: "Extracting the article…"
+        preparing: "Preparing the text for the ear…"
+        synthesizing: "Synthesizing…"
+        ready: "Ready"
+        failed: "Could not read this article"
+
+library:
+    title: "Library"
+    subscribe: "Subscribe as a podcast"
+    delete: "Remove “%title%” from the library"
+    delete_short: "Remove"
+    delete_confirm: "Remove “%title%” from the library?"
+    empty:
+        title: "Your library is empty"
+        text: "Add an article in one of three ways. Crieur starts reading it within seconds."
+        paste:
+            title: "Paste a link"
+            text: "in the field above, then choose Read aloud."
+        mcp:
+            title: "Ask your AI assistant"
+            text: "to read an article aloud: Crieur is an MCP server."
+            link: "Connect an assistant"
+        bookmarklet:
+            title: "Use the bookmarklet"
+            text: "on any page you are reading."
+            link: "Install it"
+
+player:
+    label: "Player"
+    progress_label: "Progress by paragraph"
+    transport: "Playback controls"
+    play: "Play"
+    pause: "Pause"
+    resume: "Resume"
+    previous: "Previous paragraph"
+    next: "Next paragraph"
+    stop: "Stop"
+    speed: "Speed"
+    speed_value: "%speed%×"
+    speed_spoken: "%speed% times"
+    speed_presets: "Preset speeds"
+    speed_hint: "The speed changes at once, without changing the pitch of the voice."
+    paragraph: "Paragraph %current% of %total%"
+    remaining: "−%time%"
+    remaining_spoken: "about %time% remaining"
+    minutes_seconds: "%minutes% min %seconds% s"
+    seconds: "%seconds% s"
+    key_space: "Space"
+    key_escape: "Esc"
+    play_article: "Play “%title%”"
+    pause_article: "Pause “%title%”"
+    state:
+        idle: "Ready to play"
+        loading: "Loading…"
+        queued: "Waiting in the queue…"
+        extracting: "Extracting the article…"
+        preparing: "Preparing the audio…"
+        buffering: "Preparing the next sentences…"
+        playing: "Playing"
+        paused: "Paused"
+        finished: "Finished"
+        stopped: "Stopped"
+        error: "Playback interrupted"
+        failed: "Could not read this article"
+
+reader:
+    back: "Library"
+    open_original: "Open the original article"
+    detected: "detected"
+    voice_by: "Read by %voice%"
+    words: "one word|%words% words"
+    editor:
+        prefix: "Spoken text:"
+        rules: "Rules"
+        rules_title: "Deterministic rules prepared the text for the ear: numbers, units, abbreviations."
+        label: "Speech editor:"
+        model_title: "A language model rewrote the text for the ear before the voice read it."
+    listen: "Listen"
+    download: "Download the episode"
+    retry: "Try again"
+    voice: "Voice"
+    language: "Language"
+    apply: "Apply"
+    settings_hint: "Another voice reads the rest of the article. Another language prepares it again."
+    transcript: "Transcript"
+    show_spoken: "Show what the voice reads"
+    spoken_legend: "One passage was rewritten for the ear. It is underlined: hover it to see the original text.|%count% passages were rewritten for the ear. They are underlined: hover one to see the original text."
+    spoken_same: "The voice reads the text as it is written."
+    skipped: "not read"
+    original_label: "Original text"
+    failed:
+        title: "Crieur could not read this article"
+    delete: "Remove from the library"
+
+settings:
+    title: "Settings"
+    lede: "The voice and the speech editor in use, and the ways to send articles to Crieur."
+    toc: "On this page"
+    voice:
+        title: "Voice and speech editor"
+        lede: "Crieur reads with Phonon on this computer, through Ollama, or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
+        change: "To change them, set these variables in .env.local, then restart the server and its workers."
+    editor:
+        name: "Speech editor"
+        model: "Model by %provider%:"
+        rules: "Rules only, no language model"
+        setting: "Setting:"
+    ollama:
+        reachable: "Reachable at %url%"
+        unreachable: "Not reachable at %url%"
+    mistral:
+        key: "Mistral API key"
+        set: "Set (never shown)"
+        unset: "Not set: the cloud voice and editor are off"
+    mcp:
+        title: "AI assistants (MCP)"
+        lede: "Crieur is an MCP server: an assistant such as Claude can send it an article to read aloud, list the library or read a transcript."
+        desktop: "Claude Desktop starts Crieur itself (stdio transport). Add this to claude_desktop_config.json:"
+        tools: "Tools"
+        read_aloud: "adds a web article to the library and reads it aloud"
+        list_library: "lists the latest articles with their status"
+        get_article: "gives the details and the transcript of an article"
+        example: "Then ask, for instance: “Read this article to me with Crieur: https://…”"
+    bookmarklet:
+        title: "Bookmarklet"
+        lede: "On any article, one click sends the page to Crieur, which opens it and starts reading."
+        button: "Read with Crieur"
+        drag: "Drag this button to your bookmarks bar."
+        drag_hint: "Drag the button to your bookmarks bar: here, it has nothing to read."
+        manual: "Or create a bookmark with this address:"
+    podcast:
+        title: "Private podcast"
+        lede: "Every ready article becomes an episode. Subscribe with this address in a podcast app that can reach this computer."
+        private: "This address is the key: anyone who has it can listen to your library. Changing APP_SECRET revokes it."
+
+setup:
+    ready: "Ready"
+    not_ready: "Not ready"
+    active: "In use"
+    local: "on this computer"
+    cloud: "in the cloud"
+    available_later: "Not in use"
+    issue:
+        ollama_unreachable: "Ollama does not answer at %url%. Start it with “ollama serve”."
+        model_missing: "The model is not installed. Run “ollama pull %model%”."
+        key_missing: "Needs MISTRAL_API_KEY in .env.local."
+
+copy:
+    action: "Copy"
+    done: "Copied"
+    label: "Copy: %what%"
+
+share:
+    title: "Read this article aloud?"
+    text: "Crieur adds it to your library and starts reading."
+    cancel: "Cancel"
+
+error:
+    code: "Error %code%"
+    not_found: "This page does not exist, or not anymore."
+    forbidden: "This action was refused. Reload the page and try again."
+    generic: "Something went wrong. Try again in a moment."

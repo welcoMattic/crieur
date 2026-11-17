@@ -1,0 +1,12 @@
+{% use 'form_div_layout.html.twig' %}
+
+{# Errors with an icon and a text: the colour never says it alone. #}
+{%- block form_errors -%}
+    {%- if errors|length > 0 -%}
+        <div class="field-errors" id="{{ id ~ '_errors' }}">
+            {%- for error in errors -%}
+                <p class="field-error">{{ icon('alert') }}<span>{{ error.message }}</span></p>
+            {%- endfor -%}
+        </div>
+    {%- endif -%}
+{%- endblock form_errors -%}

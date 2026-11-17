@@ -1,0 +1,237 @@
+meta:
+    description: "Crieur lit les articles du web à voix haute, avec une voix naturelle."
+
+nav:
+    skip: "Aller au contenu"
+    label: "Principal"
+    library: "Bibliothèque"
+    settings: "Réglages"
+    interface_language: "Langue de l’interface"
+
+footer:
+    voice: "Voix : %engine%"
+    personal_use: "usage personnel"
+
+podcast:
+    description: "Les articles de votre bibliothèque Crieur, lus à voix haute."
+
+engine:
+    phonon:
+        label: "Phonon de Gradium, via Ollama, sur cet ordinateur"
+    voxtral:
+        label: "Voxtral TTS de Mistral AI, dans le cloud"
+
+editor:
+    mistral: "Mistral AI"
+    ollama: "Ollama"
+    rules: "règles"
+
+compose:
+    title: "Collez un lien. Écoutez l’article."
+    title_error: "vérifiez le lien"
+    lede: "Crieur extrait l’article, prépare le texte pour l’oreille et le lit avec une voix naturelle. La lecture commence en quelques secondes, pendant que la suite se prépare."
+    url:
+        label: "Lien vers un article"
+        placeholder: "https://… le lien d’un article"
+    language: "Langue"
+    voice: "Voix"
+    submit: "Lire à voix haute"
+    submitting: "Ajout…"
+
+language:
+    short:
+        auto: "Auto"
+        fr: "FR"
+        en: "EN"
+    name:
+        fr: "Français"
+        en: "Anglais"
+
+voice:
+    female: "Féminine"
+    male: "Masculine"
+
+source:
+    mcp:
+        label: "MCP"
+        title: "Envoyé par un assistant IA, via MCP"
+    bookmarklet:
+        label: "Favori"
+        title: "Ajouté avec le favori"
+    cli:
+        label: "Console"
+        title: "Ajouté en ligne de commande"
+
+status:
+    queued: "En attente"
+    extracting: "Extraction"
+    preparing: "Préparation"
+    synthesizing: "Synthèse"
+    ready: "Prêt"
+    failed: "Échec"
+    synthesizing_count: "Synthèse %ready%/%total%"
+    ready_duration: "Prêt · %duration%"
+    long:
+        queued: "En file d’attente…"
+        extracting: "Extraction de l’article…"
+        preparing: "Préparation du texte pour l’oreille…"
+        synthesizing: "Synthèse…"
+        ready: "Prêt"
+        failed: "Lecture impossible"
+
+library:
+    title: "Bibliothèque"
+    subscribe: "S’abonner comme à un podcast"
+    delete: "Retirer « %title% » de la bibliothèque"
+    delete_short: "Retirer"
+    delete_confirm: "Retirer « %title% » de la bibliothèque ?"
+    empty:
+        title: "Votre bibliothèque est vide"
+        text: "Ajoutez un article de l’une de ces trois façons. Crieur commence à le lire en quelques secondes."
+        paste:
+            title: "Collez un lien"
+            text: "dans le champ ci-dessus, puis choisissez Lire à voix haute."
+        mcp:
+            title: "Demandez à votre assistant IA"
+            text: "de lire un article à voix haute : Crieur est un serveur MCP."
+            link: "Connecter un assistant"
+        bookmarklet:
+            title: "Utilisez le favori"
+            text: "sur n’importe quelle page que vous lisez."
+            link: "L’installer"
+
+player:
+    label: "Lecteur"
+    progress_label: "Progression par paragraphe"
+    transport: "Commandes de lecture"
+    play: "Lecture"
+    pause: "Pause"
+    resume: "Reprendre"
+    previous: "Paragraphe précédent"
+    next: "Paragraphe suivant"
+    stop: "Arrêter"
+    speed: "Vitesse"
+    speed_value: "%speed% ×"
+    speed_spoken: "%speed% fois"
+    speed_presets: "Vitesses prédéfinies"
+    speed_hint: "La vitesse change aussitôt, sans modifier la hauteur de la voix."
+    paragraph: "Paragraphe %current% sur %total%"
+    remaining: "−%time%"
+    remaining_spoken: "environ %time% restantes"
+    minutes_seconds: "%minutes% min %seconds% s"
+    seconds: "%seconds% s"
+    key_space: "Espace"
+    key_escape: "Échap"
+    play_article: "Écouter « %title% »"
+    pause_article: "Mettre en pause « %title% »"
+    state:
+        idle: "Prêt à lire"
+        loading: "Chargement…"
+        queued: "En file d’attente…"
+        extracting: "Extraction de l’article…"
+        preparing: "Préparation de l’audio…"
+        buffering: "Préparation des phrases suivantes…"
+        playing: "Lecture en cours"
+        paused: "En pause"
+        finished: "Terminé"
+        stopped: "Arrêté"
+        error: "Lecture interrompue"
+        failed: "Lecture impossible"
+
+reader:
+    back: "Bibliothèque"
+    open_original: "Ouvrir l’article d’origine"
+    detected: "détecté"
+    voice_by: "Lu par %voice%"
+    words: "un mot|%words% mots"
+    editor:
+        prefix: "Texte lu :"
+        rules: "Règles"
+        rules_title: "Des règles fixes ont préparé le texte pour l’oreille : nombres, unités, abréviations."
+        label: "Éditeur vocal :"
+        model_title: "Un modèle de langue a réécrit le texte pour l’oreille avant la lecture."
+    listen: "Écouter"
+    download: "Télécharger l’épisode"
+    retry: "Réessayer"
+    voice: "Voix"
+    language: "Langue"
+    apply: "Appliquer"
+    settings_hint: "Une autre voix lit la suite de l’article. Une autre langue le prépare à nouveau."
+    transcript: "Transcription"
+    show_spoken: "Voir ce que lit la voix"
+    spoken_legend: "Un passage a été réécrit pour l’oreille. Il est souligné : survolez-le pour voir le texte d’origine.|%count% passages ont été réécrits pour l’oreille. Ils sont soulignés : survolez-en un pour voir le texte d’origine."
+    spoken_same: "La voix lit le texte tel qu’il est écrit."
+    skipped: "non lu"
+    original_label: "Texte d’origine"
+    failed:
+        title: "Crieur n’a pas pu lire cet article"
+    delete: "Retirer de la bibliothèque"
+
+settings:
+    title: "Réglages"
+    lede: "La voix et l’éditeur vocal utilisés, et les façons d’envoyer des articles à Crieur."
+    toc: "Sur cette page"
+    voice:
+        title: "Voix et éditeur vocal"
+        lede: "Crieur lit avec Phonon sur cet ordinateur, via Ollama, ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
+        change: "Pour les changer, définissez ces variables dans .env.local, puis redémarrez le serveur et ses workers."
+    editor:
+        name: "Éditeur vocal"
+        model: "Modèle de %provider% :"
+        rules: "Règles seules, sans modèle de langue"
+        setting: "Réglage :"
+    ollama:
+        reachable: "Joignable à %url%"
+        unreachable: "Injoignable à %url%"
+    mistral:
+        key: "Clé d’API Mistral"
+        set: "Définie (jamais affichée)"
+        unset: "Non définie : la voix et l’éditeur du cloud sont désactivés"
+    mcp:
+        title: "Assistants IA (MCP)"
+        lede: "Crieur est un serveur MCP : un assistant comme Claude peut lui envoyer un article à lire, consulter la bibliothèque ou lire une transcription."
+        desktop: "Claude Desktop lance Crieur lui-même (transport stdio). Ajoutez ceci à claude_desktop_config.json :"
+        tools: "Outils"
+        read_aloud: "ajoute un article du web à la bibliothèque et le lit à voix haute"
+        list_library: "liste les derniers articles avec leur état"
+        get_article: "donne le détail et la transcription d’un article"
+        example: "Demandez ensuite, par exemple : « Lis-moi cet article avec Crieur : https://… »"
+    bookmarklet:
+        title: "Favori"
+        lede: "Sur n’importe quel article, un clic envoie la page à Crieur, qui l’ouvre et commence la lecture."
+        button: "Lire avec Crieur"
+        drag: "Faites glisser ce bouton dans votre barre de favoris."
+        drag_hint: "Faites glisser le bouton dans votre barre de favoris : ici, il n’a rien à lire."
+        manual: "Ou créez un favori avec cette adresse :"
+    podcast:
+        title: "Podcast privé"
+        lede: "Chaque article prêt devient un épisode. Abonnez-vous avec cette adresse dans une application de podcasts qui peut joindre cet ordinateur."
+        private: "Cette adresse est la clé : quiconque la possède peut écouter votre bibliothèque. Changer APP_SECRET la révoque."
+
+setup:
+    ready: "Prêt"
+    not_ready: "Pas prêt"
+    active: "Utilisé"
+    local: "sur cet ordinateur"
+    cloud: "dans le cloud"
+    available_later: "Non utilisé"
+    issue:
+        ollama_unreachable: "Ollama ne répond pas à %url%. Lancez-le avec « ollama serve »."
+        model_missing: "Le modèle n’est pas installé. Lancez « ollama pull %model% »."
+        key_missing: "Nécessite MISTRAL_API_KEY dans .env.local."
+
+copy:
+    action: "Copier"
+    done: "Copié"
+    label: "Copier : %what%"
+
+share:
+    title: "Lire cet article à voix haute ?"
+    text: "Crieur l’ajoute à votre bibliothèque et commence la lecture."
+    cancel: "Annuler"
+
+error:
+    code: "Erreur %code%"
+    not_found: "Cette page n’existe pas, ou plus."
+    forbidden: "Cette action a été refusée. Rechargez la page et réessayez."
+    generic: "Une erreur est survenue. Réessayez dans un instant."

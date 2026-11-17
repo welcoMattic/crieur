@@ -1,0 +1,24 @@
+extraction:
+    timeout: "Le site n’a pas répondu à temps."
+    http_error: "Le site a refusé d’envoyer la page."
+    not_html: "Cette adresse n’est pas une page web."
+    no_text: "Aucun texte d’article n’a été trouvé sur cette page."
+    network: "Le site est injoignable."
+    private_network: "Les pages d’un réseau privé ne sont pas lues, par sécurité."
+    unsupported_language: "Crieur lit uniquement le français et l’anglais."
+
+synthesis:
+    engine_unavailable: "Le moteur de voix n’est pas disponible : vérifiez les réglages."
+    failed: "La voix n’a pas pu lire une partie de l’article."
+
+editor:
+    failed: "L’éditeur vocal n’a pas pu préparer le texte."
+
+url:
+    empty: "Collez le lien d’un article."
+    too_long: "Ce lien est trop long."
+    scheme: "Crieur ne lit que des pages web : le lien doit commencer par http ou https."
+    host: "Ce lien ne contient pas de nom de site."
+
+share:
+    expired: "Cette confirmation a expiré. Envoyez à nouveau l’article depuis sa page."

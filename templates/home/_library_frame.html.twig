@@ -1,0 +1,79 @@
+{#
+    The library list. While an article is being prepared, assets/controllers/library_controller.js
+    reloads this frame every 2 seconds (morphed in place) and stops once nothing is in progress.
+#}
+{% set busy = articles|filter(a => a.status.inProgress)|length > 0 %}
+{# The full page gives the frame its source; a frame response must not (Turbo refuses a frame that loads itself). #}
+<turbo-frame id="library"{% if not (frame_response ?? false) %} src="{{ path('home') }}" complete{% endif %} refresh="morph" target="_top"
+             data-controller="library"
+             data-library-busy-value="{{ busy ? 'true' : 'false' }}"
+             data-library-labels-value="{{ {play: 'player.play_article'|trans, pause: 'player.pause_article'|trans}|json_encode }}">
+    {% if articles is empty %}
+        <div class="empty">
+            <div class="empty__mark" aria-hidden="true">{{ icon('wave') }}</div>
+            <h3 class="empty__title">{{ 'library.empty.title'|trans }}</h3>
+            <p class="empty__text">{{ 'library.empty.text'|trans }}</p>
+            <ol class="ways">
+                <li class="way">
+                    <span class="way__icon">{{ icon('link') }}</span>
+                    <span class="way__body"><strong>{{ 'library.empty.paste.title'|trans }}</strong> {{ 'library.empty.paste.text'|trans }}</span>
+                </li>
+                <li class="way">
+                    <span class="way__icon">{{ icon('assistant') }}</span>
+                    <span class="way__body"><strong>{{ 'library.empty.mcp.title'|trans }}</strong> {{ 'library.empty.mcp.text'|trans }} <a href="{{ path('settings') }}#mcp">{{ 'library.empty.mcp.link'|trans }}</a></span>
+                </li>
+                <li class="way">
+                    <span class="way__icon">{{ icon('bookmark') }}</span>
+                    <span class="way__body"><strong>{{ 'library.empty.bookmarklet.title'|trans }}</strong> {{ 'library.empty.bookmarklet.text'|trans }} <a href="{{ path('settings') }}#bookmarklet">{{ 'library.empty.bookmarklet.link'|trans }}</a></span>
+                </li>
+            </ol>
+        </div>
+    {% else %}
+        <ol class="entries">
+            {% for article in articles %}
+                {% set status = article.status %}
+                {% set title = article.displayTitle %}
+                <li class="entry entry--{{ status.value }}" data-article-id="{{ article.id }}"{% if status.inProgress %} data-in-progress{% endif %}>
+                    <button type="button" class="entry__play"
+                            data-action="library#play" data-library-id-param="{{ article.id }}" data-library-title-param="{{ title }}"
+                            aria-label="{{ 'player.play_article'|trans({'%title%': title}) }}"
+                            {% if not status.playable %}disabled{% endif %}>
+                        {{ icon('play', null, 'entry__play-icon') }}
+                        {{ icon('pause', null, 'entry__pause-icon') }}
+                    </button>
+                    <div class="entry__body">
+                        <a class="entry__title" href="{{ path('article_show', {id: article.id}) }}">{{ title }}</a>
+                        <p class="entry__meta">
+                            <span>{{ article.siteName ?? article.host }}</span>
+                            {% if status.value == 'failed' and article.failure %}
+                                <span class="entry__failure">{{ article.failure|trans(domain: 'errors') }}</span>
+                            {% else %}
+                                {% if article.language %}<span>{{ ('language.name.' ~ article.language.value)|trans }}</span>{% endif %}
+                                {% if article.voiceName and status.playable %}<span>{{ article.voiceName }}</span>{% endif %}
+                                {% if status.value == 'ready' %}<span class="tabular">{{ article.audioSeconds|duration }}</span>{% endif %}
+                            {% endif %}
+                            {% if article.source.value in ['mcp', 'bookmarklet', 'cli'] %}
+                                <span class="badge" title="{{ ('source.' ~ article.source.value ~ '.title')|trans }}">{{ ('source.' ~ article.source.value ~ '.label')|trans }}</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <p class="entry__status status status--{{ status.value }}">
+                        {{ icon(status|status_icon, null, status.inProgress and status.value != 'queued' ? 'spin' : '') }}
+                        <span>
+                            {%- if status.value == 'synthesizing' -%}
+                                {{ 'status.synthesizing_count'|trans({'%ready%': article.countReadySegments, '%total%': article.segments|length}) }}
+                            {%- else -%}
+                                {{ ('status.' ~ status.value)|trans }}
+                            {%- endif -%}
+                        </span>
+                    </p>
+                    <form class="entry__delete" method="post" action="{{ path('article_delete', {id: article.id}) }}"
+                          data-turbo-confirm="{{ 'library.delete_confirm'|trans({'%title%': title}) }}">
+                        <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+                        <button type="submit" class="icon-button icon-button--quiet icon-button--small" aria-label="{{ 'library.delete'|trans({'%title%': title}) }}" title="{{ 'library.delete_short'|trans }}">{{ icon('trash') }}</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+</turbo-frame>

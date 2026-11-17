@@ -1,16 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 /*
- * This is an example Stimulus controller!
- *
- * Any element with a data-controller="hello" attribute will cause
- * this controller to be executed. The name "hello" comes from the filename:
- * hello_controller.js -> "hello"
- *
- * Delete this file or adapt it for your use!
+ * Unused: left from the Symfony skeleton, to be removed. It must keep a default export, since the
+ * Stimulus loader imports every controller of this folder eagerly.
  */
-export default class extends Controller {
-    connect() {
-        this.element.textContent = 'Hello Stimulus! Edit me in assets/controllers/hello_controller.js';
-    }
-}
+export default class extends Controller {}

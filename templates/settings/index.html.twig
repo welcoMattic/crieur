@@ -1,0 +1,144 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ 'settings.title'|trans }} · Crieur{% endblock %}
+
+{% macro check_state(check) %}
+    {% if check.ready %}
+        <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'setup.ready'|trans }}</span></span>
+    {% else %}
+        <span class="status status--failed">{{ icon('alert') }}<span>{{ 'setup.not_ready'|trans }}</span></span>
+    {% endif %}
+{% endmacro %}
+
+{% macro code_block(code, label, id) %}
+    <div class="code">
+        <pre class="code__body"{% if id %} id="{{ id }}"{% endif %}><code>{{ code }}</code></pre>
+        <button type="button" class="copy-button" data-controller="clipboard" data-clipboard-text-value="{{ code }}"
+                data-clipboard-copied-value="{{ 'copy.done'|trans }}" data-action="clipboard#copy" aria-label="{{ 'copy.label'|trans({'%what%': label}) }}">
+            {{ icon('copy', null, 'copy-button__copy') }}{{ icon('check', null, 'copy-button__done') }}
+            <span data-clipboard-target="text">{{ 'copy.action'|trans }}</span>
+        </button>
+    </div>
+{% endmacro %}
+
+{% block body %}
+    {% import _self as ui %}
+    {% set mcp_url = url('_mcp_endpoint_default') %}
+    {% set feed_url = url('podcast_feed', {token: feed_token}) %}
+    {% set bookmarklet = "javascript:(function(){location.href='" ~ url('share') ~ "?url='+encodeURIComponent(location.href)})()" %}
+    {% set active = report.activeEngine %}
+
+    <div class="page-head">
+        <h1 class="page-head__title">{{ 'settings.title'|trans }}</h1>
+        <p class="page-head__lede">{{ 'settings.lede'|trans }}</p>
+    </div>
+
+    <nav class="toc" aria-label="{{ 'settings.toc'|trans }}">
+        <a href="#voice">{{ 'settings.voice.title'|trans }}</a>
+        <a href="#mcp">{{ 'settings.mcp.title'|trans }}</a>
+        <a href="#bookmarklet">{{ 'settings.bookmarklet.title'|trans }}</a>
+        <a href="#podcast">{{ 'settings.podcast.title'|trans }}</a>
+    </nav>
+
+    <section class="panel" id="voice" aria-labelledby="voice-title">
+        <h2 class="panel__title" id="voice-title">{{ icon('voice') }}{{ 'settings.voice.title'|trans }}</h2>
+        <p class="panel__lede">{{ 'settings.voice.lede'|trans }}</p>
+
+        <dl class="checks">
+            {% for engine in report.engines %}
+                <div class="check{{ engine.active ? ' check--active' }}">
+                    <dt class="check__name">
+                        {{ engine.name == 'phonon' ? 'Phonon' : 'Voxtral' }}
+                        {% if engine.active %}<span class="badge badge--accent">{{ 'setup.active'|trans }}</span>{% endif %}
+                    </dt>
+                    <dd class="check__detail">
+                        <span>{{ ('engine.' ~ engine.name ~ '.label')|trans }}</span>
+                        <span class="muted"><code>{{ engine.model }}</code> · {{ (engine.local ? 'setup.local' : 'setup.cloud')|trans }}</span>
+                        {% if engine.issue %}<span class="check__issue">{{ engine.issue|trans({'%url%': report.ollamaUrl, '%model%': engine.model}) }}</span>{% endif %}
+                    </dd>
+                    <dd class="check__state">
+                        {% if engine.active or engine.ready %}{{ ui.check_state(engine) }}{% else %}<span class="status status--queued">{{ icon('clock') }}<span>{{ 'setup.available_later'|trans }}</span></span>{% endif %}
+                    </dd>
+                </div>
+            {% endfor %}
+            <div class="check check--active">
+                <dt class="check__name">{{ 'settings.editor.name'|trans }}</dt>
+                <dd class="check__detail">
+                    <span>
+                        {%- if report.editor.model -%}
+                            {{ 'settings.editor.model'|trans({'%provider%': ('editor.' ~ report.editor.name)|trans}) }} <code>{{ report.editor.model }}</code>
+                        {%- else -%}
+                            {{ 'settings.editor.rules'|trans }}
+                        {%- endif -%}
+                    </span>
+                    <span class="muted">{{ 'settings.editor.setting'|trans }} <code>CRIEUR_EDITOR={{ report.editorSetting }}</code></span>
+                    {% if report.editor.issue %}<span class="check__issue">{{ report.editor.issue|trans({'%url%': report.ollamaUrl, '%model%': report.editor.model ?? ''}) }}</span>{% endif %}
+                </dd>
+                <dd class="check__state">{{ ui.check_state(report.editor) }}</dd>
+            </div>
+        </dl>
+
+        <dl class="facts">
+            <div>
+                <dt>Ollama</dt>
+                <dd>
+                    {% if report.ollamaReachable %}
+                        <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'settings.ollama.reachable'|trans({'%url%': report.ollamaUrl}) }}</span></span>
+                    {% else %}
+                        <span class="status status--failed">{{ icon('alert') }}<span>{{ 'settings.ollama.unreachable'|trans({'%url%': report.ollamaUrl}) }}</span></span>
+                    {% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt>{{ 'settings.mistral.key'|trans }}</dt>
+                <dd>
+                    {% if report.mistralKeySet %}
+                        <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'settings.mistral.set'|trans }}</span></span>
+                    {% else %}
+                        <span class="status status--queued">{{ icon('clock') }}<span>{{ 'settings.mistral.unset'|trans }}</span></span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+        <p class="panel__note">{{ 'settings.voice.change'|trans }}</p>
+        {{ ui.code_block("# .env.local\nCRIEUR_VOICE_ENGINE=" ~ (active ? active.name : 'phonon') ~ "\nCRIEUR_EDITOR=" ~ report.editorSetting ~ "\nMISTRAL_API_KEY=", '.env.local', null) }}
+    </section>
+
+    <section class="panel" id="mcp" aria-labelledby="mcp-title">
+        <h2 class="panel__title" id="mcp-title">{{ icon('assistant') }}{{ 'settings.mcp.title'|trans }}</h2>
+        <p class="panel__lede">{{ 'settings.mcp.lede'|trans }}</p>
+
+        <h3 class="panel__subtitle">Claude Code</h3>
+        {{ ui.code_block('claude mcp add --transport http crieur ' ~ mcp_url, 'Claude Code', null) }}
+
+        <h3 class="panel__subtitle">Claude Desktop</h3>
+        <p class="panel__note">{{ 'settings.mcp.desktop'|trans }}</p>
+        {{ ui.code_block({mcpServers: {crieur: {command: 'php', args: [console, 'mcp:server']}}}|json_encode(constant('JSON_PRETTY_PRINT') b-or constant('JSON_UNESCAPED_SLASHES')), 'Claude Desktop', null) }}
+
+        <h3 class="panel__subtitle">{{ 'settings.mcp.tools'|trans }}</h3>
+        <ul class="tools">
+            <li><code>read_aloud</code><span>{{ 'settings.mcp.read_aloud'|trans }}</span></li>
+            <li><code>list_library</code><span>{{ 'settings.mcp.list_library'|trans }}</span></li>
+            <li><code>get_article</code><span>{{ 'settings.mcp.get_article'|trans }}</span></li>
+        </ul>
+        <p class="panel__note">{{ 'settings.mcp.example'|trans }}</p>
+    </section>
+
+    <section class="panel" id="bookmarklet" aria-labelledby="bookmarklet-title">
+        <h2 class="panel__title" id="bookmarklet-title">{{ icon('bookmark') }}{{ 'settings.bookmarklet.title'|trans }}</h2>
+        <p class="panel__lede">{{ 'settings.bookmarklet.lede'|trans }}</p>
+        <p class="bookmarklet-row" data-controller="bookmarklet" data-bookmarklet-hint-value="{{ 'settings.bookmarklet.drag_hint'|trans }}">
+            <a class="bookmarklet" href="{{ bookmarklet }}" data-turbo="false" data-action="click->bookmarklet#explain">{{ brand_mark(18, 'tiny') }}{{ 'settings.bookmarklet.button'|trans }}</a>
+            <span class="muted" data-bookmarklet-target="hint" aria-live="polite">{{ 'settings.bookmarklet.drag'|trans }}</span>
+        </p>
+        <p class="panel__note">{{ 'settings.bookmarklet.manual'|trans }}</p>
+        {{ ui.code_block(bookmarklet, 'bookmarklet', null) }}
+    </section>
+
+    <section class="panel" id="podcast" aria-labelledby="podcast-title">
+        <h2 class="panel__title" id="podcast-title">{{ icon('feed') }}{{ 'settings.podcast.title'|trans }}</h2>
+        <p class="panel__lede">{{ 'settings.podcast.lede'|trans }}</p>
+        {{ ui.code_block(feed_url, 'settings.podcast.title'|trans, null) }}
+        <p class="panel__note">{{ 'settings.podcast.private'|trans }}</p>
+    </section>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Crieur{% if not form.vars.valid %} ({{ 'compose.title_error'|trans }}){% endif %}{% endblock %}
+
+{% block body %}
+    <section class="compose" aria-labelledby="compose-title">
+        <h1 class="compose__title" id="compose-title">{{ 'compose.title'|trans }}</h1>
+        <p class="compose__lede">{{ 'compose.lede'|trans }}</p>
+
+        {% set url_invalid = not form.url.vars.valid %}
+        {{ form_start(form, {attr: {class: 'compose__form'}}) }}
+            {{ form_errors(form) }}
+            <div class="urlbar{{ url_invalid ? ' urlbar--invalid' }}">
+                {{ icon('link', null, 'urlbar__icon') }}
+                {{ form_label(form.url, null, {label_attr: {class: 'visually-hidden'}}) }}
+                {{ form_widget(form.url, {attr: {class: 'urlbar__input', autofocus: url_invalid} | merge(url_invalid ? {'aria-invalid': 'true', 'aria-describedby': form.url.vars.id ~ '_errors'} : {})}) }}
+                <button type="submit" class="button button--primary urlbar__submit" data-turbo-submits-with="{{ 'compose.submitting'|trans }}">
+                    {{ icon('play') }}<span>{{ 'compose.submit'|trans }}</span>
+                </button>
+            </div>
+            {{ form_errors(form.url) }}
+
+            <div class="compose__options">
+                {% for field in [form.language, form.voice] %}
+                    <fieldset class="segmented">
+                        <legend class="segmented__legend">{{ icon(field.vars.name == 'voice' ? 'voice' : 'language') }}{{ field.vars.label|trans }}</legend>
+                        <div class="segmented__options">
+                            {% for choice in field %}
+                                <label class="segmented__option">
+                                    {{ form_widget(choice, {attr: {class: 'segmented__input'}}) }}
+                                    <span>{{ choice.vars.label|trans }}</span>
+                                </label>
+                            {% endfor %}
+                        </div>
+                    </fieldset>
+                {% endfor %}
+            </div>
+        {{ form_end(form) }}
+    </section>
+
+    <section class="library-section" aria-labelledby="library-title">
+        <div class="section-head">
+            <h2 class="section-head__title" id="library-title">{{ 'library.title'|trans }}</h2>
+            {% if articles is not empty %}
+                <a class="section-head__link" href="{{ path('settings') }}#podcast">{{ icon('feed') }}{{ 'library.subscribe'|trans }}</a>
+            {% endif %}
+        </div>
+        {{ include('home/_library_frame.html.twig') }}
+    </section>
+{% endblock %}

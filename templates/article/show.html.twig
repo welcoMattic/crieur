@@ -1,0 +1,207 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}{{ article.displayTitle }} · Crieur{% endblock %}
+
+{% block body %}
+    {% set status = article.status %}
+    {% set paragraphs = article.paragraphs %}
+    {% set has_text = paragraphs is not empty %}
+    {% set token = csrf_token('submit') %}
+    {% set title_segments = (paragraphs[0] ?? [])|filter(s => s.kind.value == 'title') %}
+    {% set rewritten = article.segments|filter(s => s.spoken != s.text)|length %}
+
+    <article class="reader"
+             data-controller="reader"
+             data-reader-id-value="{{ article.id }}"
+             data-reader-status-url-value="{{ path('article_status', {id: article.id}) }}"
+             data-reader-status-value="{{ status.value }}"
+             data-reader-revision-value="{{ article.revision }}"
+             data-reader-segments-value="{{ article.segments|length }}"
+             data-reader-autoplay-value="{{ autoplay ? 'true' : 'false' }}"
+             data-reader-labels-value="{{ {
+                 listen: 'reader.listen'|trans,
+                 pause: 'player.pause'|trans,
+                 resume: 'player.resume'|trans,
+                 synthesizing: 'status.synthesizing_count'|trans,
+                 original: 'reader.original_label'|trans,
+             }|json_encode }}">
+
+        <a class="back-link" href="{{ path('home') }}">{{ icon('arrow-left') }}{{ 'reader.back'|trans }}</a>
+
+        <header class="reader__header">
+            <p class="state-line status--{{ status.value }}">
+                {{ icon(status|status_icon, null, status.inProgress and status.value != 'queued' ? 'spin' : '') }}
+                <span data-reader-target="state">
+                    {%- if status.value == 'synthesizing' -%}
+                        {{ 'status.synthesizing_count'|trans({'%ready%': article.countReadySegments, '%total%': article.segments|length}) }}
+                    {%- elseif status.value == 'ready' -%}
+                        {{ 'status.ready_duration'|trans({'%duration%': article.audioSeconds|duration}) }}
+                    {%- else -%}
+                        {{ ('status.long.' ~ status.value)|trans }}
+                    {%- endif -%}
+                </span>
+            </p>
+
+            <h1 class="reader__title"{% if article.language %} lang="{{ article.language.value }}"{% endif %}>
+                {%- if title_segments is not empty -%}
+                    <span class="para para--title" data-paragraph="0" data-action="click->reader#seek mouseover->reader#showOriginal mouseout->reader#hideOriginal">
+                        {%- for segment in title_segments -%}
+                            {{ include('article/_segment.html.twig') }}
+                        {%- endfor -%}
+                    </span>
+                {%- else -%}
+                    {{ article.displayTitle }}
+                {%- endif -%}
+            </h1>
+
+            {% if article.summary %}
+                <p class="reader__summary"{% if article.language %} lang="{{ article.language.value }}"{% endif %}>{{ article.summary }}</p>
+            {% endif %}
+
+            <p class="reader__meta">
+                <a href="{{ article.url }}" rel="noopener noreferrer" target="_blank" class="reader__source">{{ article.siteName ?? article.host }}{{ icon('external', 'reader.open_original'|trans) }}</a>
+                {% if article.author %}<span>{{ article.author }}</span>{% endif %}
+                {% if article.language %}
+                    <span>{{ ('language.name.' ~ article.language.value)|trans }}{% if article.languageSetting.value == 'auto' %} <span class="muted">({{ 'reader.detected'|trans }})</span>{% endif %}</span>
+                {% endif %}
+                {% if article.voiceName %}<span>{{ 'reader.voice_by'|trans({'%voice%': article.voiceName}) }}</span>{% endif %}
+                {% if article.wordCount > 0 %}<span>{{ 'reader.words'|trans({'%count%': article.wordCount, '%words%': article.wordCount|number_format(0, '.', app.request.locale == 'fr' ? ' ' : ',')}) }}</span>{% endif %}
+            </p>
+
+            {% if article.editor %}
+                {% if article.editor == 'rules' %}
+                    <p class="reader__editor reader__editor--rules" title="{{ 'reader.editor.rules_title'|trans }}">
+                        {{ icon('text') }}<span><span class="reader__editor-prefix">{{ 'reader.editor.prefix'|trans }}</span> {{ 'reader.editor.rules'|trans }}</span>
+                    </p>
+                {% else %}
+                    <p class="reader__editor" title="{{ 'reader.editor.model_title'|trans }}">
+                        {{ icon('sparkle') }}<span>{{ 'reader.editor.label'|trans }} <code>{{ article.editor }}</code></span>
+                    </p>
+                {% endif %}
+            {% endif %}
+
+            <div class="reader__actions">
+                {% if status.playable %}
+                    <button type="button" class="button button--primary" data-reader-target="listen" data-action="reader#listen">
+                        {{ icon('play', null, 'when-idle') }}{{ icon('pause', null, 'when-playing') }}
+                        <span data-reader-target="listenLabel">{{ 'reader.listen'|trans }}</span>
+                    </button>
+                {% endif %}
+                {% if status.value == 'ready' %}
+                    <a class="button button--ghost" href="{{ path('article_episode', {id: article.id}) }}" download data-turbo="false">{{ icon('download') }}<span>{{ 'reader.download'|trans }}</span></a>
+                {% endif %}
+                {% if status.value == 'failed' %}
+                    <form method="post" action="{{ path('article_retry', {id: article.id}) }}">
+                        <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                        <button type="submit" class="button button--primary">{{ icon('retry') }}<span>{{ 'reader.retry'|trans }}</span></button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {% if has_text or status.value != 'failed' %}
+                <div class="reader__settings">
+                    <form method="post" action="{{ path('article_voice', {id: article.id}) }}" data-controller="autosubmit">
+                        <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                        <fieldset class="segmented"{% if not article.language %} disabled{% endif %}>
+                            <legend class="segmented__legend">{{ icon('voice') }}{{ 'reader.voice'|trans }}</legend>
+                            <div class="segmented__options">
+                                {% for gender in ['female', 'male'] %}
+                                    <label class="segmented__option">
+                                        <input class="segmented__input" type="radio" name="voice" value="{{ gender }}" data-action="autosubmit#submit"{% if article.voiceGender.value == gender %} checked{% endif %}>
+                                        <span>{{ ('voice.' ~ gender)|trans }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                        <noscript><button type="submit" class="button button--ghost button--small">{{ 'reader.apply'|trans }}</button></noscript>
+                    </form>
+                    <form method="post" action="{{ path('article_language', {id: article.id}) }}" data-controller="autosubmit">
+                        <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                        <fieldset class="segmented"{% if status.inProgress and not has_text %} disabled{% endif %}>
+                            <legend class="segmented__legend">{{ icon('language') }}{{ 'reader.language'|trans }}</legend>
+                            <div class="segmented__options">
+                                {% for setting in ['auto', 'fr', 'en'] %}
+                                    <label class="segmented__option">
+                                        <input class="segmented__input" type="radio" name="language" value="{{ setting }}" data-action="autosubmit#submit"{% if article.languageSetting.value == setting %} checked{% endif %}>
+                                        <span{% if setting != 'auto' %} title="{{ ('language.name.' ~ setting)|trans }}"{% endif %}>{{ ('language.short.' ~ setting)|trans }}</span>
+                                    </label>
+                                {% endfor %}
+                            </div>
+                        </fieldset>
+                        <noscript><button type="submit" class="button button--ghost button--small">{{ 'reader.apply'|trans }}</button></noscript>
+                    </form>
+                </div>
+                <p class="reader__settings-hint">{{ 'reader.settings_hint'|trans }}</p>
+            {% endif %}
+        </header>
+
+        {% if has_text %}
+            <section class="transcript-section" aria-labelledby="transcript-title">
+                <div class="transcript-bar">
+                    <h2 class="transcript-bar__title" id="transcript-title">{{ 'reader.transcript'|trans }}</h2>
+                    <button type="button" class="toggle" aria-pressed="false" data-reader-target="spokenToggle" data-action="reader#toggleSpoken">
+                        <span class="toggle__track" aria-hidden="true"><span class="toggle__thumb"></span></span>
+                        <span>{{ 'reader.show_spoken'|trans }}</span>
+                    </button>
+                </div>
+                <p class="transcript-legend" data-reader-target="legend" hidden>
+                    {{ icon('sparkle') }}
+                    <span>
+                        {%- if rewritten > 0 -%}
+                            {{ 'reader.spoken_legend'|trans({'%count%': rewritten}) }}
+                        {%- else -%}
+                            {{ 'reader.spoken_same'|trans }}
+                        {%- endif -%}
+                    </span>
+                </p>
+                <div class="transcript" data-reader-target="transcript" data-action="click->reader#seek mouseover->reader#showOriginal mouseout->reader#hideOriginal"{% if article.language %} lang="{{ article.language.value }}"{% endif %}>
+                    {% set in_list = false %}
+                    {% for number, segments in paragraphs %}
+                        {% set kind = segments[0].kind.value %}
+                        {% if kind != 'title' %}
+                            {% if kind == 'list_item' and not in_list %}<ul class="transcript__list">{% set in_list = true %}{% endif %}
+                            {% if kind != 'list_item' and in_list %}</ul>{% set in_list = false %}{% endif %}
+                            {% if kind == 'heading' %}
+                                <h3 class="para para--heading" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</h3>
+                            {% elseif kind == 'quote' %}
+                                <blockquote class="para para--quote" data-paragraph="{{ number }}"><p>{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p></blockquote>
+                            {% elseif kind == 'list_item' %}
+                                <li class="para para--item" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</li>
+                            {% else %}
+                                <p class="para" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
+                    {% if in_list %}</ul>{% endif %}
+                </div>
+            </section>
+        {% elseif status.value == 'failed' %}
+            <div class="notice notice--error" role="alert">
+                {{ icon('alert') }}
+                <div>
+                    <h2 class="notice__title">{{ 'reader.failed.title'|trans }}</h2>
+                    <p>{{ (article.failure ?? 'extraction.network')|trans(domain: 'errors') }}</p>
+                    <p><a href="{{ article.url }}" rel="noopener noreferrer" target="_blank">{{ 'reader.open_original'|trans }}{{ icon('external') }}</a></p>
+                </div>
+            </div>
+        {% else %}
+            <div class="pending" aria-hidden="true">
+                <span class="pending__line" style="--w: 92%"></span>
+                <span class="pending__line" style="--w: 98%"></span>
+                <span class="pending__line" style="--w: 85%"></span>
+                <span class="pending__line" style="--w: 60%"></span>
+                <span class="pending__gap"></span>
+                <span class="pending__line" style="--w: 95%"></span>
+                <span class="pending__line" style="--w: 88%"></span>
+                <span class="pending__line" style="--w: 70%"></span>
+            </div>
+        {% endif %}
+
+        <footer class="reader__footer">
+            <form method="post" action="{{ path('article_delete', {id: article.id}) }}" data-turbo-confirm="{{ 'library.delete_confirm'|trans({'%title%': article.displayTitle}) }}">
+                <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                <button type="submit" class="button button--danger-ghost button--small">{{ icon('trash') }}<span>{{ 'reader.delete'|trans }}</span></button>
+            </form>
+        </footer>
+    </article>
+{% endblock %}

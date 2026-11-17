@@ -1,24 +1,55 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ app.request.locale }}">
     <head>
         <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
-        {% block stylesheets %}
-        {% endblock %}
-
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+        <title>{% block title %}Crieur{% endblock %}</title>
+        <meta name="description" content="{{ 'meta.description'|trans }}">
+        <meta name="color-scheme" content="light dark">
+        <meta name="theme-color" content="#f6f5f1" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#131417" media="(prefers-color-scheme: dark)">
+        {# Turbo refreshes a page in place (form redirects to the same page, live updates). #}
+        <meta name="turbo-refresh-method" content="morph">
+        <meta name="turbo-refresh-scroll" content="preserve">
+        <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+        <link rel="manifest" href="/manifest.webmanifest">
+        {% block stylesheets %}{% endblock %}
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
-
-        {% set frankenphp_hot_reload = app.request.server.get('FRANKENPHP_HOT_RELOAD') %}
-        {% if frankenphp_hot_reload %}
-        <meta name="frankenphp-hot-reload:url" content="{{ frankenphp_hot_reload }}">
-        <script src="https://cdn.jsdelivr.net/npm/idiomorph"></script>
-        <script src="https://cdn.jsdelivr.net/npm/frankenphp-hot-reload/+esm" type="module"></script>
-        {% endif %}
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <a class="skip-link" href="#main">{{ 'nav.skip'|trans }}</a>
+        {% set route = app.request.attributes.get('_route') %}
+        <header class="site-header">
+            <div class="site-header__inner">
+                <a class="brand" href="{{ path('home') }}">
+                    {{ brand_mark(28) }}
+                    <span class="brand__name">Crieur</span>
+                </a>
+                <nav class="site-nav" aria-label="{{ 'nav.label'|trans }}">
+                    <a class="site-nav__link site-nav__link--library" href="{{ path('home') }}"{% if route in ['home', 'article_show'] %} aria-current="page"{% endif %}>{{ 'nav.library'|trans }}</a>
+                    <a class="site-nav__link" href="{{ path('settings') }}"{% if route == 'settings' %} aria-current="page"{% endif %}>{{ 'nav.settings'|trans }}</a>
+                    <span class="locale-switch" role="group" aria-label="{{ 'nav.interface_language'|trans }}">
+                        {% for locale, name in {en: 'English', fr: 'Français'} %}
+                            <a class="locale-switch__link" href="{{ path('locale_switch', {locale: locale, return: app.request.pathInfo}) }}" hreflang="{{ locale }}" lang="{{ locale }}" title="{{ name }}" data-turbo="false"{% if app.request.locale == locale %} aria-current="true"{% endif %}><span aria-hidden="true">{{ locale|upper }}</span><span class="visually-hidden">{{ name }}</span></a>
+                        {% endfor %}
+                    </span>
+                </nav>
+            </div>
+        </header>
+
+        <main id="main" class="site-main" tabindex="-1">
+            {% block body %}{% endblock %}
+        </main>
+
+        <footer class="site-footer">
+            {% set engine = voice_engine() %}
+            <p>{{ 'footer.voice'|trans({'%engine%': ('engine.' ~ engine.name ~ '.label')|trans}) }} <span class="site-footer__sep" aria-hidden="true">·</span> {{ engine.license }}{% if engine.license starts with 'CC BY-NC' %}, {{ 'footer.personal_use'|trans }}{% endif %}</p>
+        </footer>
+
+        {{ include('components/_player.html.twig') }}
     </body>
 </html>
