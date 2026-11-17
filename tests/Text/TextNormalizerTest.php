@@ -251,4 +251,17 @@ final class TextNormalizerTest extends TestCase
     {
         self::assertSame($expected, $this->normalizer->normalize($input, $language, $spellIntegers));
     }
+
+    #[Test]
+    public function dollarsPoundsAndEnglishOrdinalsAreWrittenInWords(): void
+    {
+        $normalizer = new TextNormalizer();
+
+        self::assertSame(
+            'one thousand two hundred dollars in the first quarter, two point five billion pounds in the twenty-second.',
+            $normalizer->writeOutSymbols('$1,200 in the 1st quarter, £2.5bn in the 22nd.', Language::English),
+        );
+        self::assertSame('trois millions de dollars et douze livres', $normalizer->writeOutSymbols('3 M$ et 12 £', Language::French));
+    }
+
 }

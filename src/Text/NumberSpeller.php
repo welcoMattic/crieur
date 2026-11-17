@@ -65,33 +65,45 @@ final readonly class NumberSpeller
     }
 
     /**
-     * "3,50 €" gives "trois euros cinquante", "2 M€" gives "deux millions d’euros".
+     * The singular and plural names of a currency, and the French form after "millions de".
      */
-    public function money(string $integerPart, ?string $decimalPart, ?string $scale): string
+    private const array CURRENCIES = [
+        'fr' => ['€' => ['euro', 'euros', 'd’euros'], '$' => ['dollar', 'dollars', 'de dollars'], '£' => ['livre', 'livres', 'de livres']],
+        'en' => ['€' => ['euro', 'euros', 'euros'], '$' => ['dollar', 'dollars', 'dollars'], '£' => ['pound', 'pounds', 'pounds']],
+    ];
+
+    /**
+     * "3,50 €" gives "trois euros cinquante", "2 M€" gives "deux millions d’euros", "$1,200" gives
+     * "one thousand two hundred dollars".
+     *
+     * @param '€'|'$'|'£' $currency
+     */
+    public function money(string $integerPart, ?string $decimalPart, ?string $scale, string $currency = '€'): string
     {
+        [$singular, $plural, $afterScale] = self::CURRENCIES[$this->language->value][$currency];
         $value = self::integer($integerPart);
         if (null === $value) {
-            return $this->number($integerPart, $decimalPart).' euros';
+            return $this->number($integerPart, $decimalPart).' '.$plural;
         }
 
-        $euro = $value >= 2 ? 'euros' : 'euro';
+        $euro = $value >= 2 ? $plural : $singular;
         if (null !== $scale) {
             $amount = $this->number($integerPart, $decimalPart);
-            $plural = $value >= 2;
+            $many = $value >= 2;
 
             $factor = self::scaleFactor($scale);
             if (Language::French === $this->language) {
                 return match ($factor) {
-                    1_000 => $amount.' mille euros',
-                    1_000_000 => $amount.' '.($plural ? 'millions' : 'million').' d’euros',
-                    default => $amount.' '.($plural ? 'milliards' : 'milliard').' d’euros',
+                    1_000 => $amount.' mille '.$plural,
+                    1_000_000 => $amount.' '.($many ? 'millions' : 'million').' '.$afterScale,
+                    default => $amount.' '.($many ? 'milliards' : 'milliard').' '.$afterScale,
                 };
             }
 
             return match ($factor) {
-                1_000 => $amount.' thousand euros',
-                1_000_000 => $amount.' million euros',
-                default => $amount.' billion euros',
+                1_000 => $amount.' thousand '.$afterScale,
+                1_000_000 => $amount.' million '.$afterScale,
+                default => $amount.' billion '.$afterScale,
             };
         }
 
@@ -99,12 +111,24 @@ final readonly class NumberSpeller
             return $this->spell($value).' '.$euro;
         }
         if (\strlen($decimalPart) > 2 || !ctype_digit($decimalPart)) {
-            return $this->number($integerPart, $decimalPart).' euros';
+            return $this->number($integerPart, $decimalPart).' '.$plural;
         }
 
         $cents = 1 === \strlen($decimalPart) ? (int) $decimalPart * 10 : (int) $decimalPart;
 
         return 0 === $cents ? $this->spell($value).' '.$euro : $this->spell($value).' '.$euro.' '.$this->spell($cents);
+    }
+
+    /**
+     * "1st" gives "first", "22nd" gives "twenty-second" (ICU spell-out rules).
+     */
+    public function englishOrdinal(int $value): string
+    {
+        $formatter = new \NumberFormatter('en_US', \NumberFormatter::SPELLOUT);
+        $formatter->setTextAttribute(\NumberFormatter::DEFAULT_RULESET, '%spellout-ordinal');
+        $words = $formatter->format($value);
+
+        return false === $words ? (string) $value : $words;
     }
 
     /**

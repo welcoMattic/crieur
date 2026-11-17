@@ -147,6 +147,21 @@ final readonly class TextNormalizer
             static fn (array $g): string => $speller->money((string) $g[1], $g[2], null));
         $t = self::replaceCallback('~€'.self::GAP.$number.'~u', $t,
             static fn (array $g): string => $speller->money((string) $g[1], $g[2], null));
+        foreach (['$', '£'] as $currency) {
+            $symbol = preg_quote($currency, '~');
+            $t = self::replaceCallback('~'.$number.self::GAP.self::SCALE.'[ \x{A0}\x{2009}\x{202F}]?'.$symbol.'~u', $t,
+                static fn (array $g): string => $speller->money((string) $g[1], $g[2], $g[3], $currency));
+            $t = self::replaceCallback('~'.$symbol.self::GAP.$number.'(?:'.self::SCALE.'(?!\p{L})|'.self::WORD_SCALE.')~u', $t,
+                static fn (array $g): string => $speller->money((string) $g[1], $g[2], $g[3] ?? $g[4], $currency));
+            $t = self::replaceCallback('~'.$symbol.self::GAP.$number.'~u', $t,
+                static fn (array $g): string => $speller->money((string) $g[1], $g[2], null, $currency));
+            $t = self::replaceCallback('~'.$number.self::GAP.$symbol.'~u', $t,
+                static fn (array $g): string => $speller->money((string) $g[1], $g[2], null, $currency));
+        }
+        if (!$french) {
+            $t = self::replaceCallback('~(?<![\p{L}\d.,])(\d{1,6})(st|nd|rd|th)(?![\p{L}\d])~u', $t,
+                static fn (array $g): string => $speller->englishOrdinal((int) $g[1]));
+        }
         $t = self::replaceCallback('~'.$number.self::GAP.'%~u', $t,
             static fn (array $g): string => $speller->number((string) $g[1], $g[2]).' '.$speller->percentWord());
         if ($french) {
