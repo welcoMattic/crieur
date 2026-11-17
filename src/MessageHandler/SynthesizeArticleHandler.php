@@ -42,7 +42,7 @@ final readonly class SynthesizeArticleHandler
     /**
      * How long the voice waits for the editor worker before reading the text of the rules.
      */
-    private const float EDITOR_WAIT_SECONDS = 8.0;
+    private const float EDITOR_WAIT_SECONDS = 2.5;
 
     public function __construct(
         private ArticleRepository $articles,
