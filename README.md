@@ -42,7 +42,7 @@ What it unlocked: one Symfony app now talks to a local speech model, a cloud spe
 
 ## Quick start (5 minutes)
 
-Requirements: PHP 8.4 or later (with `intl`, `pdo_sqlite`), [Composer](https://getcomposer.org), the [Symfony CLI](https://symfony.com/download), and **one** of:
+Requirements: PHP 8.4.1 or later (with `intl`, `pdo_sqlite`), [Composer](https://getcomposer.org), the [Symfony CLI](https://symfony.com/download), and **one** of:
 
 - **Local stack (no key, Apple Silicon Mac):** [Ollama](https://ollama.com) 0.40.11 or later.
 - **Cloud stack (any OS):** a Mistral AI API key.
@@ -76,6 +76,17 @@ symfony serve                           # also starts the three queue workers
 ```
 
 Open <http://127.0.0.1:8000> and paste a link.
+
+### Or with Docker
+
+No PHP needed: one image serves the app (FrankenPHP) and runs the two queue workers in their own containers.
+
+```sh
+docker compose up -d --build              # http://localhost:8000 (CRIEUR_PORT=8082 for another port)
+docker compose exec web php bin/console crieur:doctor --live
+```
+
+Settings go in `.env.docker` (same variables as below). Phonon runs in the Ollama of the host (Apple Silicon), reached through `host.docker.internal`; anywhere else, set `MISTRAL_API_KEY` and `CRIEUR_VOICE_ENGINE=voxtral`.
 
 ## Connect your AI assistant (MCP)
 

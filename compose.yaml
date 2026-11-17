@@ -3,14 +3,14 @@ services:
   web:
     build: .
     ports:
-      - "8000:8000"
+      - "${CRIEUR_PORT:-8000}:8000"
     env_file:
       - path: .env.docker
         required: false
     environment:
       DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:8000"
-      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
+      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -27,8 +27,8 @@ services:
         required: false
     environment:
       DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:8000"
-      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
+      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -45,8 +45,8 @@ services:
         required: false
     environment:
       DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:8000"
-      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
+      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
