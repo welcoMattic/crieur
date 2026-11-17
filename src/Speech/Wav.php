@@ -80,6 +80,50 @@ final readonly class Wav
         return self::fromPcm(pack('v*', ...$mono), $sampleRate);
     }
 
+    /**
+     * Signed 16-bit samples, clamped to [-32768, 32767].
+     *
+     * @param list<int> $samples
+     */
+    public static function fromSamples(array $samples, int $sampleRate = 24000): self
+    {
+        if ([] !== $samples && (max($samples) > 32767 || min($samples) < -32768)) {
+            $samples = array_map(static fn (int $sample): int => max(-32768, min(32767, $sample)), $samples);
+        }
+
+        return new self($sampleRate, [] === $samples ? '' : pack('v*', ...$samples));
+    }
+
+    /**
+     * The signed 16-bit samples.
+     *
+     * @return list<int>
+     */
+    public function samples(): array
+    {
+        if ('' === $this->pcm) {
+            return [];
+        }
+
+        // "s" reads the machine byte order: little-endian on every platform PHP runs Crieur on.
+        if ("\x01\x00" === pack('S', 1)) {
+            $values = unpack('s*', $this->pcm);
+            /** @var list<int> $samples */
+            $samples = false === $values ? [] : array_values($values);
+
+            return $samples;
+        }
+
+        $values = unpack('v*', $this->pcm);
+
+        return false === $values ? [] : array_values(array_map(static fn (mixed $value): int => ((int) $value + 32768) % 65536 - 32768, $values));
+    }
+
+    public function sampleCount(): int
+    {
+        return intdiv(\strlen($this->pcm), 2);
+    }
+
     public function durationMs(): int
     {
         return intdiv(\strlen($this->pcm) * 500, $this->sampleRate);

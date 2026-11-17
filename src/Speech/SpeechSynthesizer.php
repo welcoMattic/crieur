@@ -44,4 +44,20 @@ final readonly class SpeechSynthesizer
 
         return ['key' => $key, 'durationMs' => $wav->durationMs()];
     }
+
+    /**
+     * A silence in the format of the voice, for a chunk with nothing to say.
+     *
+     * @return array{key: string, durationMs: int}
+     */
+    public function silence(int $milliseconds, Voice $voice): array
+    {
+        $key = AudioStore::key($voice, \sprintf('<silence %d ms>', $milliseconds));
+        $wav = Wav::silence($milliseconds);
+        if (!$this->store->has($key)) {
+            $this->store->write($key, $wav->toBytes());
+        }
+
+        return ['key' => $key, 'durationMs' => $wav->durationMs()];
+    }
 }

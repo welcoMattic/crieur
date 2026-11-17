@@ -29,3 +29,9 @@ services:
             - '@event_dispatcher'
 
     Symfony\AI\Platform\ModelRouter\CatalogBasedModelRouter: ~
+
+when@test:
+    services:
+        crieur.platform.speech:
+            class: Symfony\AI\Platform\Platform
+            factory: ['App\Tests\Fake\FakeSpeechPlatform', 'create']

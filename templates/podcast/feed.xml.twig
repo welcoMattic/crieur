@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Crieur</title>
+        <link>{{ url('home') }}</link>
+        <atom:link href="{{ url('podcast_feed', {token: token}) }}" rel="self" type="application/rss+xml"/>
+        <description>{{ 'podcast.description'|trans }}</description>
+        <language>{{ app.request.locale }}</language>
+        <itunes:author>Crieur</itunes:author>
+        <itunes:block>Yes</itunes:block>
+        <itunes:explicit>false</itunes:explicit>
+        <itunes:image href="{{ absolute_url(asset('images/podcast-cover.png')) }}"/>
+        {% for item in items %}
+            {% set article = item.article %}
+            {% set extension = item.episode.mimeType == 'audio/mp4' ? 'm4a' : 'wav' %}
+            <item>
+                <title>{{ article.displayTitle }}</title>
+                <link>{{ article.url }}</link>
+                <guid isPermaLink="false">crieur-{{ article.id }}-r{{ article.revision }}</guid>
+                <pubDate>{{ (article.readyAt ?? article.createdAt)|date('D, d M Y H:i:s O') }}</pubDate>
+                <description>{{ article.summary ?? article.excerpt ?? article.siteName ?? article.host }}</description>
+                <itunes:duration>{{ (item.episode.durationMs / 1000)|round }}</itunes:duration>
+                <enclosure url="{{ url('podcast_episode', {token: token, id: article.id, _format: extension}) }}" length="{{ item.size }}" type="{{ item.episode.mimeType }}"/>
+            </item>
+        {% endfor %}
+    </channel>
+</rss>

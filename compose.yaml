@@ -1,0 +1,38 @@
+# docker compose up --build, then open http://localhost:8000
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      DATABASE_URL: "sqlite:////app/var/data_prod.db"
+      DEFAULT_URI: "http://localhost:8000"
+      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - crieur_var:/app/var
+
+  worker:
+    build: .
+    command: ["php", "bin/console", "messenger:consume", "extract", "synthesize", "--time-limit=3600", "--memory-limit=512M", "-vv"]
+    restart: unless-stopped
+    depends_on:
+      - web
+    env_file:
+      - path: .env.docker
+        required: false
+    environment:
+      DATABASE_URL: "sqlite:////app/var/data_prod.db"
+      DEFAULT_URI: "http://localhost:8000"
+      OLLAMA_HOST_URL: "${OLLAMA_HOST_URL:-http://host.docker.internal:11434}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - crieur_var:/app/var
+
+volumes:
+  crieur_var:

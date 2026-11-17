@@ -100,6 +100,10 @@ final readonly class ArticleQueue
         }
 
         $parts = parse_url($url);
+        if (false === $parts && preg_match('~^https?://~i', $url)) {
+            throw InvalidArticleUrl::because('host');
+        }
+
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         if (!\in_array($scheme, ['http', 'https'], true)) {
             throw InvalidArticleUrl::because('scheme');
