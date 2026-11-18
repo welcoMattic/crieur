@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 namespace App\Tests\Controller;
 
+use App\Editor\SpeechEditor;
+use App\Settings\EngineSettings;
+use App\Speech\VoiceCatalog;
+
 final class SettingsControllerTest extends ControllerTestCase
 {
     private const string SECRET = 'sk-crieur-sentinel-0123456789';
@@ -50,4 +54,46 @@ final class SettingsControllerTest extends ControllerTestCase
         self::assertSelectorExists('#bookmarklet a.bookmarklet[href^="javascript:"]');
         self::assertSelectorTextContains('#podcast', 'http://localhost/feed/');
     }
+
+    public function testTheVoiceEngineAndTheEditorAreChosenOnThePage(): void
+    {
+        $this->client->request('POST', '/settings/engines', ['voice_engine' => 'voxtral', 'editor' => 'mistral', '_token' => 'csrf-token'], server: self::sameOrigin());
+
+        self::assertResponseRedirects('/settings#voice', 303);
+        $settings = self::getContainer()->get(EngineSettings::class);
+        self::assertSame('voxtral', $settings->voiceEngine());
+        self::assertSame('mistral', $settings->editor());
+        self::assertSame('voxtral', self::getContainer()->get(VoiceCatalog::class)->defaultEngine()->name);
+        self::assertSame('mistral', self::getContainer()->get(SpeechEditor::class)->backend());
+
+        $this->client->followRedirect();
+        self::assertSelectorExists('input[name="voice_engine"][value="voxtral"][checked]');
+        self::assertSelectorExists('input[name="editor"][value="mistral"][checked]');
+        self::assertSelectorTextContains('.engine-form__saved', 'Saved');
+    }
+
+    public function testAnUnknownEngineIsRefused(): void
+    {
+        $this->client->request('POST', '/settings/engines', ['voice_engine' => 'nobody', '_token' => 'csrf-token'], server: self::sameOrigin());
+
+        self::assertResponseStatusCodeSame(400);
+        self::assertSame('phonon', self::getContainer()->get(EngineSettings::class)->voiceEngine());
+    }
+
+    public function testTheChoiceNeedsAFormOfThisSite(): void
+    {
+        $this->client->request('POST', '/settings/engines', ['voice_engine' => 'voxtral', '_token' => 'csrf-token'], server: self::crossSite());
+
+        self::assertResponseStatusCodeSame(403);
+        self::assertSame('phonon', self::getContainer()->get(EngineSettings::class)->voiceEngine());
+    }
+
+    public function testWithoutAChoiceTheEnvironmentDecides(): void
+    {
+        $settings = self::getContainer()->get(EngineSettings::class);
+
+        self::assertSame('phonon', $settings->voiceEngine());
+        self::assertSame('auto', $settings->editor());
+    }
+
 }

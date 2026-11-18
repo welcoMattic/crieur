@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Setup;
 
+use App\Settings\EngineSettings;
 use App\Speech\VoiceCatalog;
 use App\Speech\VoiceEngine;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -32,7 +33,13 @@ final readonly class SetupInspector
         #[Autowire(param: 'crieur.editor')]
         private string $editorSetting,
         private float $timeout = 1.5,
+        private ?EngineSettings $settings = null,
     ) {
+    }
+
+    public function editorSetting(): string
+    {
+        return $this->settings?->editor() ?? $this->editorSetting;
     }
 
     public function inspect(): SetupReport
@@ -49,7 +56,7 @@ final readonly class SetupInspector
         return new SetupReport(
             engines: $engines,
             editor: $this->editor($models, $keySet),
-            editorSetting: $this->editorSetting,
+            editorSetting: $this->editorSetting(),
             ollamaUrl: $this->displayedOllamaUrl(),
             ollamaReachable: null !== $models,
             ollamaModels: $models ?? [],
@@ -76,7 +83,7 @@ final readonly class SetupInspector
      */
     private function editor(?array $models, bool $keySet): Check
     {
-        return match ($this->editorSetting) {
+        return match ($this->editorSetting()) {
             'mistral' => new Check('mistral', 'Mistral AI', self::EDITOR_MODEL_MISTRAL, true, false, $keySet, $keySet ? null : 'setup.issue.key_missing'),
             'ollama' => new Check(
                 'ollama',

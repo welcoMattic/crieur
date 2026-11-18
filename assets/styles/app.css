@@ -2232,3 +2232,43 @@ html[data-show-spoken] .seg[data-rewritten] .seg__spoken[data-skipped] {
         transform: scaleY(0.45);
     }
 }
+
+/* Settings: choice of the voice engine and the speech editor */
+
+.engine-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin-top: var(--space-6);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--border);
+}
+
+.engine-form__title {
+    margin: 0;
+    font: 600 16px/1.35 var(--font-ui);
+}
+
+.engine-form__saved {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    color: var(--success);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.engine-form__saved .icon {
+    width: 18px;
+    height: 18px;
+}
+
+.engine-form .panel__note {
+    margin: 0;
+}
+
+.segmented__input:disabled + span {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

@@ -174,7 +174,18 @@ settings:
     voice:
         title: "Voix et éditeur vocal"
         lede: "Crieur lit avec Phonon sur cet ordinateur, via Ollama, ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
-        change: "Pour les changer, définissez ces variables dans .env.local, puis redémarrez le serveur et ses workers."
+    engines:
+        title: "Choisir"
+        voice: "Voix"
+        editor: "Éditeur vocal"
+        editor_choice:
+            auto: "Auto"
+            mistral: "Mistral"
+            ollama: "Ollama"
+            "off": "Règles seules"
+        note: "S’applique tout de suite aux prochains articles et aux changements de voix, sans rien redémarrer. Les articles prêts gardent leur voix. Auto prend Mistral quand une clé est définie, sinon les règles. Sans choix ici, CRIEUR_VOICE_ENGINE et CRIEUR_EDITOR décident."
+        needs_key: "Voxtral et l’éditeur Mistral demandent MISTRAL_API_KEY dans .env.local, puis un redémarrage du serveur et de ses workers."
+        saved: "Enregistré : les prochains articles utilisent ce choix."
     editor:
         name: "Éditeur vocal"
         model: "Modèle de %provider% :"

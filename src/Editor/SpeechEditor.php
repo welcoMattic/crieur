@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Editor;
 
+use App\Settings\EngineSettings;
 use App\Text\Language;
 use App\Text\TextNormalizer;
 use Psr\Container\ContainerInterface;
@@ -53,16 +54,20 @@ final class SpeechEditor
         #[Autowire(env: 'MISTRAL_API_KEY')]
         private readonly string $mistralApiKey,
         private readonly LoggerInterface $logger,
+        private readonly ?EngineSettings $settings = null,
     ) {
     }
 
     /**
-     * The agent in use: "mistral", "ollama", or null when only the deterministic rules apply.
+     * The agent in use: "mistral", "ollama", or null when only the deterministic rules apply. The
+     * settings page chooses it; until then, CRIEUR_EDITOR does.
      */
     public function backend(): ?string
     {
-        return match ($this->mode) {
-            'mistral', 'ollama' => $this->mode,
+        $mode = $this->settings?->editor() ?? $this->mode;
+
+        return match ($mode) {
+            'mistral', 'ollama' => $mode,
             'auto' => '' !== trim($this->mistralApiKey) ? 'mistral' : null,
             default => null,
         };

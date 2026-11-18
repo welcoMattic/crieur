@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Speech;
 
 use App\Enum\VoiceGender;
+use App\Settings\EngineSettings;
 use App\Text\Language;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
@@ -21,12 +22,16 @@ final readonly class VoiceCatalog
         private array $engines,
         #[Autowire(param: 'crieur.voice_engine')]
         private string $defaultEngine,
+        private ?EngineSettings $settings = null,
     ) {
     }
 
+    /**
+     * The engine of new articles: the one chosen on the settings page, else CRIEUR_VOICE_ENGINE.
+     */
     public function defaultEngine(): VoiceEngine
     {
-        return $this->engine($this->defaultEngine);
+        return $this->engine($this->settings?->voiceEngine() ?? $this->defaultEngine);
     }
 
     public function engine(string $name): VoiceEngine

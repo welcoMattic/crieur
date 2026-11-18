@@ -174,7 +174,18 @@ settings:
     voice:
         title: "Voice and speech editor"
         lede: "Crieur reads with Phonon on this computer, through Ollama, or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
-        change: "To change them, set these variables in .env.local, then restart the server and its workers."
+    engines:
+        title: "Choose"
+        voice: "Voice"
+        editor: "Speech editor"
+        editor_choice:
+            auto: "Auto"
+            mistral: "Mistral"
+            ollama: "Ollama"
+            "off": "Rules only"
+        note: "Applies at once to the next articles and to voice changes, without restarting anything. Ready articles keep their voice. Auto uses Mistral when a key is set, else the rules. Without a choice here, CRIEUR_VOICE_ENGINE and CRIEUR_EDITOR decide."
+        needs_key: "Voxtral and the Mistral editor need MISTRAL_API_KEY in .env.local, then a restart of the server and its workers."
+        saved: "Saved: the next articles use this choice."
     editor:
         name: "Speech editor"
         model: "Model by %provider%:"

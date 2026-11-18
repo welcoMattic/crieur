@@ -71,7 +71,7 @@
                             {{ 'settings.editor.rules'|trans }}
                         {%- endif -%}
                     </span>
-                    <span class="muted">{{ 'settings.editor.setting'|trans }} <code>CRIEUR_EDITOR={{ report.editorSetting }}</code></span>
+                    <span class="muted">{{ 'settings.editor.setting'|trans }} <code>{{ report.editorSetting }}</code></span>
                     {% if report.editor.issue %}<span class="check__issue">{{ report.editor.issue|trans({'%url%': report.ollamaUrl, '%model%': report.editor.model ?? ''}) }}</span>{% endif %}
                 </dd>
                 <dd class="check__state">{{ ui.check_state(report.editor) }}</dd>
@@ -100,8 +100,51 @@
                 </dd>
             </div>
         </dl>
-        <p class="panel__note">{{ 'settings.voice.change'|trans }}</p>
-        {{ ui.code_block("# .env.local\nCRIEUR_VOICE_ENGINE=" ~ (active ? active.name : 'phonon') ~ "\nCRIEUR_EDITOR=" ~ report.editorSetting ~ "\nMISTRAL_API_KEY=", '.env.local', null) }}
+        <form class="engine-form" method="post" action="{{ path('settings_engines') }}" data-controller="autosubmit" aria-labelledby="engines-title">
+            <h3 class="engine-form__title" id="engines-title">{{ 'settings.engines.title'|trans }}</h3>
+            <input type="hidden" name="_token" value="{{ csrf_token('submit') }}" data-controller="csrf-protection">
+            {% for message in app.flashes('success') %}
+                <p class="engine-form__saved" role="status">{{ icon('check-circle') }}<span>{{ message|trans }}</span></p>
+            {% endfor %}
+
+            <fieldset class="segmented">
+                <legend class="segmented__legend">{{ icon('voice') }}{{ 'settings.engines.voice'|trans }}</legend>
+                <div class="segmented__options">
+                    {% for engine in report.engines %}
+                        <label class="segmented__option">
+                            <input class="segmented__input" type="radio" name="voice_engine" value="{{ engine.name }}" data-action="autosubmit#submit"
+                                {%- if engine.active %} checked{% elseif not engine.ready %} disabled{% endif %}>
+                            <span>{{ engine.name == 'phonon' ? 'Phonon' : 'Voxtral' }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            {% set editor_ready = {
+                auto: true,
+                mistral: report.mistralKeySet,
+                ollama: report.ollamaReachable and 'ministral-3:8b' in report.ollamaModels,
+                off: true,
+            } %}
+            <fieldset class="segmented">
+                <legend class="segmented__legend">{{ icon('sparkle') }}{{ 'settings.engines.editor'|trans }}</legend>
+                <div class="segmented__options">
+                    {% for choice in ['auto', 'mistral', 'ollama', 'off'] %}
+                        <label class="segmented__option">
+                            <input class="segmented__input" type="radio" name="editor" value="{{ choice }}" data-action="autosubmit#submit"
+                                {%- if report.editorSetting == choice %} checked{% elseif not editor_ready[choice] %} disabled{% endif %}>
+                            <span>{{ ('settings.engines.editor_choice.' ~ choice)|trans }}</span>
+                        </label>
+                    {% endfor %}
+                </div>
+            </fieldset>
+
+            <noscript><button type="submit" class="button button--ghost button--small">{{ 'reader.apply'|trans }}</button></noscript>
+            <p class="panel__note">{{ 'settings.engines.note'|trans }}</p>
+            {% if not report.mistralKeySet %}
+                <p class="panel__note">{{ 'settings.engines.needs_key'|trans }}</p>
+            {% endif %}
+        </form>
     </section>
 
     <section class="panel" id="mcp" aria-labelledby="mcp-title">
