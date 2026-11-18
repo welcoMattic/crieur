@@ -16,8 +16,8 @@ use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\Routing\Attribute\Route;
 
 /**
- * The setup page: voice engine and speech editor, AI assistants over MCP, the bookmarklet and
- * the private podcast feed.
+ * The setup page: voice engine and speech editor, AI assistants over MCP, the browser extension,
+ * the bookmarklet and the private podcast feed.
  */
 final class SettingsController extends AbstractController
 {
@@ -27,11 +27,14 @@ final class SettingsController extends AbstractController
         FeedToken $feedToken,
         #[Autowire(param: 'kernel.project_dir')]
         string $projectDir,
+        #[Autowire(env: 'CRIEUR_API_TOKEN')]
+        string $apiToken,
     ): Response {
         return $this->render('settings/index.html.twig', [
             'report' => $inspector->inspect(),
             'feed_token' => $feedToken->value(),
             'console' => $projectDir.'/bin/console',
+            'api_token_set' => '' !== trim($apiToken),
         ]);
     }
 

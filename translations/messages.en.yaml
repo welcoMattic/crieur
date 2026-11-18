@@ -204,6 +204,15 @@ settings:
         list_library: "lists the latest articles with their status"
         get_article: "gives the details and the transcript of an article"
         example: "Then ask, for instance: “Read this article to me with Crieur: https://…”"
+    extension:
+        title: "Browser extension"
+        lede: "The extension reads the article in your browser, with your own access (subscriptions, logins), and sends its text here: Crieur never fetches the page."
+        server: "Server address for the extension"
+        token: "API token (CRIEUR_API_TOKEN)"
+        token_set: "Set (never shown): the extension needs it in its options"
+        token_unset: "Not set: any extension can add articles. Set it before you open Crieur to the internet."
+        install: "Chrome and Firefox. Build it with “npm run build” in the extension folder, then load dist/chrome or dist/firefox as an unpacked extension."
+        private: "The texts it sends stay in your library: anyone who can open this Crieur can read their transcripts."
     bookmarklet:
         title: "Bookmarklet"
         lede: "On any article, one click sends the page to Crieur, which opens it and starts reading."

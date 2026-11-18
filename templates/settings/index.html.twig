@@ -36,6 +36,7 @@
     <nav class="toc" aria-label="{{ 'settings.toc'|trans }}">
         <a href="#voice">{{ 'settings.voice.title'|trans }}</a>
         <a href="#mcp">{{ 'settings.mcp.title'|trans }}</a>
+        <a href="#extension">{{ 'settings.extension.title'|trans }}</a>
         <a href="#bookmarklet">{{ 'settings.bookmarklet.title'|trans }}</a>
         <a href="#podcast">{{ 'settings.podcast.title'|trans }}</a>
     </nav>
@@ -165,6 +166,29 @@
             <li><code>get_article</code><span>{{ 'settings.mcp.get_article'|trans }}</span></li>
         </ul>
         <p class="panel__note">{{ 'settings.mcp.example'|trans }}</p>
+    </section>
+
+    <section class="panel" id="extension" aria-labelledby="extension-title">
+        <h2 class="panel__title" id="extension-title">{{ icon('link') }}{{ 'settings.extension.title'|trans }}</h2>
+        <p class="panel__lede">{{ 'settings.extension.lede'|trans }}</p>
+
+        <h3 class="panel__subtitle">{{ 'settings.extension.server'|trans }}</h3>
+        {{ ui.code_block(app.request.schemeAndHttpHost ~ app.request.basePath, 'settings.extension.server'|trans, null) }}
+
+        <dl class="facts">
+            <div>
+                <dt>{{ 'settings.extension.token'|trans }}</dt>
+                <dd>
+                    {% if api_token_set %}
+                        <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'settings.extension.token_set'|trans }}</span></span>
+                    {% else %}
+                        <span class="status status--queued">{{ icon('clock') }}<span>{{ 'settings.extension.token_unset'|trans }}</span></span>
+                    {% endif %}
+                </dd>
+            </div>
+        </dl>
+        <p class="panel__note">{{ 'settings.extension.install'|trans }}</p>
+        <p class="panel__note">{{ 'settings.extension.private'|trans }}</p>
     </section>
 
     <section class="panel" id="bookmarklet" aria-labelledby="bookmarklet-title">

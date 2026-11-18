@@ -204,6 +204,15 @@ settings:
         list_library: "liste les derniers articles avec leur état"
         get_article: "donne le détail et la transcription d’un article"
         example: "Demandez ensuite, par exemple : « Lis-moi cet article avec Crieur : https://… »"
+    extension:
+        title: "Extension de navigateur"
+        lede: "L’extension lit l’article dans votre navigateur, avec vos propres accès (abonnements, connexions), et envoie son texte ici : Crieur ne télécharge jamais la page."
+        server: "Adresse du serveur pour l’extension"
+        token: "Jeton d’API (CRIEUR_API_TOKEN)"
+        token_set: "Défini (jamais affiché) : l’extension en a besoin dans ses options"
+        token_unset: "Non défini : n’importe quelle extension peut ajouter des articles. Définissez-le avant d’ouvrir Crieur sur internet."
+        install: "Chrome et Firefox. Construisez-la avec « npm run build » dans le dossier extension, puis chargez dist/chrome ou dist/firefox comme extension non empaquetée."
+        private: "Les textes envoyés restent dans votre bibliothèque : quiconque peut ouvrir ce Crieur peut lire leurs transcriptions."
     bookmarklet:
         title: "Favori"
         lede: "Sur n’importe quel article, un clic envoie la page à Crieur, qui l’ouvre et commence la lecture."
