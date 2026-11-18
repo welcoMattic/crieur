@@ -1,0 +1,16 @@
+{
+  "name": "crieur-extension",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Browser extension of Crieur: reads the article of the current page in the browser and sends it to your Crieur server.",
+  "license": "MIT",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "lint": "npx --yes web-ext@10.8.0 lint --source-dir dist/firefox",
+    "e2e": "node build.mjs --e2e && node tests/e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1"
+  }
+}

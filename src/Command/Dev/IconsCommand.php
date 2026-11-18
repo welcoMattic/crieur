@@ -17,7 +17,7 @@ use Symfony\Component\Filesystem\Filesystem;
  * the system (New York on macOS, else Georgia or DejaVu Serif).
  */
 #[When(env: 'dev')]
-#[AsCommand(name: 'app:dev:icons', description: 'Generates the favicon, app icons and podcast cover from the SVG mark')]
+#[AsCommand(name: 'app:dev:icons', description: 'Generates the favicon, app icons, podcast cover and browser extension icons from the SVG mark')]
 final readonly class IconsCommand
 {
     private const array SERIF_FONTS = [
@@ -69,8 +69,23 @@ final readonly class IconsCommand
 
         $filesystem->dumpFile($public.'/images/podcast-cover.png', $this->cover()->getImageBlob());
         $written[] = 'images/podcast-cover.png';
+        $written = array_map(static fn (string $path): string => 'public/'.$path, $written);
 
-        $io->listing(array_map(static fn (string $path): string => 'public/'.$path, $written));
+        // The browser extension: toolbar and manifest icons, and the store icon (96 px of artwork
+        // centred in 128 px, as the Chrome Web Store asks).
+        $extension = $this->projectDir.'/extension';
+        foreach ([16 => BrandMark::svg('tiny', grid: 16), 32 => $favicon, 48 => BrandMark::svg('medium', grid: 48), 128 => $icon] as $size => $svg) {
+            $filesystem->dumpFile(\sprintf('%s/src/icons/icon-%d.png', $extension, $size), $this->rasterize($svg, $size)->getImageBlob());
+            $written[] = \sprintf('extension/src/icons/icon-%d.png', $size);
+        }
+        $store = new \Imagick();
+        $store->newImage(128, 128, new \ImagickPixel('transparent'), 'png');
+        $store->compositeImage($this->rasterize($icon, 96), \Imagick::COMPOSITE_OVER, 16, 16);
+        $store->setImageDepth(8);
+        $filesystem->dumpFile($extension.'/store/icon-store-128.png', $store->getImageBlob());
+        $written[] = 'extension/store/icon-store-128.png';
+
+        $io->listing($written);
         $io->success('Icons written.');
 
         return 0;

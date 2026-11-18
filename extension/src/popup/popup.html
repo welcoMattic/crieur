@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crieur</title>
+<link rel="stylesheet" href="../lib/ui.css">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+<main class="popup">
+    <header class="popup__head">
+        <div class="brand"><svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="115.2" fill="#1f4f99"/><g fill="#fff"><rect x="80" y="192" width="64" height="128" rx="8"/><rect x="176" y="112" width="64" height="288" rx="8"/><rect x="272" y="64" width="64" height="384" rx="8"/><rect x="368" y="144" width="64" height="224" rx="8"/></g></svg><span>Crieur</span></div>
+        <a href="#" id="open-options" class="popup__options" data-i18n="popupOptions">Options</a>
+    </header>
+
+    <section class="page" aria-live="polite">
+        <p class="page__title" id="page-title">…</p>
+        <p class="page__host muted" id="page-host"></p>
+    </section>
+
+    <form id="send" class="popup__form">
+        <fieldset class="segmented">
+            <legend data-i18n="voice">Voice</legend>
+            <div class="options">
+                <label><input type="radio" name="voice" value="female" checked><span data-i18n="voiceFemale">Female</span></label>
+                <label><input type="radio" name="voice" value="male"><span data-i18n="voiceMale">Male</span></label>
+            </div>
+        </fieldset>
+        <fieldset class="segmented">
+            <legend data-i18n="language">Language</legend>
+            <div class="options">
+                <label><input type="radio" name="language" value="auto" checked><span data-i18n="languageAuto">Auto</span></label>
+                <label><input type="radio" name="language" value="fr"><span>FR</span></label>
+                <label><input type="radio" name="language" value="en"><span>EN</span></label>
+            </div>
+        </fieldset>
+        <button type="submit" class="button button--primary" id="send-button">
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M8 5.5v13L18.5 12z" fill="currentColor"/></svg>
+            <span id="send-label" data-i18n="popupRead">Read aloud</span>
+        </button>
+    </form>
+
+    <div id="result" hidden></div>
+
+    <footer class="popup__foot muted"><span data-i18n="popupServer">Server</span> <span id="server-host"></span></footer>
+</main>
+<script src="../lib/shared.js"></script>
+<script src="../lib/ui.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>

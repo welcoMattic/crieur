@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Crieur promo tile</title>
+<style>
+    /* The small promo tile of the Chrome Web Store: 440 x 280, no transparency, few words. */
+    html, body { margin: 0; width: 440px; height: 280px; overflow: hidden; }
+    body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 18px;
+        padding: 0 36px;
+        box-sizing: border-box;
+        background: #f6f5f1;
+        color: #1a1c20;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand svg { width: 64px; height: 64px; filter: drop-shadow(0 6px 16px rgb(31 79 153 / 0.25)); }
+    .brand span { font: 600 40px/1 ui-serif, "New York", Georgia, serif; letter-spacing: -0.01em; }
+    p { margin: 0; font: 400 25px/1.25 ui-serif, "New York", Georgia, serif; color: #565b65; }
+    p b { color: #1f4f99; font-weight: 600; }
+</style>
+</head>
+<body>
+    <div class="brand">
+        <svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="115.2" fill="#1f4f99"/><g fill="#fff"><rect x="80" y="192" width="64" height="128" rx="8"/><rect x="176" y="112" width="64" height="288" rx="8"/><rect x="272" y="64" width="64" height="384" rx="8"/><rect x="368" y="144" width="64" height="224" rx="8"/></g></svg>
+        <span>Crieur</span>
+    </div>
+    <p>Listen to the article <b>you are reading</b>.</p>
+</body>
+</html>

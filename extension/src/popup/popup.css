@@ -1,0 +1,13 @@
+body { width: 340px; }
+.popup { display: flex; flex-direction: column; gap: 14px; padding: 16px; }
+.popup__head { display: flex; align-items: center; justify-content: space-between; }
+.popup__options { font-size: 13px; font-weight: 500; text-decoration: none; }
+.page { padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.page__title { margin: 0; font: 600 15px/1.35 var(--font-serif); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.page__host { margin: 4px 0 0; font-size: 12px; }
+.popup__form { display: flex; flex-direction: column; gap: 10px; }
+.popup__form .button { width: 100%; margin-top: 2px; }
+#result { display: flex; flex-direction: column; gap: 10px; }
+#result .button { width: 100%; }
+.popup__foot { font-size: 12px; overflow-wrap: anywhere; }
+.popup__foot span:last-child { font-family: var(--font-mono); }

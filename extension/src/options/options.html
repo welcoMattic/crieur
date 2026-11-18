@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crieur</title>
+<link rel="stylesheet" href="../lib/ui.css">
+<link rel="stylesheet" href="options.css">
+</head>
+<body>
+<main class="options-page">
+    <header class="brand"><svg viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="115.2" fill="#1f4f99"/><g fill="#fff"><rect x="80" y="192" width="64" height="128" rx="8"/><rect x="176" y="112" width="64" height="288" rx="8"/><rect x="272" y="64" width="64" height="384" rx="8"/><rect x="368" y="144" width="64" height="224" rx="8"/></g></svg><span>Crieur</span></header>
+    <h1 data-i18n="optionsTitle">Connect to your Crieur</h1>
+    <p class="lede" data-i18n="optionsLede">Crieur reads the article of the page you are viewing and sends it to your own Crieur server, which reads it aloud.</p>
+
+    <form id="options" class="card">
+        <div class="field">
+            <label for="server" data-i18n="optionsServer">Crieur server address</label>
+            <input id="server" name="server" type="url" required autocomplete="url" spellcheck="false" placeholder="http://127.0.0.1:8000">
+            <p class="hint muted" data-i18n="optionsServerHint">The address you open Crieur with. The browser asks once for the right to reach it.</p>
+        </div>
+        <div class="field">
+            <label for="token" data-i18n="optionsToken">API token (if the server has one)</label>
+            <input id="token" name="token" type="password" autocomplete="off" spellcheck="false">
+            <p class="hint muted" data-i18n="optionsTokenHint">The value of CRIEUR_API_TOKEN on the server. Kept in this browser only.</p>
+        </div>
+        <div class="row">
+            <button type="submit" class="button button--primary" data-i18n="optionsSave">Save and test</button>
+        </div>
+        <div id="status" aria-live="polite"></div>
+    </form>
+
+    <section class="card privacy">
+        <h2 data-i18n="optionsPrivacyTitle">What the extension does with your pages</h2>
+        <p data-i18n="optionsPrivacy1">It reads a page only when you ask it to: the toolbar button, its keyboard shortcut or the menu of the page.</p>
+        <p data-i18n="optionsPrivacy2">It sends the article and its address to the server above, and nowhere else. No cookie, no browsing history, no analytics.</p>
+        <p data-i18n="optionsPrivacy3">It reads what your browser already shows you: it never gets around a login or a subscription.</p>
+    </section>
+</main>
+<script src="../lib/shared.js"></script>
+<script src="../lib/ui.js"></script>
+<script src="options.js"></script>
+</body>
+</html>

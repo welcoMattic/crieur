@@ -1,0 +1,142 @@
+{
+  "extName": {
+    "message": "Crieur: listen to this article"
+  },
+  "extDescription": {
+    "message": "Listen to the article you are reading, with your own Crieur. It reads the page your browser shows you, including your subscriptions."
+  },
+  "actionTitle": {
+    "message": "Listen to this article with Crieur"
+  },
+  "commandRead": {
+    "message": "Open Crieur on this page"
+  },
+  "menuRead": {
+    "message": "Listen to this article with Crieur"
+  },
+  "voice": {
+    "message": "Voice"
+  },
+  "voiceFemale": {
+    "message": "Female"
+  },
+  "voiceMale": {
+    "message": "Male"
+  },
+  "language": {
+    "message": "Language"
+  },
+  "languageAuto": {
+    "message": "Auto"
+  },
+  "popupRead": {
+    "message": "Read aloud"
+  },
+  "popupReading": {
+    "message": "Reading the page…"
+  },
+  "popupOptions": {
+    "message": "Options"
+  },
+  "popupServer": {
+    "message": "Server:"
+  },
+  "popupNoServer": {
+    "message": "not set"
+  },
+  "popupNoTitle": {
+    "message": "Untitled page"
+  },
+  "popupSent": {
+    "message": "Sent to Crieur"
+  },
+  "popupOpen": {
+    "message": "Open in Crieur"
+  },
+  "errorSetup": {
+    "message": "Set the address of your Crieur server first."
+  },
+  "errorPermission": {
+    "message": "The extension needs the right to reach your Crieur server: save the options again and accept."
+  },
+  "errorPage": {
+    "message": "The browser does not let extensions read this page (browser, store or PDF page)."
+  },
+  "errorNoArticle": {
+    "message": "No article found on this page."
+  },
+  "errorNoText": {
+    "message": "Too little text to read aloud."
+  },
+  "errorLanguage": {
+    "message": "Crieur reads French and English only."
+  },
+  "errorTooLong": {
+    "message": "This page is too long to send."
+  },
+  "errorToken": {
+    "message": "Your Crieur server refused the API token: check it in the options."
+  },
+  "errorRefused": {
+    "message": "Your Crieur server refused the request."
+  },
+  "errorUnreachable": {
+    "message": "Your Crieur server cannot be reached: is it running at this address?"
+  },
+  "errorServer": {
+    "message": "Your Crieur server could not take the article."
+  },
+  "optionsTitle": {
+    "message": "Connect to your Crieur"
+  },
+  "optionsLede": {
+    "message": "Crieur reads the article of the page you are viewing and sends it to your own Crieur server, which reads it aloud."
+  },
+  "optionsServer": {
+    "message": "Crieur server address"
+  },
+  "optionsServerHint": {
+    "message": "The address you open Crieur with. The browser asks once for the right to reach it."
+  },
+  "optionsToken": {
+    "message": "API token (if the server has one)"
+  },
+  "optionsTokenHint": {
+    "message": "The value of CRIEUR_API_TOKEN on the server. Kept in this browser only."
+  },
+  "optionsSave": {
+    "message": "Save and test"
+  },
+  "optionsInvalidServer": {
+    "message": "Enter an http or https address, for instance http://127.0.0.1:8000."
+  },
+  "optionsConnected": {
+    "message": "Connected to Crieur."
+  },
+  "optionsConnectedDetail": {
+    "message": " Voice: $ENGINE$, speech editor: $EDITOR$.",
+    "placeholders": {
+      "engine": {
+        "content": "$1"
+      },
+      "editor": {
+        "content": "$2"
+      }
+    }
+  },
+  "optionsRules": {
+    "message": "rules only"
+  },
+  "optionsPrivacyTitle": {
+    "message": "What the extension does with your pages"
+  },
+  "optionsPrivacy1": {
+    "message": "It reads a page only when you ask it to: the toolbar button, its keyboard shortcut or the menu of the page."
+  },
+  "optionsPrivacy2": {
+    "message": "It sends the article and its address to the server above, and nowhere else. No cookie, no browsing history, no analytics."
+  },
+  "optionsPrivacy3": {
+    "message": "It reads what your browser already shows you: it never gets around a login or a subscription."
+  }
+}

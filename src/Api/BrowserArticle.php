@@ -7,7 +7,7 @@ namespace App\Api;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * An article the browser extension extracted with Readability, from the page the reader sees.
+ * An article the browser extension extracted with Defuddle, from the page the reader sees.
  */
 final readonly class BrowserArticle
 {
@@ -21,7 +21,7 @@ final readonly class BrowserArticle
         #[Assert\NotBlank]
         #[Assert\Length(max: 512)]
         public string $title,
-        /** The HTML of the readable content, as Readability returns it. */
+        /** The HTML of the readable content, as Defuddle returns it. */
         #[Assert\NotBlank]
         #[Assert\Length(max: self::MAX_CONTENT)]
         public string $content,

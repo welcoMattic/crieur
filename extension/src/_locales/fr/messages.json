@@ -1,0 +1,142 @@
+{
+  "extName": {
+    "message": "Crieur : écouter cet article"
+  },
+  "extDescription": {
+    "message": "Écoutez l’article que vous lisez, avec votre Crieur. Il lit la page que votre navigateur vous montre, abonnements compris."
+  },
+  "actionTitle": {
+    "message": "Écouter cet article avec Crieur"
+  },
+  "commandRead": {
+    "message": "Ouvrir Crieur sur cette page"
+  },
+  "menuRead": {
+    "message": "Écouter cet article avec Crieur"
+  },
+  "voice": {
+    "message": "Voix"
+  },
+  "voiceFemale": {
+    "message": "Féminine"
+  },
+  "voiceMale": {
+    "message": "Masculine"
+  },
+  "language": {
+    "message": "Langue"
+  },
+  "languageAuto": {
+    "message": "Auto"
+  },
+  "popupRead": {
+    "message": "Lire à voix haute"
+  },
+  "popupReading": {
+    "message": "Lecture de la page…"
+  },
+  "popupOptions": {
+    "message": "Options"
+  },
+  "popupServer": {
+    "message": "Serveur :"
+  },
+  "popupNoServer": {
+    "message": "non défini"
+  },
+  "popupNoTitle": {
+    "message": "Page sans titre"
+  },
+  "popupSent": {
+    "message": "Envoyé à Crieur"
+  },
+  "popupOpen": {
+    "message": "Ouvrir dans Crieur"
+  },
+  "errorSetup": {
+    "message": "Indiquez d’abord l’adresse de votre serveur Crieur."
+  },
+  "errorPermission": {
+    "message": "L’extension a besoin du droit de joindre votre serveur Crieur : enregistrez de nouveau les options et acceptez."
+  },
+  "errorPage": {
+    "message": "Le navigateur ne laisse pas les extensions lire cette page (page du navigateur, d’une boutique ou PDF)."
+  },
+  "errorNoArticle": {
+    "message": "Aucun article trouvé sur cette page."
+  },
+  "errorNoText": {
+    "message": "Trop peu de texte à lire à voix haute."
+  },
+  "errorLanguage": {
+    "message": "Crieur ne lit que le français et l’anglais."
+  },
+  "errorTooLong": {
+    "message": "Cette page est trop longue pour être envoyée."
+  },
+  "errorToken": {
+    "message": "Votre serveur Crieur refuse le jeton d’API : vérifiez-le dans les options."
+  },
+  "errorRefused": {
+    "message": "Votre serveur Crieur a refusé la demande."
+  },
+  "errorUnreachable": {
+    "message": "Votre serveur Crieur est injoignable : tourne-t-il à cette adresse ?"
+  },
+  "errorServer": {
+    "message": "Votre serveur Crieur n’a pas pu prendre l’article."
+  },
+  "optionsTitle": {
+    "message": "Relier l’extension à votre Crieur"
+  },
+  "optionsLede": {
+    "message": "Crieur lit l’article de la page que vous consultez et l’envoie à votre propre serveur Crieur, qui le lit à voix haute."
+  },
+  "optionsServer": {
+    "message": "Adresse du serveur Crieur"
+  },
+  "optionsServerHint": {
+    "message": "L’adresse avec laquelle vous ouvrez Crieur. Le navigateur demande une fois le droit de la joindre."
+  },
+  "optionsToken": {
+    "message": "Jeton d’API (si le serveur en a un)"
+  },
+  "optionsTokenHint": {
+    "message": "La valeur de CRIEUR_API_TOKEN sur le serveur. Gardée dans ce navigateur seulement."
+  },
+  "optionsSave": {
+    "message": "Enregistrer et tester"
+  },
+  "optionsInvalidServer": {
+    "message": "Indiquez une adresse http ou https, par exemple http://127.0.0.1:8000."
+  },
+  "optionsConnected": {
+    "message": "Relié à Crieur."
+  },
+  "optionsConnectedDetail": {
+    "message": " Voix : $ENGINE$, éditeur vocal : $EDITOR$.",
+    "placeholders": {
+      "engine": {
+        "content": "$1"
+      },
+      "editor": {
+        "content": "$2"
+      }
+    }
+  },
+  "optionsRules": {
+    "message": "règles seules"
+  },
+  "optionsPrivacyTitle": {
+    "message": "Ce que l’extension fait de vos pages"
+  },
+  "optionsPrivacy1": {
+    "message": "Elle ne lit une page que lorsque vous le demandez : le bouton de la barre d’outils, son raccourci clavier ou le menu de la page."
+  },
+  "optionsPrivacy2": {
+    "message": "Elle envoie l’article et son adresse au serveur ci-dessus, et nulle part ailleurs. Aucun cookie, aucun historique, aucune mesure d’audience."
+  },
+  "optionsPrivacy3": {
+    "message": "Elle lit ce que votre navigateur vous montre déjà : elle ne contourne jamais une connexion ni un abonnement."
+  }
+}

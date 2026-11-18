@@ -26,6 +26,7 @@ Tags: **MCP** (server), **Text-to-speech**, **Structured output**, **Local AI**.
 - **Read-along player.** The sentence being read is highlighted. Speed from 0.75x to 2x without pitch change, female or male voice, French or English, previous and next paragraph, media keys, keyboard shortcuts, position remembered per article.
 - **Your AI assistant can hand you articles.** The MCP server exposes `read_aloud`, `list_library` and `get_article`: ask Claude to find three good articles on a topic and send them to Crieur, then listen on your way home.
 - **A private podcast.** Every finished article becomes an episode of a private RSS feed (AAC with ffmpeg, WAV otherwise) for any podcast app on your network.
+- **Browser extension (Chrome, Firefox).** It extracts the article in your browser with [Defuddle](https://github.com/kepano/defuddle), as the page shows it to you: the articles of your subscriptions are read with your own access, and Crieur never fetches the page. See [extension/](extension/README.md).
 - **Bookmarklet and CLI.** One click from any page, or `php bin/console crieur:read <url> --wait`.
 
 ## How Symfony AI is used
@@ -122,6 +123,7 @@ All settings are environment variables (`.env`, override in `.env.local`):
 | `OLLAMA_HOST_URL` | `http://127.0.0.1:11434` | Where Ollama listens. |
 | `MISTRAL_API_KEY` | empty | Needed for Voxtral and the Mistral speech editor only. |
 | `CRIEUR_AUDIO_DIR` | `var/audio` | Where the synthesized chunks and episodes are stored (content-addressed: a sentence read by a voice is synthesized once). |
+| `CRIEUR_API_TOKEN` | empty | Token the browser extension must send (`Authorization: Bearer`). Set it as soon as Crieur is reachable by others: without it, any extension can add articles. |
 | `CRIEUR_ALLOW_PRIVATE_NETWORKS` | `0` | Pages on private networks (localhost, 10.0.0.0/8...) are refused unless set to `1`: a URL can come from an AI assistant. |
 
 ## Architecture
@@ -130,6 +132,7 @@ All settings are environment variables (`.env`, override in `.env.local`):
 flowchart LR
     U[Web UI, bookmarklet, CLI] --> Q[ArticleQueue]
     M[MCP client] -->|read_aloud| Q
+    B[Browser extension: Defuddle in the page] -->|POST /api/articles| T
     Q -->|ExtractArticle| X[Extract worker]
     X -->|readability.php| T[Text rules: blocks, language, sentences, chunks]
     T -->|EditArticle| E[Editor worker: Agent + structured output, Mistral or Ollama]
@@ -143,6 +146,7 @@ flowchart LR
     A --> F[Podcast feed]
 ```
 
+- `src/Api` and `src/Controller/ApiController.php`: the API of the browser extension, which sends the article it extracted (no fetch on the server).
 - `src/Extraction`: HTTP fetch (Symfony HttpClient, private networks refused by default) and [readability.php](https://github.com/fivefilters/readability.php).
 - `src/Text`: deterministic preparation ported from the macOS app: blocks, French and English detection, ICU sentence breaking, number normalization, chunking (120 characters for the first chunk, then 300 in French and 400 in English).
 - `src/Editor`: the speech editor and its faithfulness check.
@@ -156,18 +160,19 @@ flowchart LR
 php bin/phpunit                    # the whole suite, no model needed
 vendor/bin/phpstan analyse         # level 8
 php bin/console crieur:voices:sample var/samples   # the same sentences read by every voice, to compare by ear
+cd extension && npm ci && npm test && npm run e2e  # the browser extension (Chromium headless, muted)
 ```
 
 ## Limits
 
-- **Personal use.** There is no login: run it on your machine or behind your own authentication. The podcast feed address carries a secret derived from `APP_SECRET`.
+- **Personal use.** There is no login: run it on your machine or behind your own authentication. The podcast feed address carries a secret derived from `APP_SECRET`. Articles sent by the browser extension come from your subscriptions: anyone who can open your Crieur can read their transcripts.
 - **Licenses of the voices.** The Phonon 40m models are CC BY-NC 4.0: personal and non-commercial use only. Voxtral follows the terms of Mistral AI.
 - **Phonon through Ollama** needs an Apple Silicon Mac today; elsewhere use the cloud stack.
 - **What the voice cannot show:** images, charts, code blocks and tables are skipped.
 
 ## Credits
 
-Built by Mathieu Santostefano for the Symfony AI & MCP Hackathon 2026, with [Symfony AI](https://github.com/symfony/ai), the [PHP MCP SDK](https://github.com/modelcontextprotocol/php-sdk), [readability.php](https://github.com/fivefilters/readability.php), [Phonon](https://gradium.ai/phonon) by Gradium, and Voxtral and Ministral by Mistral AI.
+Built by Mathieu Santostefano for the Symfony AI & MCP Hackathon 2026, with [Symfony AI](https://github.com/symfony/ai), the [PHP MCP SDK](https://github.com/modelcontextprotocol/php-sdk), [readability.php](https://github.com/fivefilters/readability.php), [Defuddle](https://github.com/kepano/defuddle) by Steph Ango (in the browser extension), [Phonon](https://gradium.ai/phonon) by Gradium, and Voxtral and Ministral by Mistral AI.
 
 ## License
 
