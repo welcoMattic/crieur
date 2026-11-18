@@ -4,7 +4,7 @@
 
 Crieur (French for *town crier*) started as a macOS menu bar app. This is its web version, rebuilt on **Symfony 8.1 and Symfony AI 1.0**, for the [Symfony AI & MCP Hackathon](https://symfony.com/hackathon). It runs **entirely on your machine** with [Ollama](https://ollama.com) (Phonon voices by Gradium, Ministral as speech editor), or in the cloud with a single [Mistral AI](https://mistral.ai) key (Voxtral voices, Mistral Small as speech editor).
 
-> Demo video (86 s): _link to come_. Live demo: <https://crieur.cleverapps.io> (Phonon on the server, the library starts again empty at each restart).
+> Demo video (81 s): _link to come_. Live demo: <https://crieur.cleverapps.io> (Phonon on the server, the library starts again empty at each restart).
 
 <p align="center">
   <picture>
