@@ -225,6 +225,10 @@ class Player extends EventTarget {
         if (this.index >= segments.length && segments.length > 0 && !data.inProgress) {
             this.index = 0;
         }
+        if (segments[this.index]?.removed && previous && !previous.segments[this.index]?.removed) {
+            // The listener just left out the chunk being read (or the one paused on): on to the next.
+            this.skipRemoved();
+        }
 
         if (data.status === 'failed' && !data.playable) {
             this.halt();
@@ -562,6 +566,19 @@ class Player extends EventTarget {
             refresh(this.statusUrl(this.id));
         }
         this.emit();
+    }
+
+    skipRemoved() {
+        const playing = ['playing', 'buffering'].includes(this.state);
+        this.halt();
+        const next = this.nextRead(this.index);
+        this.index = next === -1 ? this.article.segments.length : next;
+        if (playing) {
+            this.toBuffering();
+        } else if (this.state === 'paused') {
+            // Resume starts the next chunk, not the rest of the removed one.
+            this.savePosition();
+        }
     }
 
     /** The first chunk from this index that the listener did not remove, or -1. */
