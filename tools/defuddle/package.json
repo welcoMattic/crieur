@@ -1,0 +1,10 @@
+{
+  "name": "crieur-defuddle",
+  "private": true,
+  "description": "The article extractor of Crieur: Defuddle, the same release as the browser extension, compiled by build.sh into build/defuddle.",
+  "license": "MIT",
+  "dependencies": {
+    "defuddle": "0.19.6",
+    "linkedom": "0.18.13"
+  }
+}

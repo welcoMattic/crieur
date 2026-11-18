@@ -10,6 +10,7 @@ use App\Entity\Article;
 use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
 use App\Extraction\ExtractedArticle;
+use App\Extraction\TitleCleaner;
 use App\Extraction\ExtractionFailed;
 use App\Library\ArticleQueue;
 use App\Library\InvalidArticleUrl;
@@ -72,7 +73,7 @@ final class ApiController extends AbstractController
 
         $page = new ExtractedArticle(
             url: $payload->url,
-            title: trim($payload->title),
+            title: TitleCleaner::clean($payload->title, self::clean($payload->siteName), $payload->url),
             html: $payload->content,
             siteName: self::clean($payload->siteName),
             author: self::clean($payload->byline),

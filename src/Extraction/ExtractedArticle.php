@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Extraction;
 
 /**
- * The main content of a web page and its metadata, as readability found them.
+ * The main content of a web page and its metadata, as Defuddle found them.
  */
 final readonly class ExtractedArticle
 {

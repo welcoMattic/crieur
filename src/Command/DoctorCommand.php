@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Editor\EditorUnavailable;
 use App\Editor\SpeechEditor;
 use App\Enum\VoiceGender;
+use App\Extraction\ArticleExtractor;
 use App\Speech\PhononServers;
 use App\Speech\SpeechSynthesizer;
 use App\Speech\VoiceCatalog;
@@ -29,6 +30,7 @@ final readonly class DoctorCommand
         private SpeechEditor $editor,
         private Connection $connection,
         private HttpClientInterface $httpClient,
+        private ArticleExtractor $extractor,
         #[Autowire(env: 'OLLAMA_HOST_URL')]
         private string $ollamaUrl,
         #[Autowire(env: 'MISTRAL_API_KEY')]
@@ -56,6 +58,9 @@ final readonly class DoctorCommand
         } catch (\Throwable) {
             $check('Database', false, 'The schema is missing.', 'Run: php bin/console doctrine:migrations:migrate');
         }
+
+        $defuddle = $this->extractor->defuddleVersion();
+        $check('Article extractor', null !== $defuddle, null !== $defuddle ? 'Defuddle '.$defuddle : 'Defuddle is not built.', 'Run: tools/defuddle/build.sh (Bun 1.3.2)');
 
         $engine = $this->voices->defaultEngine();
         $check('Voice engine', true, \sprintf('%s (%s)', $engine->name, $engine->label));

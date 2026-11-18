@@ -7,7 +7,7 @@ namespace App\Tests\Text;
 use App\Text\Block;
 use App\Text\BlockKind;
 use App\Text\HtmlBlockExtractor;
-use fivefilters\Readability\Readability;
+use Symfony\Component\Process\Process;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
@@ -168,7 +168,7 @@ final class HtmlBlockExtractorTest extends TestCase
     }
 
     /**
-     * The cases of MarkdownCleanerTests.swift, written as the HTML readability returns.
+     * The cases of MarkdownCleanerTests.swift, written as the HTML an extractor returns.
      *
      * @return iterable<string, array{string, string}>
      */
@@ -229,12 +229,13 @@ final class HtmlBlockExtractorTest extends TestCase
     }
 
     #[Test]
-    public function readabilityOutputOfTheFixturePages(): void
+    public function defuddleOutputOfTheFixturePages(): void
     {
-        $french = $this->extractor->extract(self::readability('article-fr.html'));
+        $french = $this->extractor->extract(self::defuddle('article-fr.html'));
         self::assertSame(
             'À Lyon, les jardins partagés se multiplient. En cinq ans, leur nombre a presque doublé. Reportage dans trois parcelles où les habitants cultivent ensemble des légumes, des fleurs et, surtout, des liens.',
-            $french[1]->text,
+            // Defuddle leaves out the title and the author line: the article starts with its lede.
+            $french[0]->text,
         );
         self::assertSame(
             ['Un mouvement qui s’accélère', 'Des règles simples et un compost commun', 'Un lieu d’apprentissage pour les enfants'],
@@ -245,16 +246,16 @@ final class HtmlBlockExtractorTest extends TestCase
             self::assertStringNotContainsString('accueille quarante-trois adhérents', $block->text);
         }
 
-        $english = $this->extractor->extract(self::readability('article-en.html'));
-        self::assertSame(BlockKind::Heading, $english[4]->kind);
-        self::assertSame('Hot water holds less oxygen', $english[4]->text);
+        $english = $this->extractor->extract(self::defuddle('article-en.html'));
+        self::assertSame(BlockKind::Heading, $english[3]->kind);
+        self::assertSame('Hot water holds less oxygen', $english[3]->text);
         foreach ($english as $block) {
             self::assertStringNotContainsString('Cape Perpetua', $block->text);
         }
     }
 
     #[Test]
-    public function pageFurnitureKeptByReadabilityIsNotRead(): void
+    public function pageFurnitureKeptByAnExtractorIsNotRead(): void
     {
         $blocks = $this->extractor->extract(<<<'HTML'
             <div class="hatnote" role="note">"Crier" redirects here. For the surname, see Crier (surname).</div>
@@ -270,11 +271,20 @@ final class HtmlBlockExtractorTest extends TestCase
         ], $blocks);
     }
 
-    private static function readability(string $page): string
+    /**
+     * The article of a fixture page, as the Defuddle binary of tools/defuddle extracts it.
+     */
+    private static function defuddle(string $page): string
     {
-        $content = (new Readability(fixRelativeURLs: true, originalURL: 'https://example.org/a'))->parse(TextFixtures::page($page))->content;
-        self::assertNotNull($content);
+        $binary = \dirname(__DIR__, 2).'/tools/defuddle/build/defuddle';
+        self::assertFileExists($binary, 'Build the extractor first: tools/defuddle/build.sh');
+        $process = new Process([$binary, 'https://example.org/a']);
+        $process->setInput(TextFixtures::page($page));
+        $process->mustRun();
+        $article = json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($article);
+        self::assertIsString($article['content'] ?? null);
 
-        return $content;
+        return $article['content'];
     }
 }

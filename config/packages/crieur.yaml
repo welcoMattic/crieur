@@ -3,6 +3,8 @@ parameters:
     crieur.voice_engine: '%env(CRIEUR_VOICE_ENGINE)%'
     crieur.editor: '%env(CRIEUR_EDITOR)%'
     crieur.allow_private_networks: '%env(bool:CRIEUR_ALLOW_PRIVATE_NETWORKS)%'
+    # The article extractor: Defuddle compiled into one binary by tools/defuddle/build.sh.
+    crieur.defuddle: '%env(resolve:CRIEUR_DEFUDDLE)%'
     crieur.audio_dir: '%env(resolve:CRIEUR_AUDIO_DIR)%'
     # How long the voice waits for the speech editor before reading the text of the rules.
     crieur.editor_wait_seconds: 2.5

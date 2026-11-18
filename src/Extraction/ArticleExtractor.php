@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 namespace App\Extraction;
 
-use fivefilters\Readability\ParseException;
 use App\Text\HtmlBlockExtractor;
-use fivefilters\Readability\Readability;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\NoPrivateNetworkHttpClient;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
+use Symfony\Component\Process\Exception\ProcessTimedOutException;
+use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
- * Fetches a web page and extracts its article with readability.php, a port of Mozilla Readability.
+ * Fetches a web page and extracts its article with Defuddle, the engine of Obsidian Web Clipper,
+ * the same release as the browser extension (tools/defuddle, compiled into one binary).
  *
  * Pages on private networks (localhost, 10.0.0.0/8, ...) are refused unless explicitly allowed:
  * the URL can come from an AI assistant over MCP, and the transcript goes back to it.
@@ -24,15 +25,36 @@ final readonly class ArticleExtractor
 {
     public const int TIMEOUT_SECONDS = 20;
     public const int MAX_BYTES = 8_000_000;
+    public const int EXTRACTION_SECONDS = 30;
 
     private HttpClientInterface $httpClient;
+
+    private string $defuddle;
 
     public function __construct(
         HttpClientInterface $httpClient,
         #[Autowire(param: 'crieur.allow_private_networks')]
         bool $allowPrivateNetworks = false,
+        #[Autowire(param: 'crieur.defuddle')]
+        ?string $defuddle = null,
     ) {
         $this->httpClient = $allowPrivateNetworks ? $httpClient : new NoPrivateNetworkHttpClient($httpClient);
+        $this->defuddle = $defuddle ?? \dirname(__DIR__, 2).'/tools/defuddle/build/defuddle';
+    }
+
+    /**
+     * The version of Defuddle, or null when its binary is missing or does not run.
+     */
+    public function defuddleVersion(): ?string
+    {
+        if (!is_file($this->defuddle) || !is_executable($this->defuddle)) {
+            return null;
+        }
+        $process = new Process([$this->defuddle, '--version']);
+        $process->setTimeout(10);
+        $process->run();
+
+        return $process->isSuccessful() ? trim($process->getOutput()) : null;
     }
 
     /**
@@ -41,29 +63,70 @@ final readonly class ArticleExtractor
     public function extract(string $url): ExtractedArticle
     {
         [$finalUrl, $html] = $this->fetch($url);
+        $article = $this->defuddle(self::withoutFurniture($html), $finalUrl);
 
-        try {
-            $article = (new Readability(fixRelativeURLs: true, originalURL: $finalUrl, classesToPreserve: HtmlBlockExtractor::BOILERPLATE_CLASSES))->parse(self::withoutFurniture($html));
-        } catch (ParseException $e) {
-            throw new ExtractionFailed(ExtractionFailed::NO_TEXT, $e->getMessage(), $e);
-        }
-
-        $content = $article->content;
-        if (!$article->hasContent() || null === $content) {
+        $content = \is_string($article['content'] ?? null) ? $article['content'] : '';
+        if ('' === trim(strip_tags($content))) {
             throw new ExtractionFailed(ExtractionFailed::NO_TEXT);
         }
+        $image = self::text($article, 'image');
+        $siteName = self::text($article, 'site');
+        $author = self::text($article, 'author');
 
         return new ExtractedArticle(
             url: $finalUrl,
-            title: self::clean($article->title) ?? '',
+            title: TitleCleaner::clean(self::text($article, 'title') ?? '', $siteName, $finalUrl),
             html: $content,
-            siteName: self::clean($article->siteName),
-            author: self::clean($article->byline),
-            excerpt: self::clean($article->excerpt),
-            imageUrl: null !== $article->image && preg_match('~^https?://~i', $article->image) ? $article->image : null,
-            languageHint: self::clean($article->lang) ?? self::documentLanguage($html),
-            publishedAt: self::date($article->publishedTime),
+            siteName: $siteName,
+            // Without a byline, Defuddle gives the name of the site as author.
+            author: null !== $author && $author !== $siteName ? $author : null,
+            excerpt: self::text($article, 'description'),
+            imageUrl: null !== $image && preg_match('~^https?://~i', $image) ? $image : null,
+            languageHint: self::text($article, 'language') ?? self::documentLanguage($html),
+            publishedAt: self::date(self::text($article, 'published')),
         );
+    }
+
+    /**
+     * @return array<string, mixed> the answer of Defuddle: title, content (HTML), site, author, ...
+     */
+    private function defuddle(string $html, string $url): array
+    {
+        if (!is_file($this->defuddle) || !is_executable($this->defuddle)) {
+            throw new ExtractionFailed(ExtractionFailed::EXTRACTOR, \sprintf('%s is missing: run tools/defuddle/build.sh', $this->defuddle));
+        }
+
+        $process = new Process([$this->defuddle, $url]);
+        $process->setInput($html);
+        $process->setTimeout(self::EXTRACTION_SECONDS);
+        try {
+            $process->run();
+        } catch (ProcessTimedOutException $e) {
+            throw new ExtractionFailed(ExtractionFailed::TIMEOUT, $e->getMessage(), $e);
+        }
+        if (!$process->isSuccessful()) {
+            throw new ExtractionFailed(ExtractionFailed::EXTRACTOR, trim($process->getErrorOutput()));
+        }
+
+        try {
+            $article = json_decode($process->getOutput(), true, flags: \JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new ExtractionFailed(ExtractionFailed::EXTRACTOR, $e->getMessage(), $e);
+        }
+        if (!\is_array($article) || isset($article['error'])) {
+            throw new ExtractionFailed(ExtractionFailed::NO_TEXT);
+        }
+
+        /** @var array<string, mixed> $article */
+        return $article;
+    }
+
+    /**
+     * @param array<string, mixed> $article
+     */
+    private static function text(array $article, string $key): ?string
+    {
+        return \is_string($article[$key] ?? null) ? self::clean($article[$key]) : null;
     }
 
     /**
@@ -115,11 +178,10 @@ final readonly class ArticleExtractor
     }
 
     /**
-     * Page furniture (hatnotes, infoboxes, edit links, reference marks) is removed before
-     * readability runs: readability turns some of it into plain paragraphs, without the classes
-     * that tell what it is.
+     * Page furniture (hatnotes, infoboxes, edit links, reference marks) is removed before Defuddle
+     * runs: some of it would come out as plain paragraphs, without the classes that tell what it is.
      */
-    private static function withoutFurniture(string $html): \Dom\HTMLDocument
+    private static function withoutFurniture(string $html): string
     {
         $document = \Dom\HTMLDocument::createFromString($html, \LIBXML_NOERROR, 'UTF-8');
         $selector = implode(', ', [...array_map(static fn (string $class): string => '.'.$class, HtmlBlockExtractor::BOILERPLATE_CLASSES), '[role="note"]']);
@@ -129,7 +191,7 @@ final readonly class ArticleExtractor
             }
         }
 
-        return $document;
+        return $document->saveHtml();
     }
 
     private static function toUtf8(string $html, string $contentType): string

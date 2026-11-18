@@ -6,6 +6,7 @@ extraction:
     network: "The site could not be reached."
     private_network: "Pages on a private network are not read, for safety."
     unsupported_language: "Crieur reads French and English only."
+    extractor: "The article extractor is not available: run tools/defuddle/build.sh."
 
 synthesis:
     engine_unavailable: "The voice engine is not available: check the settings."

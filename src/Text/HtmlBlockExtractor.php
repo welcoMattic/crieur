@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Text;
 
 /**
- * Turns the article HTML that readability returns into readable blocks (R-TX-1, R-TX-2):
+ * Turns the article HTML that Defuddle returns (on the server or in the browser extension) into readable blocks (R-TX-1, R-TX-2):
  * headings, paragraphs, quotes and list items, as plain text.
  *
  * Dropped: images, figure captions, media, scripts and styles, code blocks (`pre`), navigation,
@@ -31,7 +31,7 @@ final readonly class HtmlBlockExtractor
     private const array HEADINGS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
     /**
-     * Page furniture that readability keeps inside the article: Wikipedia hatnotes, infoboxes,
+     * Page furniture that an extractor may keep inside the article: Wikipedia hatnotes, infoboxes,
      * edit links and reference marks, screen reader only text.
      */
     public const array BOILERPLATE_CLASSES = [

@@ -43,7 +43,7 @@ What it unlocked: one Symfony app now talks to a local speech model, a cloud spe
 
 ## Quick start (5 minutes)
 
-Requirements: PHP 8.4.1 or later (with `intl`, `pdo_sqlite`), [Composer](https://getcomposer.org), the [Symfony CLI](https://symfony.com/download), and **one** of:
+Requirements: PHP 8.4.1 or later (with `intl`, `pdo_sqlite`), [Composer](https://getcomposer.org), the [Symfony CLI](https://symfony.com/download), [Bun](https://bun.sh) 1.3.2 (to build the article extractor once), and **one** of:
 
 - **Local stack (no key, Apple Silicon Mac):** [Ollama](https://ollama.com) 0.40.11 or later.
 - **Cloud stack (any OS):** a Mistral AI API key.
@@ -51,6 +51,7 @@ Requirements: PHP 8.4.1 or later (with `intl`, `pdo_sqlite`), [Composer](https:/
 ```sh
 git clone <this repository> crieur && cd crieur
 composer install
+tools/defuddle/build.sh               # the article extractor: Defuddle, compiled into one binary
 php bin/console doctrine:migrations:migrate --no-interaction
 ```
 
@@ -153,7 +154,7 @@ flowchart LR
     M[MCP client] -->|read_aloud| Q
     B[Browser extension: Defuddle in the page] -->|POST /api/articles| T
     Q -->|ExtractArticle| X[Extract worker]
-    X -->|readability.php| T[Text rules: blocks, language, sentences, chunks]
+    X -->|Defuddle| T[Text rules: blocks, language, sentences, chunks]
     T -->|EditArticle| E[Editor worker: Agent + structured output, Mistral or Ollama]
     T -->|SynthesizeArticle| S[Synthesis worker]
     E -.->|rewritten chunks, ahead of the voice| S
@@ -166,7 +167,7 @@ flowchart LR
 ```
 
 - `src/Api` and `src/Controller/ApiController.php`: the API of the browser extension, which sends the article it extracted (no fetch on the server).
-- `src/Extraction`: HTTP fetch (Symfony HttpClient, private networks refused by default) and [readability.php](https://github.com/fivefilters/readability.php).
+- `src/Extraction`: HTTP fetch (Symfony HttpClient, private networks refused by default), then [Defuddle](https://github.com/kepano/defuddle), the extraction engine of Obsidian Web Clipper: the same release as the browser extension, compiled by Bun into one binary (`tools/defuddle`), so the server needs no Node at runtime.
 - `src/Text`: deterministic preparation ported from the macOS app: blocks, French and English detection, ICU sentence breaking, number normalization, chunking (120 characters for the first chunk, then 300 in French and 400 in English).
 - `src/Editor`: the speech editor and its faithfulness check.
 - `src/Speech`: voices, synthesis, audio post-processing (silence trimming, level normalization to -24 dBFS), content-addressed audio cache.
@@ -191,7 +192,7 @@ cd extension && npm ci && npm test && npm run e2e  # the browser extension (Chro
 
 ## Credits
 
-Built by Mathieu Santostefano for the Symfony AI & MCP Hackathon 2026, with [Symfony AI](https://github.com/symfony/ai), the [PHP MCP SDK](https://github.com/modelcontextprotocol/php-sdk), [readability.php](https://github.com/fivefilters/readability.php), [Defuddle](https://github.com/kepano/defuddle) by Steph Ango (in the browser extension), [Phonon](https://gradium.ai/phonon) by Gradium, and Voxtral and Ministral by Mistral AI.
+Built by Mathieu Santostefano for the Symfony AI & MCP Hackathon 2026, with [Symfony AI](https://github.com/symfony/ai), the [PHP MCP SDK](https://github.com/modelcontextprotocol/php-sdk), [Defuddle](https://github.com/kepano/defuddle) by Steph Ango, [Phonon](https://gradium.ai/phonon) by Gradium, and Voxtral and Ministral by Mistral AI.
 
 ## License
 

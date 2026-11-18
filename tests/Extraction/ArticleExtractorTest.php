@@ -101,4 +101,20 @@ final class ArticleExtractorTest extends TestCase
         static::assertStringContainsString('They rang a handbell', $article->html);
     }
 
+    #[Test]
+    public function itSaysWhenTheExtractorIsMissing(): void
+    {
+        $html = (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html');
+        $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse($html)), allowPrivateNetworks: true, defuddle: '/nonexistent/defuddle');
+
+        try {
+            $extractor->extract('https://example.org/essay');
+            static::fail('A missing extractor must be reported.');
+        } catch (ExtractionFailed $e) {
+            static::assertSame(ExtractionFailed::EXTRACTOR, $e->reason);
+        }
+        static::assertNull($extractor->defuddleVersion());
+        static::assertSame('0.19.6', (new ArticleExtractor(new MockHttpClient()))->defuddleVersion());
+    }
+
 }

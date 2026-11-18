@@ -12,7 +12,7 @@ use Random\Randomizer;
 
 /**
  * Test texts of the Text tests, ported from TextFixtures.swift. The Markdown articles of the
- * Swift app are written here as the HTML that readability returns.
+ * Swift app are written here as the HTML an extractor returns.
  */
 final class TextFixtures
 {

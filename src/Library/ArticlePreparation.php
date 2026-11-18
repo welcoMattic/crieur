@@ -164,7 +164,7 @@ final readonly class ArticlePreparation
 
     /**
      * The voice says the title, never the author line ("By Ada Lovecraft, April 12"), which
-     * readability sometimes keeps as the first paragraph.
+     * an extractor sometimes keeps as the first paragraph.
      *
      * @param list<Block> $blocks
      *

@@ -5,6 +5,13 @@
 #
 # A Docker application of Clever Cloud has no persistent disk: the library (SQLite and audio in
 # var/) starts again empty at each deployment or restart.
+# The article extractor: Defuddle (the same release as the browser extension), compiled by Bun into
+# one binary, so the image needs no Node at runtime.
+FROM oven/bun:1.3.2 AS defuddle
+WORKDIR /src
+COPY tools/defuddle/package.json tools/defuddle/bun.lock tools/defuddle/extract.mjs ./
+RUN bun install --frozen-lockfile && bun build --compile extract.mjs --outfile /out/defuddle
+
 FROM ghcr.io/gradium-ai/ptts-openai-server:0.7.1@sha256:b4f46fb8bbd2dee326a012da6cc33ceadcbafe29e46b827d0e7b1bb01b1b053d AS phonon
 
 FROM dunglas/frankenphp:1-php8.4-bookworm
@@ -37,6 +44,7 @@ COPY composer.json composer.lock symfony.lock ./
 RUN composer install --no-dev --no-scripts --no-autoloader --no-interaction --prefer-dist
 
 COPY . .
+COPY --from=defuddle /out/defuddle /app/tools/defuddle/build/defuddle
 RUN composer dump-autoload --classmap-authoritative --no-dev \
     && composer run-script --no-dev post-install-cmd \
     && php bin/console asset-map:compile

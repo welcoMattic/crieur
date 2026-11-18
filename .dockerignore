@@ -9,3 +9,5 @@ assets/vendor
 .phpunit.cache
 graft
 extension
+tools/defuddle/build
+tools/defuddle/node_modules
