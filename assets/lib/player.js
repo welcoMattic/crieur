@@ -338,7 +338,8 @@ class Player extends EventTarget {
         }
         const index = Math.min(this.index, segments.length - 1);
         const paragraph = segments[index].paragraph;
-        const start = segments.findIndex((segment) => segment.paragraph === paragraph);
+        const read = (segment) => !segment.removed;
+        const start = Math.max(0, segments.findIndex((segment) => segment.paragraph === paragraph && read(segment)));
         let elapsed = 0;
         for (let i = start; i < index; i++) {
             elapsed += (segments[i].durationMs ?? 0) + segments[i].pauseAfterMs;
@@ -349,8 +350,15 @@ class Player extends EventTarget {
 
         let target = start;
         if (elapsed / this.speed <= RESTART_PARAGRAPH_MS && start > 0) {
-            const before = segments[start - 1].paragraph;
-            target = segments.findIndex((segment) => segment.paragraph === before);
+            // The paragraph before, skipping the ones the listener removed whole.
+            let before = start - 1;
+            while (before > 0 && !read(segments[before])) {
+                before -= 1;
+            }
+            if (read(segments[before])) {
+                const previous = segments[before].paragraph;
+                target = segments.findIndex((segment) => segment.paragraph === previous && read(segment));
+            }
         }
         this.jump(target);
     }
@@ -361,7 +369,7 @@ class Player extends EventTarget {
             return;
         }
         const paragraph = segments[Math.min(this.index, segments.length - 1)].paragraph;
-        const target = segments.findIndex((segment, i) => i > this.index && segment.paragraph !== paragraph);
+        const target = segments.findIndex((segment, i) => i > this.index && segment.paragraph !== paragraph && !segment.removed);
         if (target === -1) {
             if (!this.article.inProgress) {
                 this.finish();
@@ -401,12 +409,14 @@ class Player extends EventTarget {
         if (!article.playable || segments.length === 0) {
             return;
         }
-        if (this.index >= segments.length) {
+        const start = this.nextRead(this.index);
+        if (start === -1) {
             if (!article.inProgress) {
                 this.finish();
             }
             return;
         }
+        this.index = start;
 
         let buffered = 0;
         let everyChunkLeft = true;
@@ -428,6 +438,19 @@ class Player extends EventTarget {
     startSegment(index) {
         clearTimeout(this.gapTimer);
         this.gapTimer = null;
+        // The chunks the listener removed are skipped.
+        const read = this.nextRead(index);
+        if (read === -1) {
+            this.index = this.article.segments.length;
+            if (this.article.inProgress) {
+                this.toBuffering();
+                this.emit();
+            } else {
+                this.finish();
+            }
+            return;
+        }
+        index = read;
         const segment = this.article.segments[index];
         this.index = index;
         if (!segment?.ready) {
@@ -480,7 +503,7 @@ class Player extends EventTarget {
     }
 
     preloadNext() {
-        const next = this.article?.segments[this.index + 1];
+        const next = this.article?.segments[this.nextRead(this.index + 1)];
         if (!next?.ready) {
             return;
         }
@@ -497,7 +520,8 @@ class Player extends EventTarget {
             return;
         }
         const segment = this.article.segments[this.index];
-        const last = this.index + 1 >= this.article.segments.length;
+        const following = this.nextRead(this.index + 1);
+        const last = following === -1;
         if (last && !this.article.inProgress) {
             this.finish();
             return;
@@ -509,7 +533,7 @@ class Player extends EventTarget {
             if (this.state !== 'playing') {
                 return;
             }
-            const next = this.index + 1;
+            const next = last ? this.index + 1 : following;
             if (this.article.segments[next]?.ready) {
                 this.startSegment(next);
             } else {
@@ -538,6 +562,18 @@ class Player extends EventTarget {
             refresh(this.statusUrl(this.id));
         }
         this.emit();
+    }
+
+    /** The first chunk from this index that the listener did not remove, or -1. */
+    nextRead(index) {
+        const segments = this.article?.segments ?? [];
+        for (let i = Math.max(0, index); i < segments.length; i++) {
+            if (!segments[i].removed) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     finish() {

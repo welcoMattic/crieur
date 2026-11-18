@@ -83,17 +83,20 @@ final class ArticleController extends AbstractController
         $segments = [];
         foreach ($article->getSegments() as $segment) {
             $key = $segment->getAudioKey();
+            $removed = $segment->isRemoved();
             $segments[] = [
                 'position' => $segment->getPosition(),
                 'paragraph' => $segment->getParagraph(),
+                'removed' => $removed,
                 'ready' => null !== $key,
                 'url' => null === $key ? null : $this->generateUrl('segment_audio', [
                     'id' => $article->getId(),
                     'position' => $segment->getPosition(),
                     'k' => $key,
                 ]),
-                'durationMs' => $segment->getDurationMs(),
-                'pauseAfterMs' => $segment->getPauseAfterMs(),
+                // A removed chunk takes no time: the player skips it, pause included.
+                'durationMs' => $removed ? 0 : $segment->getDurationMs(),
+                'pauseAfterMs' => $removed ? 0 : $segment->getPauseAfterMs(),
                 'chars' => mb_strlen($segment->getSpoken()),
                 'edited' => $segment->isEdited(),
                 'spokenHash' => Formatting::spokenHash($segment->getSpoken()),
@@ -188,6 +191,31 @@ final class ArticleController extends AbstractController
         }
 
         return $this->backToArticle($article);
+    }
+
+    /**
+     * Takes chunks out of the reading, or puts them back ("positions": "3,4,5", "removed": 1 or 0).
+     * The read-along page calls it with fetch and gets 204; a plain form goes back to the article.
+     */
+    #[Route('/articles/{id}/passages', name: 'article_passages', requirements: ['id' => Requirement::UUID], methods: ['POST'])]
+    public function passages(#[MapEntity(id: 'id')] Article $article, Request $request): Response
+    {
+        $this->denyUnlessValidCsrf($request);
+        $positions = [];
+        foreach (explode(',', $request->getPayload()->getString('positions')) as $position) {
+            if (1 === preg_match('/^\s*\d{1,6}\s*$/', $position)) {
+                $positions[] = (int) $position;
+            }
+        }
+        if ([] === $positions) {
+            throw new BadRequestHttpException('Expected the positions of the chunks, such as "3,4,5".');
+        }
+
+        $this->queue->setRemoved($article, array_values(array_unique($positions)), $request->getPayload()->getBoolean('removed'));
+
+        return 'json' === $request->getPreferredFormat()
+            ? new Response(status: Response::HTTP_NO_CONTENT)
+            : $this->backToArticle($article);
     }
 
     #[Route('/articles/{id}/retry', name: 'article_retry', requirements: ['id' => Requirement::UUID], methods: ['POST'])]

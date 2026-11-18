@@ -6,6 +6,7 @@ namespace App\Tests\Controller;
 
 use App\Entity\Article;
 use App\Enum\ArticleSource;
+use App\Enum\ArticleStatus;
 use App\Enum\VoiceGender;
 use App\Message\ExtractArticle;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
@@ -75,11 +76,12 @@ final class ArticleControllerTest extends ControllerTestCase
         self::assertSelectorTextContains('h1', 'On listening');
         self::assertSelectorTextContains('.reader__summary', 'A short walk');
         self::assertSelectorTextContains('.models', 'ministral-3:8b');
-        self::assertSelectorTextContains('.models', 'phonon:40m-multilingual');
+        self::assertSame('phonon:40m-multilingual', $crawler->filter('.models code')->first()->text());
         self::assertCount(4, $crawler->filter('.seg[data-position]'));
         self::assertCount(1, $crawler->filter('.seg[data-rewritten]'));
         self::assertSelectorTextContains('.seg[data-rewritten] .seg__spoken', 'three and a half kilometres');
         self::assertSelectorTextContains('.transcript-bar .toggle', 'Show what the voice reads');
+        self::assertSelectorTextContains('.transcript-bar .toggle[data-reader-target="editToggle"]', 'Choose what is read');
     }
 
     public function testTheStatusDescribesEveryChunk(): void
@@ -100,7 +102,7 @@ final class ArticleControllerTest extends ControllerTestCase
         self::assertSame(2, $status['readySegments']);
         self::assertIsArray($status['segments']);
         self::assertCount(4, $status['segments']);
-        self::assertSame(['position', 'paragraph', 'ready', 'url', 'durationMs', 'pauseAfterMs', 'chars', 'edited', 'spokenHash'], array_keys($status['segments'][0]));
+        self::assertSame(['position', 'paragraph', 'removed', 'ready', 'url', 'durationMs', 'pauseAfterMs', 'chars', 'edited', 'spokenHash'], array_keys($status['segments'][0]));
         self::assertTrue($status['segments'][1]['ready']);
         self::assertStringContainsString('/segments/1.wav?k=', $status['segments'][1]['url']);
         self::assertSame(\strlen('It was three and a half kilometres away.'), $status['segments'][1]['chars']);
@@ -141,7 +143,7 @@ final class ArticleControllerTest extends ControllerTestCase
         $article = $this->createArticle();
         $id = $article->getId();
 
-        foreach ([['voice', ['voice' => 'male']], ['language', ['language' => 'fr']], ['retry', []], ['delete', []]] as [$action, $data]) {
+        foreach ([['voice', ['voice' => 'male']], ['language', ['language' => 'fr']], ['passages', ['positions' => '1', 'removed' => '1']], ['retry', []], ['delete', []]] as [$action, $data]) {
             $this->client->request('POST', \sprintf('/articles/%s/%s', $id, $action), $data);
             self::assertResponseStatusCodeSame(403, $action.' without a token');
 
@@ -164,6 +166,40 @@ final class ArticleControllerTest extends ControllerTestCase
         self::assertSame(VoiceGender::Male, $article->getVoiceGender());
         self::assertSame('Preston', $article->getVoiceName());
         self::assertSame(0, $article->countReadySegments());
+    }
+
+    public function testAPassageIsLeftOutOfTheReadingThenPutBack(): void
+    {
+        $article = $this->createArticle();
+        $passages = \sprintf('/articles/%s/passages', $article->getId());
+
+        $this->client->request('POST', $passages, ['positions' => '1,2', 'removed' => '1', '_token' => 'csrf-token'], server: self::sameOrigin() + ['HTTP_ACCEPT' => 'application/json']);
+        self::assertResponseStatusCodeSame(204);
+
+        $this->client->request('GET', \sprintf('/articles/%s/status', $article->getId()));
+        $status = json_decode((string) $this->client->getResponse()->getContent(), true, flags: \JSON_THROW_ON_ERROR);
+        self::assertIsArray($status);
+        self::assertSame('ready', $status['status']);
+        self::assertSame([false, true, true, false], array_column($status['segments'], 'removed'));
+        self::assertSame(0, $status['segments'][1]['durationMs']);
+        self::assertSame(0, $status['segments'][1]['pauseAfterMs']);
+        self::assertTrue($status['segments'][1]['ready']);
+
+        $crawler = $this->client->request('GET', '/articles/'.$article->getId());
+        self::assertCount(2, $crawler->filter('.seg.is-removed'));
+        self::assertCount(1, $crawler->filter('.para.is-removed .para__toggle[aria-pressed="true"]'));
+
+        // A plain form goes back to the article; the voice reads the chunk again.
+        $this->client->request('POST', $passages, ['positions' => '2', 'removed' => '0', '_token' => 'csrf-token'], server: self::sameOrigin());
+        self::assertResponseRedirects(\sprintf('/articles/%s', $article->getId()), 303);
+        $article = $this->reload($article);
+        self::assertNotNull($article);
+        self::assertSame(ArticleStatus::Synthesizing, $article->getStatus());
+        self::assertSame(1, $article->countRemovedSegments());
+        self::assertFalse($article->getSegments()[2]?->isReady());
+
+        $this->client->request('POST', $passages, ['positions' => 'all', 'removed' => '1', '_token' => 'csrf-token'], server: self::sameOrigin());
+        self::assertResponseStatusCodeSame(400);
     }
 
     public function testDeletingAnArticleReturnsToTheLibrary(): void

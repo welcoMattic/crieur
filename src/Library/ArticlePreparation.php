@@ -32,6 +32,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
  */
 final readonly class ArticlePreparation
 {
+    /**
+     * A shorter removed passage ("Crieur public") goes only when it is a whole block: inside a
+     * sentence, the same words are part of the text.
+     */
+    private const int MIN_REMOVED_PASSAGE = 24;
+
     public function __construct(
         private ArticleRepository $articles,
         private HtmlBlockExtractor $blocks,
@@ -81,9 +87,57 @@ final readonly class ArticlePreparation
 
     /**
      * @param list<Block> $blocks
+     *
+     * @return list<Block>
+     */
+    private static function withoutRemoved(array $blocks, Article $article): array
+    {
+        $removed = [];
+        foreach ($article->getSegments() as $segment) {
+            $text = self::squeeze($segment->getText());
+            if ($segment->isRemoved() && BlockKind::Title !== $segment->getKind() && '' !== $text) {
+                $removed[] = $text;
+            }
+        }
+        if ([] === $removed) {
+            return $blocks;
+        }
+
+        $kept = [];
+        foreach ($blocks as $block) {
+            $text = self::squeeze($block->text);
+            foreach ($removed as $passage) {
+                if ($text === $passage) {
+                    $text = '';
+                } elseif (mb_strlen($passage) >= self::MIN_REMOVED_PASSAGE) {
+                    // Between spaces only: a removed passage never cuts a word of another sentence.
+                    $text = self::squeeze(preg_replace('/(?:^|(?<=\s))'.preg_quote($passage, '/').'(?=\s|$)/u', '', $text) ?? $text);
+                }
+            }
+            if ('' !== $text) {
+                $kept[] = $text === $block->text ? $block : new Block($block->kind, $text);
+            }
+        }
+
+        return $kept;
+    }
+
+    private static function squeeze(string $text): string
+    {
+        return trim(preg_replace('/\s+/u', ' ', $text) ?? $text);
+    }
+
+    /**
+     * @param list<Block> $blocks
      */
     private function prepare(Article $article, string $title, array $blocks, ?string $languageHint): void
     {
+        // What the listener removed stays out of the new preparation (another language, the page again).
+        $blocks = self::withoutRemoved($blocks, $article);
+        if ([] === $blocks) {
+            throw new NoReadableText(0);
+        }
+
         $sample = $title."\n".implode("\n", array_map(static fn (Block $block): string => $block->text, $blocks));
         $language = $article->getLanguageSetting()->forced()
             ?? $this->languages->detect($sample, $languageHint)

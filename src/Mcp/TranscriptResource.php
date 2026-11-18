@@ -30,12 +30,12 @@ final readonly class TranscriptResource
     public function transcript(string $id): string
     {
         $article = Uuid::isValid($id) ? $this->articles->get(Uuid::fromString($id)) : null;
-        if (null === $article || [] === $article->getParagraphs()) {
+        if (null === $article || [] === $article->getParagraphs(withRemoved: false)) {
             throw new ResourceNotFoundException(\sprintf('No transcript for the article "%s".', $id));
         }
 
         $lines = [];
-        foreach ($article->getParagraphs() as $segments) {
+        foreach ($article->getParagraphs(withRemoved: false) as $segments) {
             $text = implode(' ', array_map(static fn ($segment): string => $segment->getText(), $segments));
             $lines[] = match ($segments[0]->getKind()) {
                 BlockKind::Title => '# '.$text,

@@ -166,6 +166,53 @@ final class PipelineTest extends KernelTestCase
     }
 
     #[Test]
+    public function aPassageTheListenerRemovedIsNotReadEvenAfterAnotherPreparation(): void
+    {
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline(['extract']);
+
+        // Removed before the voice reaches it: a silence, never the voice.
+        $article = $this->reload($article);
+        $firstParagraph = array_values($article->getParagraphs())[1];
+        $removedText = $firstParagraph[0]->getText();
+        $this->queue()->setRemoved($article, array_map(static fn ($segment): int => $segment->getPosition(), $firstParagraph), true);
+        $this->runPipeline();
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        foreach ($article->getSegments() as $segment) {
+            if ($segment->isRemoved()) {
+                static::assertLessThanOrEqual(1, $segment->getDurationMs(), 'a removed chunk is a silence');
+            }
+        }
+        static::assertSame(\count($firstParagraph), $article->countRemovedSegments());
+        static::assertNotContains($removedText, array_map(static fn (array $segments): string => $segments[0]->getText(), $article->getParagraphs(withRemoved: false)));
+
+        // Another language prepares the page again: the removed passage stays out.
+        $this->queue()->restart($article, LanguageSetting::French);
+        $this->runPipeline();
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        foreach ($article->getSegments() as $segment) {
+            static::assertStringNotContainsString($removedText, $segment->getText());
+        }
+
+        // Put back: synthesized again with the voice.
+        $segment = $article->getSegments()[1];
+        static::assertNotNull($segment);
+        $this->queue()->setRemoved($article, [1], true);
+        $this->queue()->setRemoved($this->reload($article), [1], false);
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Synthesizing, $article->getStatus());
+        $this->runPipeline();
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        static::assertSame(0, $article->countRemovedSegments());
+        static::assertGreaterThan(1, $article->getSegments()[1]?->getDurationMs());
+    }
+
+    #[Test]
     public function itReadsTheRestWithAnotherVoice(): void
     {
         $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));

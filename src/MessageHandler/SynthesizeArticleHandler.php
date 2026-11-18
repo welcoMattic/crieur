@@ -84,6 +84,13 @@ final readonly class SynthesizeArticleHandler
                 return;
             }
 
+            if ($segment->isRemoved()) {
+                // Removed before the voice reached it: its silence is attached already, or now.
+                $segment->attachAudio(...$this->silence($voice));
+                $this->entityManager->flush();
+                continue;
+            }
+
             if ($editing && !$segment->isEdited() && !EditArticleHandler::isOpening($segment, $segments)) {
                 $this->waitForEditor($segment);
             }
@@ -110,7 +117,11 @@ final readonly class SynthesizeArticleHandler
             }
 
             // The editor may have rewritten the chunk meanwhile: its new text gets its own audio.
+            // The listener may have removed it: it keeps the silence the web request attached.
             $this->entityManager->refresh($segment);
+            if ($segment->isRemoved()) {
+                continue;
+            }
             if ($segment->getSpoken() !== $spoken) {
                 $rewritten = true;
                 continue;

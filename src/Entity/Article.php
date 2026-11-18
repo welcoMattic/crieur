@@ -269,16 +269,25 @@ class Article
     }
 
     /**
+     * @param bool $withRemoved false for what the voice reads only (the chunks the listener did not remove)
+     *
      * @return array<int, list<Segment>> segments grouped by paragraph, in reading order
      */
-    public function getParagraphs(): array
+    public function getParagraphs(bool $withRemoved = true): array
     {
         $paragraphs = [];
         foreach ($this->segments as $segment) {
-            $paragraphs[$segment->getParagraph()][] = $segment;
+            if ($withRemoved || !$segment->isRemoved()) {
+                $paragraphs[$segment->getParagraph()][] = $segment;
+            }
         }
 
         return $paragraphs;
+    }
+
+    public function countRemovedSegments(): int
+    {
+        return $this->segments->filter(static fn (Segment $segment): bool => $segment->isRemoved())->count();
     }
 
     public function countReadySegments(): int
@@ -293,7 +302,7 @@ class Article
     {
         $milliseconds = 0;
         foreach ($this->segments as $segment) {
-            if ($segment->isReady()) {
+            if ($segment->isReady() && !$segment->isRemoved()) {
                 $milliseconds += ($segment->getDurationMs() ?? 0) + $segment->getPauseAfterMs();
             }
         }

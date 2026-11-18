@@ -15,6 +15,8 @@ use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
 use App\Repository\ArticleRepository;
+use App\Enum\ArticleStatus;
+use App\Speech\SpeechSynthesizer;
 use App\Speech\VoiceCatalog;
 use App\Text\NoReadableText;
 use Psr\Clock\ClockInterface;
@@ -35,6 +37,7 @@ final readonly class ArticleQueue
         private ClockInterface $clock,
         private SpeechEditor $editor,
         private ArticlePreparation $preparation,
+        private SpeechSynthesizer $synthesizer,
     ) {
     }
 
@@ -116,6 +119,47 @@ final readonly class ArticleQueue
         // The edits already made stay; the editor goes on with the chunks it had not reached.
         if (null !== $this->editor->backend()) {
             $this->bus->dispatch(new EditArticle($article->getId(), $article->getRevision()));
+        }
+    }
+
+    /**
+     * Takes chunks out of the reading, or puts them back. A removed chunk gets a short silence at
+     * once, so nothing waits for it; a restored one is synthesized again.
+     *
+     * @param list<int> $positions
+     */
+    public function setRemoved(Article $article, array $positions, bool $removed): void
+    {
+        $language = $article->getLanguage();
+        if (null === $language || [] === $positions) {
+            return;
+        }
+
+        $voice = $this->voices->voice($article->getVoiceEngine(), $language, $article->getVoiceGender());
+        $silence = $removed ? $this->synthesizer->silence(1, $voice) : null;
+        $restoredFrom = null;
+        foreach ($article->getSegments() as $segment) {
+            if ($segment->isRemoved() === $removed || !\in_array($segment->getPosition(), $positions, true)) {
+                continue;
+            }
+            if (null !== $silence) {
+                $segment->remove($silence['key'], $silence['durationMs']);
+            } else {
+                $segment->restore();
+                $restoredFrom = min($restoredFrom ?? $segment->getPosition(), $segment->getPosition());
+            }
+        }
+
+        if (null !== $restoredFrom) {
+            $article->resumeSynthesis($this->clock->now());
+        } elseif (ArticleStatus::Synthesizing === $article->getStatus() && $article->countReadySegments() === $article->getSegments()->count()) {
+            // The chunks left to synthesize were all removed.
+            $article->markReady($this->clock->now());
+        }
+        $this->articles->save($article);
+
+        if (null !== $restoredFrom) {
+            $this->bus->dispatch(new SynthesizeArticle($article->getId(), $article->getRevision(), $restoredFrom));
         }
     }
 

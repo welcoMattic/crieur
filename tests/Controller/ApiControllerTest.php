@@ -126,6 +126,31 @@ final class ApiControllerTest extends ControllerTestCase
         self::assertSame('Why we read slower than we listen', $article->getTitle());
     }
 
+    public function testAShortRemovedPassageStaysInTheOtherSentencesWhenTheArticleIsPreparedAgain(): void
+    {
+        $payload = self::article();
+        $payload['content'] = '<div><p>Crieur public</p><p>Crieur public was the name of the job, and the voice of the town for centuries.</p>'.substr($payload['content'], 5);
+        $this->post($payload);
+        $article = $this->articles()->latest()[0];
+        $alone = null;
+        foreach ($article->getSegments() as $segment) {
+            if ('Crieur public' === $segment->getText()) {
+                $alone = $segment->getPosition();
+            }
+        }
+        self::assertNotNull($alone);
+
+        $this->client->request('POST', \sprintf('/articles/%s/passages', $article->getId()), ['positions' => (string) $alone, 'removed' => '1', '_token' => 'csrf-token'], server: self::sameOrigin());
+        $this->client->request('POST', \sprintf('/articles/%s/language', $article->getId()), ['language' => 'fr', '_token' => 'csrf-token'], server: self::sameOrigin());
+
+        $this->entityManager()->clear();
+        $article = $this->articles()->get($article->getId());
+        self::assertNotNull($article);
+        $texts = array_map(static fn ($segment): string => $segment->getText(), $article->getSegments()->toArray());
+        self::assertNotContains('Crieur public', $texts);
+        self::assertContains('Crieur public was the name of the job, and the voice of the town for centuries.', $texts);
+    }
+
     /**
      * @return array<string, string>
      */

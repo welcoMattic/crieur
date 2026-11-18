@@ -8,7 +8,8 @@
     {% set has_text = paragraphs is not empty %}
     {% set token = csrf_token('submit') %}
     {% set title_segments = (paragraphs[0] ?? [])|filter(s => s.kind.value == 'title') %}
-    {% set rewritten = article.segments|filter(s => s.spoken != s.text)|length %}
+    {% set rewritten = article.segments|filter(s => s.spoken != s.text and not s.removed)|length %}
+    {% set removed = article.countRemovedSegments %}
 
     <article class="reader"
              data-controller="reader"
@@ -17,6 +18,8 @@
              data-reader-status-value="{{ status.value }}"
              data-reader-revision-value="{{ article.revision }}"
              data-reader-segments-value="{{ article.segments|length }}"
+             data-reader-passages-url-value="{{ path('article_passages', {id: article.id}) }}"
+             data-reader-token-value="{{ token }}"
              data-reader-autoplay-value="{{ autoplay ? 'true' : 'false' }}"
              data-reader-labels-value="{{ {
                  listen: 'reader.listen'|trans,
@@ -24,6 +27,9 @@
                  resume: 'player.resume'|trans,
                  synthesizing: 'status.synthesizing_count'|trans,
                  original: 'reader.original_label'|trans,
+                 removed: 'reader.removed'|trans,
+                 removedCount: 'reader.removed_count'|trans,
+                 failed: 'reader.edit_failed'|trans,
              }|json_encode }}">
 
         <a class="back-link" href="{{ path('home') }}">{{ icon('arrow-left') }}{{ 'reader.back'|trans }}</a>
@@ -136,11 +142,21 @@
             <section class="transcript-section" aria-labelledby="transcript-title">
                 <div class="transcript-bar">
                     <h2 class="transcript-bar__title" id="transcript-title">{{ 'reader.transcript'|trans }}</h2>
-                    <button type="button" class="toggle" aria-pressed="false" data-reader-target="spokenToggle" data-action="reader#toggleSpoken">
-                        <span class="toggle__track" aria-hidden="true"><span class="toggle__thumb"></span></span>
-                        <span>{{ 'reader.show_spoken'|trans }}</span>
-                    </button>
+                    <div class="transcript-bar__toggles">
+                        <button type="button" class="toggle" aria-pressed="false" data-reader-target="spokenToggle" data-action="reader#toggleSpoken">
+                            <span class="toggle__track" aria-hidden="true"><span class="toggle__thumb"></span></span>
+                            <span>{{ 'reader.show_spoken'|trans }}</span>
+                        </button>
+                        <button type="button" class="toggle" aria-pressed="false" data-reader-target="editToggle" data-action="reader#toggleEdit">
+                            <span class="toggle__track" aria-hidden="true"><span class="toggle__thumb"></span></span>
+                            <span>{{ 'reader.edit'|trans }}</span>
+                        </button>
+                    </div>
                 </div>
+                <p class="transcript-legend transcript-legend--edit" data-reader-target="editLegend" hidden>
+                    {{ icon('trash') }}
+                    <span>{{ 'reader.edit_legend'|trans }} <strong data-reader-target="removedCount">{{ removed > 0 ? 'reader.removed_count'|trans({'%count%': removed}) }}</strong></span>
+                </p>
                 <p class="transcript-legend" data-reader-target="legend" hidden>
                     {{ icon('sparkle') }}
                     <span>
@@ -151,21 +167,24 @@
                         {%- endif -%}
                     </span>
                 </p>
-                <div class="transcript" data-reader-target="transcript" data-action="click->reader#seek mouseover->reader#showOriginal mouseout->reader#hideOriginal"{% if article.language %} lang="{{ article.language.value }}"{% endif %}>
+                <div class="transcript" data-reader-target="transcript" data-action="click->reader#seek keydown->reader#keyEdit mouseover->reader#showOriginal mouseout->reader#hideOriginal"{% if article.language %} lang="{{ article.language.value }}"{% endif %}>
                     {% set in_list = false %}
                     {% for number, segments in paragraphs %}
                         {% set kind = segments[0].kind.value %}
+                        {% set out = segments|filter(s => not s.removed) is empty %}
+                        {% set para_class = out ? ' is-removed' : '' %}
+                        {% set toggle %}<button type="button" class="para__toggle" aria-pressed="{{ out ? 'true' : 'false' }}" aria-label="{{ 'reader.leave_out_paragraph'|trans }}" title="{{ 'reader.leave_out_paragraph'|trans }}" data-action="reader#toggleParagraph">{{ icon('trash', null, 'para__toggle-out') }}{{ icon('retry', null, 'para__toggle-back') }}</button>{% endset %}
                         {% if kind != 'title' %}
                             {% if kind == 'list_item' and not in_list %}<ul class="transcript__list">{% set in_list = true %}{% endif %}
                             {% if kind != 'list_item' and in_list %}</ul>{% set in_list = false %}{% endif %}
                             {% if kind == 'heading' %}
-                                <h3 class="para para--heading" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</h3>
+                                <h3 class="para para--heading{{ para_class }}" data-paragraph="{{ number }}">{{ toggle }}{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</h3>
                             {% elseif kind == 'quote' %}
-                                <blockquote class="para para--quote" data-paragraph="{{ number }}"><p>{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p></blockquote>
+                                <blockquote class="para para--quote{{ para_class }}" data-paragraph="{{ number }}"><p>{{ toggle }}{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p></blockquote>
                             {% elseif kind == 'list_item' %}
-                                <li class="para para--item" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</li>
+                                <li class="para para--item{{ para_class }}" data-paragraph="{{ number }}">{{ toggle }}{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</li>
                             {% else %}
-                                <p class="para" data-paragraph="{{ number }}">{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p>
+                                <p class="para{{ para_class }}" data-paragraph="{{ number }}">{{ toggle }}{% for segment in segments %}{{ include('article/_segment.html.twig') }}{% endfor %}</p>
                             {% endif %}
                         {% endif %}
                     {% endfor %}

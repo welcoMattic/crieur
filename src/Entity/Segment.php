@@ -57,6 +57,13 @@ class Segment
     #[ORM\Column(nullable: true)]
     private ?int $durationMs = null;
 
+    /**
+     * Taken out of the reading by the listener (a line in another language, a leftover of the
+     * page): it stays in the transcript, struck through, and the voice skips it.
+     */
+    #[ORM\Column(options: ['default' => false])]
+    private bool $removed = false;
+
     public function __construct(
         #[ORM\ManyToOne(inversedBy: 'segments')]
         #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
@@ -132,6 +139,30 @@ class Segment
         return null !== $this->audioKey;
     }
 
+    public function isRemoved(): bool
+    {
+        return $this->removed;
+    }
+
+    /**
+     * Out of the reading: the audio becomes the given (short) silence, so the chunk keeps its
+     * place in the timeline and the article stays complete.
+     */
+    public function remove(string $silenceKey, int $durationMs): void
+    {
+        $this->removed = true;
+        $this->attachAudio($silenceKey, $durationMs);
+    }
+
+    /**
+     * Back in the reading: its audio is synthesized again.
+     */
+    public function restore(): void
+    {
+        $this->removed = false;
+        $this->forgetAudio();
+    }
+
     /**
      * The speech editor rewrote this chunk for the ear. Audio made from the former text is dropped.
      */
@@ -140,7 +171,10 @@ class Segment
         $this->edited = true;
         if ($spoken !== $this->spoken) {
             $this->spoken = $spoken;
-            $this->forgetAudio();
+            // A removed chunk keeps its silence: restoring it synthesizes the new text.
+            if (!$this->removed) {
+                $this->forgetAudio();
+            }
         }
     }
 

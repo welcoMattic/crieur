@@ -8,11 +8,15 @@ const AFTER_CHANGE_POLL_MS = 30000;
 const USER_SCROLL_GRACE_MS = 4000;
 const SCROLL_KEYS = new Set(['PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown']);
 
+// The article whose transcript is being edited: it stays so when the page morphs.
+let editing = null;
+
 /*
  * The read-along page of an article: highlights the chunk being read and its paragraph, follows it
  * gently unless the listener scrolled a moment ago, jumps to a sentence on click, and shows on
- * request the text as the voice reads it. While the article is prepared, it refreshes the page
- * in place (Turbo morph) when the status, the revision or a spoken text changes.
+ * request the text as the voice reads it. In edit mode, a click leaves a passage (or a whole
+ * paragraph) out of the reading, or puts it back. While the article is prepared, it refreshes the
+ * page in place (Turbo morph) when the status, the revision or a spoken text changes.
  */
 export default class extends Controller {
     static values = {
@@ -23,13 +27,16 @@ export default class extends Controller {
         segments: Number,
         autoplay: Boolean,
         labels: Object,
+        passagesUrl: String,
+        token: String,
     };
 
-    static targets = ['state', 'listen', 'listenLabel', 'transcript', 'spokenToggle', 'legend'];
+    static targets = ['state', 'listen', 'listenLabel', 'transcript', 'spokenToggle', 'legend', 'editToggle', 'editLegend', 'removedCount'];
 
     connect() {
         this.highlighted = null;
         this.userScrolledAt = 0;
+        this.saving = 0;
         this.onPlayer = this.onPlayer.bind(this);
         this.onMorph = this.onMorph.bind(this);
         this.onUserScroll = () => {
@@ -53,6 +60,7 @@ export default class extends Controller {
             player.load(this.idValue);
         }
         this.applySpoken();
+        this.applyEdit();
         this.onPlayer();
     }
 
@@ -83,7 +91,124 @@ export default class extends Controller {
         if (!segment || window.getSelection()?.toString()) {
             return;
         }
+        if (this.editing()) {
+            // The title is not edited here: preparing the article again would bring it back.
+            if (this.hasTranscriptTarget && this.transcriptTarget.contains(segment)) {
+                this.setRemoved([segment], !segment.classList.contains('is-removed'));
+            }
+            return;
+        }
+        if (segment.classList.contains('is-removed')) {
+            return;
+        }
         player.load(this.idValue, { play: true, position: Number(segment.dataset.position) });
+    }
+
+    // Choosing what is read.
+
+    toggleEdit() {
+        editing = this.editing() ? null : this.idValue;
+        this.applyEdit();
+    }
+
+    toggleParagraph(event) {
+        const paragraph = event.currentTarget.closest('.para');
+        const segments = [...(paragraph?.querySelectorAll('.seg') ?? [])];
+        if (segments.length > 0) {
+            this.setRemoved(segments, !segments.every((segment) => segment.classList.contains('is-removed')));
+        }
+    }
+
+    /** In edit mode, Enter or Space on a passage does what a click does. */
+    keyEdit(event) {
+        const segment = event.target.closest?.('.seg');
+        if (!segment || !this.editing() || !['Enter', ' '].includes(event.key)) {
+            return;
+        }
+        event.preventDefault();
+        this.setRemoved([segment], !segment.classList.contains('is-removed'));
+    }
+
+    editing() {
+        return editing === this.idValue;
+    }
+
+    applyEdit() {
+        const on = this.editing();
+        if (!this.hasTranscriptTarget) {
+            return;
+        }
+        this.transcriptTarget.toggleAttribute('data-editing', on);
+        for (const segment of this.transcriptTarget.querySelectorAll('.seg')) {
+            if (on) {
+                segment.setAttribute('role', 'button');
+                segment.setAttribute('tabindex', '0');
+                segment.setAttribute('aria-pressed', String(segment.classList.contains('is-removed')));
+            } else {
+                segment.removeAttribute('role');
+                segment.removeAttribute('tabindex');
+                segment.removeAttribute('aria-pressed');
+            }
+        }
+        if (this.hasEditToggleTarget) {
+            this.editToggleTarget.setAttribute('aria-pressed', String(on));
+        }
+        if (this.hasEditLegendTarget) {
+            this.editLegendTarget.hidden = !on;
+        }
+    }
+
+    /** Shows the change at once, then saves it; the player gets the new timeline from the status. */
+    async setRemoved(segments, removed) {
+        const before = segments.map((segment) => segment.classList.contains('is-removed'));
+        this.markRemoved(segments, () => removed);
+        const body = new FormData();
+        body.set('_token', this.tokenValue);
+        body.set('positions', segments.map((segment) => segment.dataset.position).join(','));
+        body.set('removed', removed ? '1' : '0');
+        this.saving += 1;
+        try {
+            const response = await fetch(this.passagesUrlValue, { method: 'POST', body, headers: { Accept: 'application/json' } });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch {
+            this.markRemoved(segments, (segment, i) => before[i]);
+            window.alert(this.labelsValue.failed);
+        } finally {
+            this.saving -= 1;
+        }
+        refresh(this.statusUrlValue, AFTER_CHANGE_POLL_MS);
+    }
+
+    markRemoved(segments, removedFor) {
+        segments.forEach((segment, i) => {
+            const removed = removedFor(segment, i);
+            segment.classList.toggle('is-removed', removed);
+            segment.title = removed ? this.labelsValue.removed : '';
+            if (segment.hasAttribute('aria-pressed')) {
+                segment.setAttribute('aria-pressed', String(removed));
+            }
+            const spoken = segment.querySelector('.seg__spoken');
+            if (spoken && removed) {
+                spoken.dataset.skipped = this.labelsValue.removed;
+            } else if (spoken && spoken.textContent.trim() !== '') {
+                delete spoken.dataset.skipped;
+            }
+        });
+        for (const paragraph of new Set(segments.map((segment) => segment.closest('.para')))) {
+            if (!paragraph) {
+                continue;
+            }
+            const out = [...paragraph.querySelectorAll('.seg')].every((segment) => segment.classList.contains('is-removed'));
+            paragraph.classList.toggle('is-removed', out);
+            paragraph.querySelector('.para__toggle')?.setAttribute('aria-pressed', String(out));
+        }
+        if (this.hasRemovedCountTarget) {
+            const count = this.transcriptTarget.querySelectorAll('.seg.is-removed').length;
+            const [one, many] = this.labelsValue.removedCount.split('|');
+            this.removedCountTarget.textContent = count === 0 ? '' : (count === 1 ? one : many.replace('%count%', String(count)));
+        }
     }
 
     toggleSpoken() {
@@ -103,7 +228,9 @@ export default class extends Controller {
             || data.segments.some((segment) => {
                 const element = this.segmentElement(segment.position);
 
-                return element !== null && element.dataset.spokenHash !== segment.spokenHash;
+                return element !== null && (element.dataset.spokenHash !== segment.spokenHash
+                    // Removed elsewhere (another tab): not while a change of this page is saved.
+                    || (this.saving === 0 && element.classList.contains('is-removed') !== Boolean(segment.removed)));
             });
         if (changed) {
             this.refreshPage();
@@ -133,6 +260,7 @@ export default class extends Controller {
     onMorph() {
         this.highlighted = null;
         this.applySpoken();
+        this.applyEdit();
         this.onPlayer();
     }
 

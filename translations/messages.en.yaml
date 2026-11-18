@@ -159,6 +159,12 @@ reader:
     spoken_legend: "One passage was rewritten for the ear. It is underlined: hover it to see the original text.|%count% passages were rewritten for the ear. They are underlined: hover one to see the original text."
     spoken_same: "The voice reads the text as it is written."
     skipped: "not read"
+    edit: "Choose what is read"
+    edit_legend: "Click a passage to leave it out of the reading, click it again to put it back. The button before a paragraph does it for the whole paragraph."
+    removed: "Left out of the reading"
+    removed_count: "One passage left out.|%count% passages left out."
+    leave_out_paragraph: "Leave this paragraph out of the reading"
+    edit_failed: "The change could not be saved. Try again."
     original_label: "Original text"
     failed:
         title: "Crieur could not read this article"

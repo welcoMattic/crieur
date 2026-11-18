@@ -103,7 +103,7 @@ final readonly class LibraryTools
         if ($transcript) {
             $description['transcript'] = array_values(array_map(
                 static fn (array $segments): string => implode(' ', array_map(static fn ($segment): string => $segment->getText(), $segments)),
-                $article->getParagraphs(),
+                $article->getParagraphs(withRemoved: false),
             ));
         }
 

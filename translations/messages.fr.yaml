@@ -159,6 +159,12 @@ reader:
     spoken_legend: "Un passage a été réécrit pour l’oreille. Il est souligné : survolez-le pour voir le texte d’origine.|%count% passages ont été réécrits pour l’oreille. Ils sont soulignés : survolez-en un pour voir le texte d’origine."
     spoken_same: "La voix lit le texte tel qu’il est écrit."
     skipped: "non lu"
+    edit: "Choisir ce qui est lu"
+    edit_legend: "Cliquez sur un passage pour le retirer de la lecture, cliquez de nouveau pour le remettre. Le bouton devant un paragraphe fait de même pour tout le paragraphe."
+    removed: "Retiré de la lecture"
+    removed_count: "Un passage retiré.|%count% passages retirés."
+    leave_out_paragraph: "Retirer ce paragraphe de la lecture"
+    edit_failed: "La modification n’a pas pu être enregistrée. Réessayez."
     original_label: "Texte d’origine"
     failed:
         title: "Crieur n’a pas pu lire cet article"

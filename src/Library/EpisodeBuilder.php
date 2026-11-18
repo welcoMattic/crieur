@@ -43,6 +43,9 @@ final readonly class EpisodeBuilder
         if (!is_file($wavPath)) {
             $episode = Wav::silence(0);
             foreach ($article->getSegments() as $segment) {
+                if ($segment->isRemoved()) {
+                    continue;
+                }
                 $key = $segment->getAudioKey();
                 if (null === $key) {
                     throw new \LogicException('The episode of an article is built once every chunk has its audio.');

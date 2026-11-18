@@ -1258,6 +1258,116 @@ html[data-show-spoken] .seg[data-rewritten] .seg__spoken[data-skipped] {
     text-decoration: none;
 }
 
+/* Choosing what is read: a passage left out stays in the transcript, struck through. */
+.transcript-bar__toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-3);
+}
+
+.transcript-legend--edit {
+    background: var(--surface-sunken);
+}
+
+.transcript-legend--edit .icon {
+    color: var(--text-secondary);
+}
+
+.seg.is-removed {
+    color: var(--text-tertiary);
+    text-decoration: line-through;
+    text-decoration-thickness: 1px;
+    cursor: default;
+}
+
+.seg.is-removed:hover {
+    background: none;
+}
+
+.transcript[data-editing] .seg {
+    cursor: pointer;
+}
+
+/* Hovering previews the click: struck through, or back in the text. */
+.transcript[data-editing] .seg:hover {
+    background: var(--danger-soft);
+    text-decoration: line-through;
+    text-decoration-color: var(--danger);
+}
+
+.transcript[data-editing] .seg.is-removed:hover {
+    background: var(--accent-softer);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.transcript[data-editing] .seg:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.para__toggle {
+    display: none;
+}
+
+.transcript[data-editing] .para__toggle {
+    position: absolute;
+    top: 0.3em;
+    left: -38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-s);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font: inherit;
+    cursor: pointer;
+}
+
+.transcript[data-editing] .para--item > .para__toggle {
+    left: calc(-1.5em - 30px);
+}
+
+.para__toggle .icon {
+    width: 14px;
+    height: 14px;
+}
+
+.para__toggle:hover,
+.para__toggle:focus-visible {
+    border-color: var(--danger-border);
+    color: var(--danger);
+}
+
+.para__toggle-back,
+.para__toggle[aria-pressed="true"] .para__toggle-out {
+    display: none;
+}
+
+.para__toggle[aria-pressed="true"] .para__toggle-back {
+    display: inline;
+}
+
+.para__toggle[aria-pressed="true"]:hover,
+.para__toggle[aria-pressed="true"]:focus-visible {
+    border-color: var(--accent);
+    color: var(--accent-text);
+}
+
+/* Narrow screens have no margin for the button: it starts the paragraph. */
+@media (max-width: 860px) {
+    .transcript[data-editing] .para__toggle,
+    .transcript[data-editing] .para--item > .para__toggle {
+        position: static;
+        margin-right: 8px;
+        vertical-align: 0.15em;
+    }
+}
+
 .original-tip {
     position: fixed;
     z-index: 40;
