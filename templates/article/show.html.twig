@@ -18,8 +18,7 @@
              data-reader-status-value="{{ status.value }}"
              data-reader-revision-value="{{ article.revision }}"
              data-reader-segments-value="{{ article.segments|length }}"
-             data-reader-passages-url-value="{{ path('article_passages', {id: article.id}) }}"
-             data-reader-token-value="{{ token }}"
+
              data-reader-autoplay-value="{{ autoplay ? 'true' : 'false' }}"
              data-reader-labels-value="{{ {
                  listen: 'reader.listen'|trans,
@@ -153,6 +152,10 @@
                         </button>
                     </div>
                 </div>
+                {# Sent with fetch: the CSRF field gives the double-submit token, as for the other forms. #}
+                <form method="post" action="{{ path('article_passages', {id: article.id}) }}" data-reader-target="passagesForm" hidden>
+                    <input type="hidden" name="_token" value="{{ token }}" data-controller="csrf-protection">
+                </form>
                 <p class="transcript-legend transcript-legend--edit" data-reader-target="editLegend" hidden>
                     {{ icon('trash') }}
                     <span>{{ 'reader.edit_legend'|trans }} <strong data-reader-target="removedCount">{{ removed > 0 ? 'reader.removed_count'|trans({'%count%': removed}) }}</strong></span>

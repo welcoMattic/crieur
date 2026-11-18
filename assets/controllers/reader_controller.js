@@ -2,6 +2,7 @@ import { Controller } from '@hotwired/stimulus';
 import { visit } from '@hotwired/turbo';
 import { player, storage } from '../lib/player.js';
 import { refresh, watch } from '../lib/status.js';
+import { generateCsrfHeaders, generateCsrfToken, removeCsrfToken } from './csrf_protection_controller.js';
 
 const SPOKEN_KEY = 'crieur.showSpoken';
 const AFTER_CHANGE_POLL_MS = 30000;
@@ -27,11 +28,9 @@ export default class extends Controller {
         segments: Number,
         autoplay: Boolean,
         labels: Object,
-        passagesUrl: String,
-        token: String,
     };
 
-    static targets = ['state', 'listen', 'listenLabel', 'transcript', 'spokenToggle', 'legend', 'editToggle', 'editLegend', 'removedCount'];
+    static targets = ['state', 'listen', 'listenLabel', 'transcript', 'spokenToggle', 'legend', 'editToggle', 'editLegend', 'removedCount', 'passagesForm'];
 
     connect() {
         this.highlighted = null;
@@ -162,13 +161,15 @@ export default class extends Controller {
     async setRemoved(segments, removed) {
         const before = segments.map((segment) => segment.classList.contains('is-removed'));
         this.markRemoved(segments, () => removed);
-        const body = new FormData();
-        body.set('_token', this.tokenValue);
+        // The CSRF token goes as the forms send it: a field and its double-submit cookie.
+        const form = this.passagesFormTarget;
+        generateCsrfToken(form);
+        const body = new FormData(form);
         body.set('positions', segments.map((segment) => segment.dataset.position).join(','));
         body.set('removed', removed ? '1' : '0');
         this.saving += 1;
         try {
-            const response = await fetch(this.passagesUrlValue, { method: 'POST', body, headers: { Accept: 'application/json' } });
+            const response = await fetch(form.action, { method: 'POST', body, headers: { Accept: 'application/json', ...generateCsrfHeaders(form) } });
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}`);
             }
@@ -177,6 +178,7 @@ export default class extends Controller {
             window.alert(this.labelsValue.failed);
         } finally {
             this.saving -= 1;
+            removeCsrfToken(form);
         }
         refresh(this.statusUrlValue, AFTER_CHANGE_POLL_MS);
     }
