@@ -6,6 +6,21 @@
     <section class="compose" aria-labelledby="compose-title">
         <h1 class="compose__title" id="compose-title">{{ 'compose.title'|trans }}</h1>
         <p class="compose__lede">{{ 'compose.lede'|trans }}</p>
+        {% set demo = public_demo() %}
+        {% if demo %}
+            {% set separator = app.request.locale == 'fr' ? ' ' : ',' %}
+            <aside class="notice notice--demo" aria-labelledby="demo-title">
+                {{ icon('clock') }}
+                <div>
+                    <h2 class="notice__title" id="demo-title">{{ 'demo.title'|trans }}</h2>
+                    <p>
+                        {{ 'demo.reset'|trans({'%time%': demo.next|date('H:i', 'UTC'), '%remaining%': (demo.hours > 0 ? 'demo.in_hours' : 'demo.in_minutes')|trans({'%hours%': demo.hours, '%minutes%': demo.minutes})}) }}
+                        {{ 'demo.limits'|trans({'%count%': demo.articles, '%characters%': demo.characters|number_format(0, '.', separator)}) }}
+                    </p>
+                    <p><a href="https://github.com/welcoMattic/crieur">{{ 'demo.install'|trans }}</a></p>
+                </div>
+            </aside>
+        {% endif %}
 
         {% set url_invalid = not form.url.vars.valid %}
         {{ form_start(form, {attr: {class: 'compose__form'}}) }}

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Library;
 
+use App\Demo\PublicDemo;
+use App\Demo\TooManyArticles;
 use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
@@ -38,11 +40,13 @@ final readonly class ArticleQueue
         private SpeechEditor $editor,
         private ArticlePreparation $preparation,
         private SpeechSynthesizer $synthesizer,
+        private PublicDemo $demo,
     ) {
     }
 
     /**
      * @throws InvalidArticleUrl
+     * @throws TooManyArticles   on the public demo
      */
     public function queue(
         string $url,
@@ -50,7 +54,9 @@ final readonly class ArticleQueue
         LanguageSetting $language = LanguageSetting::Auto,
         VoiceGender $gender = VoiceGender::Female,
     ): Article {
-        $article = new Article(self::normalizeUrl($url), $language, $gender, $this->voices->defaultEngine()->name, $source, $this->clock->now());
+        $url = self::normalizeUrl($url);
+        $this->demo->consumeArticle();
+        $article = new Article($url, $language, $gender, $this->voices->defaultEngine()->name, $source, $this->clock->now());
         $this->articles->save($article);
         $this->bus->dispatch(new ExtractArticle($article->getId()));
 
@@ -62,12 +68,15 @@ final readonly class ArticleQueue
      * reader's own access: it is prepared at once, never fetched by the server.
      *
      * @throws InvalidArticleUrl
-     * @throws ExtractionFailed  for a language other than French or English
+     * @throws TooManyArticles   on the public demo
+     * @throws ExtractionFailed  for a language other than French or English, or too long for the public demo
      * @throws NoReadableText    under 30 words
      */
     public function queueFromBrowser(ExtractedArticle $page, LanguageSetting $language = LanguageSetting::Auto, VoiceGender $gender = VoiceGender::Female): Article
     {
-        $article = new Article(self::normalizeUrl($page->url), $language, $gender, $this->voices->defaultEngine()->name, ArticleSource::Extension, $this->clock->now());
+        $url = self::normalizeUrl($page->url);
+        $this->demo->consumeArticle();
+        $article = new Article($url, $language, $gender, $this->voices->defaultEngine()->name, ArticleSource::Extension, $this->clock->now());
         $this->preparation->fromPage($article, $page);
 
         return $article;

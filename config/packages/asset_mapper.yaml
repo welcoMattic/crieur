@@ -5,7 +5,10 @@ framework:
             - assets/
         missing_import_mode: strict
 
-when@prod:
+when@prod: &prod
     framework:
         asset_mapper:
             missing_import_mode: warn
+
+# The public demo runs as in production.
+when@demo: *prod

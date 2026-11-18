@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Api\BrowserArticle;
+use App\Demo\TooManyArticles;
 use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Enum\LanguageSetting;
@@ -16,6 +17,7 @@ use App\Library\ArticleQueue;
 use App\Library\InvalidArticleUrl;
 use App\Speech\VoiceCatalog;
 use App\Text\NoReadableText;
+use Psr\Clock\ClockInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -66,6 +68,7 @@ final class ApiController extends AbstractController
         BrowserArticle $payload,
         ArticleQueue $queue,
         TranslatorInterface $translator,
+        ClockInterface $clock,
     ): JsonResponse {
         if (null !== $refusal = $this->refusal($request)) {
             return $refusal;
@@ -87,6 +90,11 @@ final class ApiController extends AbstractController
             $article = $queue->queueFromBrowser($page, LanguageSetting::from($payload->language), VoiceGender::from($payload->voice));
         } catch (InvalidArticleUrl $e) {
             return $this->error(Response::HTTP_UNPROCESSABLE_ENTITY, 'url.'.$e->getMessage(), $translator->trans('url.'.$e->getMessage(), [], 'errors'));
+        } catch (TooManyArticles $e) {
+            $response = $this->error(Response::HTTP_TOO_MANY_REQUESTS, 'demo.too_many', $translator->trans('demo.too_many', [], 'errors'));
+            $response->headers->set('Retry-After', (string) $e->retryAfterSeconds($clock->now()));
+
+            return $response;
         } catch (ExtractionFailed $e) {
             return $this->error(Response::HTTP_UNPROCESSABLE_ENTITY, $e->reason, $translator->trans($e->reason, [], 'errors'));
         } catch (NoReadableText) {

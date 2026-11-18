@@ -29,7 +29,7 @@ when@test:
                 path: "%kernel.logs_dir%/%kernel.environment%.log"
                 level: debug
 
-when@prod:
+when@prod: &prod
     monolog:
         handlers:
             main:
@@ -53,3 +53,6 @@ when@prod:
                 channels: [deprecation]
                 path: php://stderr
                 formatter: monolog.formatter.json
+
+# The public demo runs as in production.
+when@demo: *prod

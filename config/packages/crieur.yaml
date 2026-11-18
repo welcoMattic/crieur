@@ -8,6 +8,11 @@ parameters:
     crieur.audio_dir: '%env(resolve:CRIEUR_AUDIO_DIR)%'
     # How long the voice waits for the speech editor before reading the text of the rules.
     crieur.editor_wait_seconds: 2.5
+    # The public demo (APP_ENV=demo): its limits, and whether it is one.
+    crieur.public_demo: false
+    crieur.demo.visitor_articles: 5
+    crieur.demo.all_articles: 30
+    crieur.demo.max_characters: 25000
 
     # Each engine maps a language and a gender to a voice: "id" is what the engine expects,
     # "name" what the listener sees. Changing a voice needs no code change.
@@ -33,3 +38,7 @@ when@test:
     parameters:
         crieur.audio_dir: '%kernel.project_dir%/var/audio_test'
         crieur.editor_wait_seconds: 0
+
+when@demo:
+    parameters:
+        crieur.public_demo: true

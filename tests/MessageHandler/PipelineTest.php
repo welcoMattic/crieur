@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Tests\MessageHandler;
 
+use App\Demo\LibraryReset;
 use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
@@ -288,6 +289,33 @@ final class PipelineTest extends KernelTestCase
                 static::assertSame(AudioStore::key($voice, $segment->getSpoken()), $segment->getAudioKey(), 'Every chunk is read by the new voice.');
             }
         }
+    }
+
+    #[Test]
+    public function theDemoMayEmptyTheLibraryWhileAnArticleIsRead(): void
+    {
+        // The reset of the public demo runs in its own process while the worker waits for audio.
+        $state = new class {
+            public bool $article = false;
+            public int $removed = -1;
+        };
+        self::getContainer()->set('crieur.platform.speech', MockPlatformFactory::createPlatform(function (Model $model, array|string|object $payload) use ($state): BinaryResult {
+            if ($state->article && -1 === $state->removed) {
+                $state->removed = self::getContainer()->get(LibraryReset::class)->reset();
+            }
+
+            return new BinaryResult(Wav::silence(60 * mb_strlen(\is_string($payload) ? $payload : '-'))->toBytes(), 'audio/wav');
+        }));
+        $page = str_replace('The reason is not speed', 'The reason, '.strtr(bin2hex(random_bytes(6)), '0123456789', 'ghijklmnop').', is not speed', (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $this->servePage($page);
+        $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $state->article = true;
+        $this->runPipeline();
+
+        static::assertSame(1, $state->removed);
+        $connection = self::getContainer()->get(EntityManagerInterface::class)->getConnection();
+        static::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM article'));
+        static::assertSame(0, (int) $connection->fetchOne('SELECT COUNT(*) FROM segment'));
     }
 
     #[Test]

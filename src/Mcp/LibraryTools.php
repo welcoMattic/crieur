@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Mcp;
 
+use App\Demo\TooManyArticles;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
 use App\Enum\LanguageSetting;
@@ -56,6 +57,8 @@ final readonly class LibraryTools
             );
         } catch (InvalidArticleUrl) {
             throw new ToolCallException('Crieur reads http and https web pages only: check the address.');
+        } catch (TooManyArticles) {
+            throw new ToolCallException('The public demo of Crieur takes no more articles from this address for now: try again within the hour, or install Crieur to read without limits.');
         }
 
         return $this->describe($article) + [

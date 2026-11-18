@@ -18,6 +18,7 @@ final class ExtractionFailed extends \RuntimeException
     public const string PRIVATE_NETWORK = 'extraction.private_network';
     public const string UNSUPPORTED_LANGUAGE = 'extraction.unsupported_language';
     public const string EXTRACTOR = 'extraction.extractor';
+    public const string TOO_LONG_FOR_DEMO = 'extraction.too_long_for_demo';
 
     public function __construct(
         public readonly string $reason,

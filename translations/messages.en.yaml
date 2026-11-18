@@ -26,6 +26,14 @@ editor:
     ollama: "Ollama"
     rules: "rules"
 
+demo:
+    title: "Public demo"
+    reset: "Every visitor shares this library: it is emptied every 6 hours, next at %time% UTC (%remaining%)."
+    in_hours: "in %hours% h %minutes% min"
+    in_minutes: "in %minutes% min"
+    limits: "Each visitor may add %count% articles an hour, of up to %characters% characters."
+    install: "Install Crieur to read without limits"
+
 compose:
     title: "Paste a link. Listen to the article."
     title_error: "check the link"

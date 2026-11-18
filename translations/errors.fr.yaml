@@ -1,5 +1,6 @@
 extraction:
     extractor: "L’extracteur d’articles n’est pas disponible : lancez tools/defuddle/build.sh."
+    too_long_for_demo: "Cet article est trop long pour la démo publique : installez Crieur pour l’écouter."
     timeout: "Le site n’a pas répondu à temps."
     http_error: "Le site a refusé d’envoyer la page."
     not_html: "Cette adresse n’est pas une page web."
@@ -17,6 +18,9 @@ url:
     too_long: "Ce lien est trop long."
     scheme: "Crieur ne lit que des pages web : le lien doit commencer par http ou https."
     host: "Ce lien ne contient pas de nom de site."
+
+demo:
+    too_many: "La démo publique ne prend plus d’article de votre part pour le moment : réessayez dans l’heure, ou installez Crieur pour écouter sans limite."
 
 share:
     expired: "Cette confirmation a expiré. Envoyez à nouveau l’article depuis sa page."

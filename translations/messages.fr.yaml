@@ -26,6 +26,14 @@ editor:
     ollama: "Ollama"
     rules: "règles"
 
+demo:
+    title: "Démo publique"
+    reset: "Cette bibliothèque est commune à tous les visiteurs : elle est vidée toutes les 6 heures, la prochaine fois à %time% UTC (%remaining%)."
+    in_hours: "dans %hours% h %minutes% min"
+    in_minutes: "dans %minutes% min"
+    limits: "Chaque visiteur peut ajouter %count% articles par heure, de %characters% caractères au plus."
+    install: "Installer Crieur pour écouter sans limite"
+
 compose:
     title: "Collez un lien. Écoutez l’article."
     title_error: "vérifiez le lien"

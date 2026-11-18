@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Demo\TooManyArticles;
 use App\Entity\Article;
 use App\Entity\Segment;
 use App\Enum\ArticleSource;
@@ -18,6 +19,7 @@ use App\Speech\AudioStore;
 use App\Twig\Formatting;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\Form\FormError;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -48,24 +50,30 @@ final class ArticleController extends AbstractController
     }
 
     #[Route('/articles', name: 'article_create', methods: ['POST'])]
-    public function create(Request $request, ArticleRepository $articles): Response
+    public function create(Request $request, ArticleRepository $articles, TranslatorInterface $translator): Response
     {
         $data = new ArticleRequest();
         $form = $this->createForm(ArticleType::class, $data, ['action' => $this->generateUrl('article_create')]);
         $form->handleRequest($request);
+        $status = Response::HTTP_UNPROCESSABLE_ENTITY;
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $article = $this->queue->queue((string) $data->url, ArticleSource::Web, $data->language, $data->voice);
+            try {
+                $article = $this->queue->queue((string) $data->url, ArticleSource::Web, $data->language, $data->voice);
 
-            // "play" asks the read-along page to start the audio as soon as the first chunk is ready.
-            return $this->redirectToRoute('article_show', ['id' => $article->getId(), 'play' => 1], Response::HTTP_SEE_OTHER);
+                // "play" asks the read-along page to start the audio as soon as the first chunk is ready.
+                return $this->redirectToRoute('article_show', ['id' => $article->getId(), 'play' => 1], Response::HTTP_SEE_OTHER);
+            } catch (TooManyArticles) {
+                $form->get('url')->addError(new FormError($translator->trans('demo.too_many', [], 'errors')));
+                $status = Response::HTTP_TOO_MANY_REQUESTS;
+            }
         }
 
         // Turbo renders a form response only with a 4xx status: 422 also when nothing was submitted.
         return $this->render('home/index.html.twig', [
             'form' => $form,
             'articles' => $articles->latest(),
-        ], new Response(status: Response::HTTP_UNPROCESSABLE_ENTITY));
+        ], new Response(status: $status));
     }
 
     #[Route('/articles/{id}', name: 'article_show', requirements: ['id' => Requirement::UUID], methods: ['GET'])]

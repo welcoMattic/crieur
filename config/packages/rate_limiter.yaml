@@ -1,0 +1,13 @@
+# The limits of the public demo (APP_ENV=demo, App\Demo\PublicDemo): they apply nowhere else.
+framework:
+    rate_limiter:
+        # Articles a visitor (an IP address) may add.
+        demo_visitor:
+            policy: sliding_window
+            limit: '%crieur.demo.visitor_articles%'
+            interval: '1 hour'
+        # Articles everyone together may add: the voices of the demo run on a small CPU.
+        demo_all:
+            policy: sliding_window
+            limit: '%crieur.demo.all_articles%'
+            interval: '1 hour'

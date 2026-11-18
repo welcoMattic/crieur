@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Demo\TooManyArticles;
 use App\Enum\ArticleSource;
 use App\Library\ArticleQueue;
 use App\Library\InvalidArticleUrl;
@@ -39,6 +40,8 @@ final class ShareController extends AbstractController
                 $article = $queue->queue($url, ArticleSource::Bookmarklet);
             } catch (InvalidArticleUrl $exception) {
                 return $this->confirmation($url, 'url.'.$exception->getMessage(), Response::HTTP_UNPROCESSABLE_ENTITY);
+            } catch (TooManyArticles) {
+                return $this->confirmation($url, 'demo.too_many', Response::HTTP_TOO_MANY_REQUESTS);
             }
 
             return $this->redirectToRoute('article_show', ['id' => $article->getId(), 'play' => 1], Response::HTTP_SEE_OTHER);

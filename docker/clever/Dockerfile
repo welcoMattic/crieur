@@ -5,6 +5,8 @@
 #
 # A Docker application of Clever Cloud has no persistent disk: the library (SQLite and audio in
 # var/) starts again empty at each deployment or restart.
+# The live demo sets APP_ENV=demo in the env of the app: the public demo, with its limits and a
+# reset every six hours (src/Demo).
 # The article extractor: Defuddle (the same release as the browser extension), compiled by Bun into
 # one binary, so the image needs no Node at runtime.
 FROM oven/bun:1.3.2 AS defuddle

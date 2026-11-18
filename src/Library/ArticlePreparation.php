@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Library;
 
+use App\Demo\PublicDemo;
 use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Extraction\ExtractedArticle;
@@ -47,11 +48,12 @@ final readonly class ArticlePreparation
         private SpeechEditor $editor,
         private MessageBusInterface $bus,
         private ClockInterface $clock,
+        private PublicDemo $demo,
     ) {
     }
 
     /**
-     * @throws ExtractionFailed for a language other than French or English
+     * @throws ExtractionFailed for a language other than French or English, or too long for the public demo
      * @throws NoReadableText   under 30 words
      */
     public function fromPage(Article $article, ExtractedArticle $page): void
@@ -136,6 +138,9 @@ final readonly class ArticlePreparation
         $blocks = self::withoutRemoved($blocks, $article);
         if ([] === $blocks) {
             throw new NoReadableText(0);
+        }
+        if ($this->demo->isTooLong(array_sum(array_map(static fn (Block $block): int => mb_strlen($block->text), $blocks)))) {
+            throw new ExtractionFailed(ExtractionFailed::TOO_LONG_FOR_DEMO);
         }
 
         $sample = $title."\n".implode("\n", array_map(static fn (Block $block): string => $block->text, $blocks));

@@ -1439,6 +1439,15 @@ html[data-show-spoken] .seg[data-rewritten] .seg__spoken[data-skipped] {
     color: var(--danger);
 }
 
+.notice--demo {
+    margin-top: var(--space-6);
+    background: var(--accent-softer);
+}
+
+.notice--demo > .icon {
+    color: var(--accent-text);
+}
+
 .notice__title {
     margin: 0;
     font: 600 18px/1.35 var(--font-serif);

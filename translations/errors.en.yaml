@@ -7,6 +7,7 @@ extraction:
     private_network: "Pages on a private network are not read, for safety."
     unsupported_language: "Crieur reads French and English only."
     extractor: "The article extractor is not available: run tools/defuddle/build.sh."
+    too_long_for_demo: "This article is too long for the public demo: install Crieur to read it."
 
 synthesis:
     engine_unavailable: "The voice engine is not available: check the settings."
@@ -17,6 +18,9 @@ url:
     too_long: "This link is too long."
     scheme: "Crieur reads web pages only: the link must start with http or https."
     host: "This link has no site name."
+
+demo:
+    too_many: "The public demo takes no more articles from you for now: try again within the hour, or install Crieur to read without limits."
 
 share:
     expired: "This confirmation has expired. Send the article again from its page."

@@ -47,6 +47,8 @@ Open <http://127.0.0.1:8000> and paste a link. `castor list` shows the other tas
 
 **With Docker:** `castor docker:up` serves Crieur on <http://localhost:8000>, with Phonon through the Ollama of the host (Apple Silicon), or Voxtral with `MISTRAL_API_KEY` and `CRIEUR_VOICE_ENGINE=voxtral` in `.env.docker`. `castor docker:build-server` builds the all-in-one image for hosts without Ollama (Phonon servers of Gradium inside, as on the live demo; it listens on port 8080 and needs a Hugging Face `HF_TOKEN` with access to the Phonon models).
 
+**Public demo:** `APP_ENV=demo` runs Crieur as on <https://crieur.cleverapps.io>. Each visitor (IP address) may add 5 articles an hour, everyone together 30, of up to 25,000 characters each (parameters `crieur.demo.*` of `config/packages/crieur.yaml`). `crieur:demo:reset` empties the library every six hours from midnight UTC: the all-in-one image runs it, and the home page says when.
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The Phonon 40m voices are licensed CC BY-NC 4.0: personal and non-commercial use only.
