@@ -2,7 +2,7 @@
 
 Listen to the article you are reading, with your own Crieur server. The extension extracts the
 article **in the browser**, with [Defuddle](https://github.com/kepano/defuddle) (the extraction
-engine of Obsidian Web Clipper, already used by the macOS version of Crieur), and sends its text to
+engine of Obsidian Web Clipper, the same release as the server), and sends its text to
 `POST /api/articles`. Crieur never fetches the page: articles you can read thanks to a subscription
 or a login are read aloud as your browser shows them to you.
 
