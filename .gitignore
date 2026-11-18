@@ -19,3 +19,5 @@
 /.phpunit.cache/
 ###< phpunit/phpunit ###
 /.env.docker
+
+/.castor.stub.php
