@@ -9,13 +9,14 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\Attribute\Target;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\RateLimiter\RateLimiterFactoryInterface;
+use Symfony\Component\Scheduler\Trigger\PeriodicalTrigger;
 
 /**
  * The public demo (APP_ENV=demo): one library shared by every visitor, emptied every six hours,
  * and a few articles an hour per visitor. Elsewhere, nothing here applies.
  *
- * The library is emptied at fixed times, every six hours from midnight UTC: the home page and
- * crieur:demo:reset share them.
+ * The library is emptied at fixed times, every six hours from midnight UTC: one trigger for the
+ * schedule that empties it (DemoSchedule) and for the home page that announces it.
  */
 final readonly class PublicDemo
 {
@@ -45,14 +46,21 @@ final readonly class PublicDemo
     }
 
     /**
+     * Every six hours from midnight UTC.
+     */
+    public static function resetTrigger(): PeriodicalTrigger
+    {
+        return new PeriodicalTrigger(self::RESET_SECONDS, new \DateTimeImmutable('1970-01-01 00:00:00', new \DateTimeZone('UTC')));
+    }
+
+    /**
      * The next time the library is emptied.
      */
     public function nextReset(?\DateTimeImmutable $now = null): \DateTimeImmutable
     {
-        $now ??= $this->clock->now();
-        $next = (intdiv($now->getTimestamp(), self::RESET_SECONDS) + 1) * self::RESET_SECONDS;
+        $next = self::resetTrigger()->getNextRunDate($now ?? $this->clock->now()) ?? throw new \LogicException('The demo is emptied for ever.');
 
-        return new \DateTimeImmutable('@'.$next)->setTimezone(new \DateTimeZone('UTC'));
+        return $next->setTimezone(new \DateTimeZone('UTC'));
     }
 
     /**

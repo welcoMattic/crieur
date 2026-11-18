@@ -27,13 +27,10 @@ keep env PTTS_LANG=en PTTS_MODEL=hf://gradium/phonon-40m-en@9b95393286eaeeebf133
     ptts-openai-server --addr 127.0.0.1:8881
 keep php bin/console messenger:consume extract synthesize --time-limit=3600 --memory-limit=512M
 keep php bin/console messenger:consume edit --time-limit=3600 --memory-limit=256M
-# The public demo (APP_ENV=demo) empties its library every six hours, as its home page says.
+# The public demo (APP_ENV=demo) empties its library every six hours, as its home page says:
+# its schedule (Symfony Scheduler, App\Demo\DemoSchedule).
 if [ "${APP_ENV:-prod}" = demo ]; then
-    (
-        while true; do
-            php bin/console crieur:demo:reset --at-next-reset || sleep 60
-        done
-    ) &
+    keep php bin/console messenger:consume scheduler_demo --time-limit=3600 --memory-limit=128M
 fi
 
 exec "$@"
