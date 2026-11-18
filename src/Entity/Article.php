@@ -328,6 +328,17 @@ class Article
     }
 
     /**
+     * Drops the chunks before a new preparation. They must be deleted before the new ones are
+     * inserted (same positions): flush in between.
+     */
+    public function discardSegments(): void
+    {
+        foreach ($this->segments as $segment) {
+            $this->segments->removeElement($segment);
+        }
+    }
+
+    /**
      * Replaces the chunks with a new preparation of the text, for the given voice.
      */
     public function prepare(PreparedArticle $prepared, string $voiceName, string $editor, ?\DateTimeImmutable $now = null): void

@@ -13,4 +13,6 @@ enum ArticleSource: string
     case Bookmarklet = 'bookmarklet';
     case Mcp = 'mcp';
     case Cli = 'cli';
+    /** Extracted by the browser extension, with the access of the reader. */
+    case Extension = 'extension';
 }

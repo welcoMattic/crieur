@@ -52,7 +52,7 @@
                                 {% if article.voiceName and status.playable %}<span>{{ article.voiceName }}</span>{% endif %}
                                 {% if status.value == 'ready' %}<span class="tabular">{{ article.audioSeconds|duration }}</span>{% endif %}
                             {% endif %}
-                            {% if article.source.value in ['mcp', 'bookmarklet', 'cli'] %}
+                            {% if article.source.value in ['mcp', 'bookmarklet', 'cli', 'extension'] %}
                                 <span class="badge" title="{{ ('source.' ~ article.source.value ~ '.title')|trans }}">{{ ('source.' ~ article.source.value ~ '.label')|trans }}</span>
                             {% endif %}
                         </p>

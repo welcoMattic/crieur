@@ -52,6 +52,9 @@ voice:
     male: "Masculine"
 
 source:
+    extension:
+        label: "Extension"
+        title: "Lu dans le navigateur par l’extension Crieur, avec votre propre accès à la page"
     mcp:
         label: "MCP"
         title: "Envoyé par un assistant IA, via MCP"

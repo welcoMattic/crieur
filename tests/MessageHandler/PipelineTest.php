@@ -7,6 +7,7 @@ namespace App\Tests\MessageHandler;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
 use App\Enum\ArticleStatus;
+use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
 use App\Library\ArticleQueue;
 use App\Editor\SpeechEditor;
@@ -146,6 +147,22 @@ final class PipelineTest extends KernelTestCase
         foreach (\array_slice(array_values($article->getSegments()->toArray()), 2) as $segment) {
             static::assertTrue($segment->isEdited(), 'The editor goes on after a voice change.');
         }
+    }
+
+    #[Test]
+    public function anotherLanguagePreparesTheArticleAgain(): void
+    {
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline();
+
+        $this->queue()->restart($this->reload($article), LanguageSetting::French);
+        $this->runPipeline();
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        static::assertSame(Language::French, $article->getLanguage());
+        static::assertSame('Tiphaine', $article->getVoiceName());
     }
 
     #[Test]

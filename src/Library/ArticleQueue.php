@@ -9,11 +9,14 @@ use App\Enum\ArticleSource;
 use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
 use App\Editor\SpeechEditor;
+use App\Extraction\ExtractedArticle;
+use App\Extraction\ExtractionFailed;
 use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
 use App\Repository\ArticleRepository;
 use App\Speech\VoiceCatalog;
+use App\Text\NoReadableText;
 use Psr\Clock\ClockInterface;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -31,6 +34,7 @@ final readonly class ArticleQueue
         private VoiceCatalog $voices,
         private ClockInterface $clock,
         private SpeechEditor $editor,
+        private ArticlePreparation $preparation,
     ) {
     }
 
@@ -51,7 +55,24 @@ final readonly class ArticleQueue
     }
 
     /**
-     * Extracts and prepares the article again, for instance after a failure or with another language.
+     * Adds an article the browser extension extracted from the page the reader sees, with the
+     * reader's own access: it is prepared at once, never fetched by the server.
+     *
+     * @throws InvalidArticleUrl
+     * @throws ExtractionFailed  for a language other than French or English
+     * @throws NoReadableText    under 30 words
+     */
+    public function queueFromBrowser(ExtractedArticle $page, LanguageSetting $language = LanguageSetting::Auto, VoiceGender $gender = VoiceGender::Female): Article
+    {
+        $article = new Article(self::normalizeUrl($page->url), $language, $gender, $this->voices->defaultEngine()->name, ArticleSource::Extension, $this->clock->now());
+        $this->preparation->fromPage($article, $page);
+
+        return $article;
+    }
+
+    /**
+     * Prepares the article again, for instance after a failure or with another language. An
+     * article read in the browser keeps its text: the server could not fetch its page.
      */
     public function restart(Article $article, ?LanguageSetting $language = null): void
     {
@@ -60,7 +81,21 @@ final readonly class ArticleQueue
             $this->articles->save($article);
         }
 
-        $this->bus->dispatch(new ExtractArticle($article->getId()));
+        if (ArticleSource::Extension !== $article->getSource()) {
+            $this->bus->dispatch(new ExtractArticle($article->getId()));
+
+            return;
+        }
+
+        try {
+            $this->preparation->fromTranscript($article);
+        } catch (ExtractionFailed $e) {
+            $article->fail($e->reason, $this->clock->now());
+            $this->articles->save($article);
+        } catch (NoReadableText) {
+            $article->fail(ExtractionFailed::NO_TEXT, $this->clock->now());
+            $this->articles->save($article);
+        }
     }
 
     /**
