@@ -93,20 +93,23 @@ async function flagTab(tabId, ok) {
     setTimeout(() => ext.action.setBadgeText({ tabId, text: '' }).catch(() => {}), 6000);
 }
 
-ext.runtime.onInstalled.addListener(() => {
-    ext.contextMenus.create({ id: 'crieur-read', title: ext.i18n.getMessage('menuRead'), contexts: ['page'] });
-});
+// Firefox for Android has no page menu: the toolbar button is the only way there.
+if (ext.contextMenus) {
+    ext.runtime.onInstalled.addListener(() => {
+        ext.contextMenus.create({ id: 'crieur-read', title: ext.i18n.getMessage('menuRead'), contexts: ['page'] });
+    });
 
-ext.contextMenus.onClicked.addListener(async (info, tab) => {
-    if (info.menuItemId !== 'crieur-read' || !tab || tab.id === undefined) {
-        return;
-    }
-    const result = await sendTab(tab.id);
-    await flagTab(tab.id, result.ok);
-    if (!result.ok && (result.error === 'errorSetup' || result.error === 'errorPermission')) {
-        await ext.runtime.openOptionsPage();
-    }
-});
+    ext.contextMenus.onClicked.addListener(async (info, tab) => {
+        if (info.menuItemId !== 'crieur-read' || !tab || tab.id === undefined) {
+            return;
+        }
+        const result = await sendTab(tab.id);
+        await flagTab(tab.id, result.ok);
+        if (!result.ok && (result.error === 'errorSetup' || result.error === 'errorPermission')) {
+            await ext.runtime.openOptionsPage();
+        }
+    });
+}
 
 ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message && message.type === 'crieur:send' && typeof message.tabId === 'number') {

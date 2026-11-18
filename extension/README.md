@@ -41,6 +41,7 @@ npm run build              # dist/chrome, dist/firefox and their zips (crieur-<b
 npm test                   # unit tests: payload, manifests, translations, Defuddle checksum
 npm run lint               # web-ext lint on dist/firefox
 npm run e2e                # Chromium (headless, muted) against an isolated Crieur on port 8099
+npm run e2e:firefox        # the Firefox zip in headless Firefox (geckodriver), same isolated Crieur
 ```
 
 - **Chrome:** `chrome://extensions`, *Developer mode*, *Load unpacked*, choose `dist/chrome`.

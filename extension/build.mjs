@@ -24,6 +24,9 @@ const targets = {
     firefox: {
         ...base,
         background: { scripts: ['lib/shared.js', 'background.js'] },
+        // The default policy of Firefox for Manifest V3 adds upgrade-insecure-requests: a Crieur
+        // served over plain http on another machine of the home network could not be reached.
+        content_security_policy: { extension_pages: "script-src 'self'; object-src 'self'" },
         browser_specific_settings: {
             gecko: {
                 id: GECKO_ID,

@@ -8,7 +8,8 @@ Everything below is ready to paste. Nothing has been submitted.
 |---|---|
 | Packages | `npm run build` writes `dist/crieur-chrome-1.0.0.zip` and `dist/crieur-firefox-1.0.0.zip` (the version comes from `src/manifest.json`). |
 | Images | `store/`: icon 128 x 128, screenshots 1280 x 800 in English (`screenshot-en-*`) and French (`screenshot-fr-*`), small promo tile 440 x 280. |
-| Checks | `npm test`, `npm run lint` (0 error), `npm run e2e`. |
+| Checks | `npm test`, `npm run lint` (0 error), `npm run e2e` (Chromium, the test build allowed on 127.0.0.1), `npm run e2e:firefox` (the AMO zip in Firefox, options page, permission, article sent to a plain http server). |
+| Try by hand | **To do.** The toolbar click that grants `activeTab` cannot be automated: load `dist/chrome` and `dist/firefox` once and send one article from the button. Firefox for Android has never been tried. |
 | Developer accounts | **To do.** Chrome Web Store: one-time registration fee, 2-step verification. AMO: a Firefox account, free. |
 | Privacy policy URL | **To do.** [PRIVACY.md](PRIVACY.md) once the repository is public, for instance `https://github.com/welcoMattic/crieur/blob/main/extension/PRIVACY.md`. |
 | A Crieur for the reviewers | **To do.** Reviewers cannot test without a server: an instance they can reach (for instance on Clever Cloud) with `CRIEUR_API_TOKEN` set, its address and token in the test notes below. |
@@ -112,7 +113,7 @@ Also: right-click the page, "Listen to this article with Crieur".
 
 ## addons.mozilla.org (Developer Hub)
 
-**Upload:** *Submit a New Add-on*, *On this site*, upload `dist/crieur-firefox-1.0.0.zip`. Platforms: Firefox and Firefox for Android (minimum versions 140 and 142: the versions with the built-in data consent).
+**Upload:** *Submit a New Add-on*, *On this site*, upload `dist/crieur-firefox-1.0.0.zip`. Platforms: Firefox (minimum version 140, the first with the built-in data consent). Leave Firefox for Android unchecked until it has been tried on a phone (the manifest already sets 142 for it).
 
 **Source code:** not needed. The code is neither minified nor transpiled: `build.mjs` copies `src/` and writes the manifest. Answer "No" and explain in the notes (below).
 
@@ -137,6 +138,7 @@ Third-party library: vendor/defuddle.js is the unmodified dist/index.js of defud
   https://registry.npmjs.org/defuddle/-/defuddle-0.19.6.tgz (package/dist/index.js)
   SHA-256 f40075dc7b7b0460c16f77b9486a0ee66907a19677d2984e198e94356116a1e8
 The innerHTML warnings of web-ext lint are in that library.
+content_security_policy.extension_pages only drops the upgrade-insecure-requests of the default policy: Crieur is self-hosted, often on plain http on the home network.
 ```
 
 ## After publication

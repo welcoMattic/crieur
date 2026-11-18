@@ -50,15 +50,16 @@
         }
         const plain = (value) => String(value || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
         const suffix = plain(match[2]);
-        let host = '';
+        // The site name, the host ("example.org") or one of its labels but the last ("wikipedia").
+        const names = [plain(siteName)];
         try {
-            host = plain(new URL(url).hostname.replace(/^www\./, ''));
+            const labels = new URL(url).hostname.replace(/^www\./, '').split('.');
+            names.push(plain(labels.join('.')), ...labels.slice(0, -1).map(plain));
         } catch (error) {
             // No address: the site name alone decides.
         }
-        const site = plain(siteName);
 
-        return suffix !== '' && (suffix === site || host.includes(suffix)) ? match[1].trim() : text;
+        return suffix !== '' && names.includes(suffix) ? match[1].trim() : text;
     }
 
     /**

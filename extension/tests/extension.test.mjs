@@ -43,6 +43,8 @@ test('the name of the site leaves the title', () => {
     assert.equal(shared.cleanTitle('Why we read slower | The Field Notes', 'The Field Notes', 'https://example.org/essay'), 'Why we read slower');
     assert.equal(shared.cleanTitle('Symfony 8: what changes - a review', 'Symfony', 'https://symfony.com/blog'), 'Symfony 8: what changes - a review');
     assert.equal(shared.cleanTitle('Plain title', 'Example', 'https://example.org'), 'Plain title');
+    assert.equal(shared.cleanTitle('A letter to me - me', '', 'https://medium.com/@someone/a-letter'), 'A letter to me - me');
+    assert.equal(shared.cleanTitle('Notes on PHP - example.org', '', 'https://www.example.org/notes'), 'Notes on PHP');
 });
 
 test('answers of the server become messages', () => {
@@ -85,6 +87,8 @@ test('the build gives one manifest per browser', () => {
     assert.deepEqual(firefox.background, { scripts: ['lib/shared.js', 'background.js'] });
     assert.equal(firefox.browser_specific_settings.gecko.strict_min_version, '140.0');
     assert.deepEqual(firefox.browser_specific_settings.gecko.data_collection_permissions.required, ['websiteContent', 'browsingActivity']);
+    // A Crieur on plain http elsewhere than this computer must stay reachable from Firefox.
+    assert.doesNotMatch(firefox.content_security_policy.extension_pages, /upgrade-insecure-requests/);
     for (const manifest of [chrome, firefox]) {
         assert.equal(manifest.host_permissions, undefined, 'no host permission at install');
         assert.deepEqual(manifest.permissions, ['activeTab', 'scripting', 'storage', 'contextMenus']);
