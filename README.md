@@ -89,6 +89,23 @@ docker compose exec web php bin/console crieur:doctor --live
 
 Settings go in `.env.docker` (same variables as below). Phonon runs in the Ollama of the host (Apple Silicon), reached through `host.docker.internal`; anywhere else, set `MISTRAL_API_KEY` and `CRIEUR_VOICE_ENGINE=voxtral`.
 
+### Or on Clever Cloud
+
+Ollama runs Phonon on Apple Silicon only, so on a server the voices come from the Phonon servers of Gradium ([ptts-openai-server](https://github.com/gradium-ai/xn-ptts/tree/main/ptts-openai-server), CPU, French and English). `docker/clever/Dockerfile` puts everything in one Docker application: the app, its queue workers and the two Phonon servers, which listen on 127.0.0.1 only. The Phonon 40m models are gated: accept the terms of [gradium/phonon-40m-fr](https://huggingface.co/gradium/phonon-40m-fr) and [gradium/phonon-40m-en](https://huggingface.co/gradium/phonon-40m-en) with the account of `HF_TOKEN`.
+
+```sh
+clever create --type docker --org <organisation> crieur
+clever scale --flavor S
+clever env set CC_DOCKERFILE docker/clever/Dockerfile
+clever env set APP_SECRET "$(php -r 'echo bin2hex(random_bytes(16));')"
+clever env set CRIEUR_API_TOKEN "$(php -r 'echo bin2hex(random_bytes(24));')"
+clever env set DEFAULT_URI https://<domain>
+clever env set HF_TOKEN <a Hugging Face token>
+clever deploy
+```
+
+A Docker application of Clever Cloud has no persistent disk: the library starts again empty at each deployment or restart. Keep a single instance (SQLite).
+
 ## Connect your AI assistant (MCP)
 
 Claude Code, over HTTP while `symfony serve` runs:
@@ -121,6 +138,8 @@ All settings are environment variables (`.env`, override in `.env.local`):
 | `CRIEUR_VOICE_ENGINE` | `phonon` | `phonon` (local, Ollama) or `voxtral` (Mistral AI). Voices per language and gender live in `config/packages/crieur.yaml`. |
 | `CRIEUR_EDITOR` | `auto` | Speech editor: `mistral`, `ollama`, `off`, or `auto` (Mistral when a key is set, else the deterministic rules). |
 | `OLLAMA_HOST_URL` | `http://127.0.0.1:11434` | Where Ollama listens. |
+| `CRIEUR_PHONON_SERVERS` | empty | Phonon without Ollama: the Phonon servers of Gradium, one per language, as `fr=http://127.0.0.1:8880,en=http://127.0.0.1:8881`. |
+| `CRIEUR_PHONON_MODEL` | `phonon:40m-multilingual` | The Phonon model as Ollama names it (with Phonon servers, the name the pages show). |
 | `MISTRAL_API_KEY` | empty | Needed for Voxtral and the Mistral speech editor only. |
 | `CRIEUR_AUDIO_DIR` | `var/audio` | Where the synthesized chunks and episodes are stored (content-addressed: a sentence read by a voice is synthesized once). |
 | `CRIEUR_API_TOKEN` | empty | Token the browser extension must send (`Authorization: Bearer`). Set it as soon as Crieur is reachable by others: without it, any extension can add articles. |
@@ -167,7 +186,7 @@ cd extension && npm ci && npm test && npm run e2e  # the browser extension (Chro
 
 - **Personal use.** There is no login: run it on your machine or behind your own authentication. The podcast feed address carries a secret derived from `APP_SECRET`. Articles sent by the browser extension come from your subscriptions: anyone who can open your Crieur can read their transcripts.
 - **Licenses of the voices.** The Phonon 40m models are CC BY-NC 4.0: personal and non-commercial use only. Voxtral follows the terms of Mistral AI.
-- **Phonon through Ollama** needs an Apple Silicon Mac today; elsewhere use the cloud stack.
+- **Phonon through Ollama** needs an Apple Silicon Mac today; elsewhere, run the Phonon servers of Gradium (see *Or on Clever Cloud*) or use the cloud stack.
 - **What the voice cannot show:** images, charts, code blocks and tables are skipped.
 
 ## Credits

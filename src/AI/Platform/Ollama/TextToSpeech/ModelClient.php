@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\AI\Platform\Ollama\TextToSpeech;
 
 use App\AI\Platform\Ollama\TextToSpeech;
+use App\Speech\PhononServers;
 use Symfony\AI\Platform\Exception\InvalidArgumentException;
 use Symfony\AI\Platform\Model;
 use Symfony\AI\Platform\ModelClientInterface;
@@ -15,6 +16,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
  * Calls the OpenAI compatible speech endpoint of Ollama: POST /v1/audio/speech.
  *
  * Ollama answers WAV (24 kHz, 16-bit, mono for Phonon) and refuses more than 4096 characters.
+ * Where Ollama cannot run Phonon (it does on Apple Silicon only), the Phonon servers of Gradium
+ * answer the same request, one server per language: the "language" option picks it.
  */
 final readonly class ModelClient implements ModelClientInterface
 {
@@ -23,6 +26,7 @@ final readonly class ModelClient implements ModelClientInterface
     public function __construct(
         private HttpClientInterface $httpClient,
         private string $endpoint,
+        private ?PhononServers $servers = null,
     ) {
     }
 
@@ -46,7 +50,10 @@ final readonly class ModelClient implements ModelClientInterface
             throw new InvalidArgumentException(\sprintf('Ollama speaks at most %d characters per request, %d given.', self::MAX_CHARACTERS, mb_strlen($input)));
         }
 
-        return new RawHttpResult($this->httpClient->request('POST', rtrim($this->endpoint, '/').'/v1/audio/speech', [
+        $language = \is_string($options['language'] ?? null) ? $options['language'] : '';
+        $endpoint = $this->servers?->for($language) ?? $this->endpoint;
+
+        return new RawHttpResult($this->httpClient->request('POST', rtrim($endpoint, '/').'/v1/audio/speech', [
             'json' => [
                 'model' => $model->getName(),
                 'input' => $input,

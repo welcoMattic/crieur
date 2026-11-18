@@ -68,6 +68,29 @@ final class SetupInspectorTest extends TestCase
         self::assertSame('http://127.0.0.1:11434', $report->ollamaUrl);
     }
 
+    public function testPhononServersReplaceOllamaForTheVoice(): void
+    {
+        $http = new MockHttpClient(static function (string $method, string $url): MockResponse {
+            return match ($url) {
+                'http://127.0.0.1:8880/v1/models' => new MockResponse('{"data":[{"id":"gradium/phonon-40m-fr"}]}'),
+                'http://127.0.0.1:8881/v1/models' => throw new TransportException('Connection refused.'),
+                default => throw new TransportException('Ollama is not there.'),
+            };
+        });
+        $voices = new VoiceCatalog([
+            'phonon' => ['label' => 'Phonon', 'model' => 'phonon:40m', 'license' => 'CC BY-NC 4.0', 'local' => true, 'voices' => []],
+        ], 'phonon');
+
+        $down = (new SetupInspector($http, $voices, 'http://127.0.0.1:11434', '', 'off', phononServers: 'fr=http://127.0.0.1:8880,en=http://user:secret@127.0.0.1:8881'))->inspect();
+        self::assertSame('setup.issue.phonon_unreachable', $down->activeEngine()?->issue);
+        self::assertSame(['fr' => 'http://127.0.0.1:8880', 'en' => 'http://127.0.0.1:8881'], $down->phononServers);
+        self::assertStringNotContainsString('secret', serialize($down));
+
+        $up = (new SetupInspector($http, $voices, 'http://127.0.0.1:11434', '', 'off', phononServers: 'fr=http://127.0.0.1:8880'))->inspect();
+        self::assertTrue($up->activeEngine()?->ready);
+        self::assertFalse($up->ollamaReachable);
+    }
+
     /**
      * @param ?list<string> $models the models pulled in Ollama, null when it does not answer
      */

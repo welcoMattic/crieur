@@ -11,8 +11,8 @@ parameters:
     # "name" what the listener sees. Changing a voice needs no code change.
     crieur.voice_engines:
         phonon:
-            label: 'Phonon by Gradium, through Ollama, on this machine'
-            model: 'phonon:40m-multilingual'
+            label: 'Phonon by Gradium, a local voice (Ollama, or the Phonon servers of CRIEUR_PHONON_SERVERS)'
+            model: '%env(CRIEUR_PHONON_MODEL)%'
             license: 'CC BY-NC 4.0'
             local: true
             voices:

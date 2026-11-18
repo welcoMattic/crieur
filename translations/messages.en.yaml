@@ -17,7 +17,7 @@ podcast:
 
 engine:
     phonon:
-        label: "Phonon by Gradium, through Ollama, on this computer"
+        label: "Phonon by Gradium, a local voice, no cloud"
     voxtral:
         label: "Voxtral TTS by Mistral AI, in the cloud"
 
@@ -170,7 +170,7 @@ settings:
     toc: "On this page"
     voice:
         title: "Voice and speech editor"
-        lede: "Crieur reads with Phonon on this computer, through Ollama, or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
+        lede: "Crieur reads with Phonon, a local voice (through Ollama, or the Phonon servers of Gradium), or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
     engines:
         title: "Choose"
         voice: "Voice"
@@ -195,6 +195,8 @@ settings:
         key: "Mistral API key"
         set: "Set (never shown)"
         unset: "Not set: the cloud voice and editor are off"
+    phonon:
+        server: "Phonon server (%language%)"
     mcp:
         title: "AI assistants (MCP)"
         lede: "Crieur is an MCP server: an assistant such as Claude can send it an article to read aloud, list the library or read a transcript."
@@ -229,12 +231,13 @@ setup:
     ready: "Ready"
     not_ready: "Not ready"
     active: "In use"
-    local: "on this computer"
+    local: "local"
     cloud: "in the cloud"
     available_later: "Not in use"
     issue:
         ollama_unreachable: "Ollama does not answer at %url%. Start it with “ollama serve”."
         model_missing: "The model is not installed. Run “ollama pull %model%”."
+        phonon_unreachable: "A Phonon server does not answer: %url%."
         key_missing: "Needs MISTRAL_API_KEY in .env.local."
 
 copy:

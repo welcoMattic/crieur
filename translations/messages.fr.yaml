@@ -17,7 +17,7 @@ podcast:
 
 engine:
     phonon:
-        label: "Phonon de Gradium, via Ollama, sur cet ordinateur"
+        label: "Phonon de Gradium, une voix locale, sans cloud"
     voxtral:
         label: "Voxtral TTS de Mistral AI, dans le cloud"
 
@@ -170,7 +170,7 @@ settings:
     toc: "Sur cette page"
     voice:
         title: "Voix et éditeur vocal"
-        lede: "Crieur lit avec Phonon sur cet ordinateur, via Ollama, ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
+        lede: "Crieur lit avec Phonon, une voix locale (via Ollama, ou les serveurs Phonon de Gradium), ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
     engines:
         title: "Choisir"
         voice: "Voix"
@@ -195,6 +195,8 @@ settings:
         key: "Clé d’API Mistral"
         set: "Définie (jamais affichée)"
         unset: "Non définie : la voix et l’éditeur du cloud sont désactivés"
+    phonon:
+        server: "Serveur Phonon (%language%)"
     mcp:
         title: "Assistants IA (MCP)"
         lede: "Crieur est un serveur MCP : un assistant comme Claude peut lui envoyer un article à lire, consulter la bibliothèque ou lire une transcription."
@@ -229,12 +231,13 @@ setup:
     ready: "Prêt"
     not_ready: "Pas prêt"
     active: "Utilisé"
-    local: "sur cet ordinateur"
+    local: "en local"
     cloud: "dans le cloud"
     available_later: "Non utilisé"
     issue:
         ollama_unreachable: "Ollama ne répond pas à %url%. Lancez-le avec « ollama serve »."
         model_missing: "Le modèle n’est pas installé. Lancez « ollama pull %model% »."
+        phonon_unreachable: "Un serveur Phonon ne répond pas : %url%."
         key_missing: "Nécessite MISTRAL_API_KEY dans .env.local."
 
 copy:

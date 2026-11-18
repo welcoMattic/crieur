@@ -43,18 +43,28 @@ final class SettingsController extends AbstractController
      * the change applies to the next articles and voice changes, without a restart.
      */
     #[Route('/settings/engines', name: 'settings_engines', methods: ['POST'])]
-    public function engines(Request $request, EngineSettings $settings): Response
+    public function engines(Request $request, EngineSettings $settings, SetupInspector $inspector): Response
     {
         if (!$this->isCsrfTokenValid('submit', $request->getPayload()->getString('_token'))) {
             throw new AccessDeniedHttpException('The form has expired or comes from another site: reload the page and try again.');
         }
 
+        // Only what can work now: a voice engine without its key would stop every reading.
+        $report = $inspector->inspect();
         try {
             if ($request->getPayload()->has('voice_engine')) {
-                $settings->changeVoiceEngine($request->getPayload()->getString('voice_engine'));
+                $engine = $request->getPayload()->getString('voice_engine');
+                if (!$report->canUseEngine($engine)) {
+                    throw new \InvalidArgumentException(\sprintf('The voice engine "%s" is not ready.', $engine));
+                }
+                $settings->changeVoiceEngine($engine);
             }
             if ($request->getPayload()->has('editor')) {
-                $settings->changeEditor($request->getPayload()->getString('editor'));
+                $editor = $request->getPayload()->getString('editor');
+                if (!$report->canUseEditor($editor)) {
+                    throw new \InvalidArgumentException(\sprintf('The speech editor "%s" is not ready.', $editor));
+                }
+                $settings->changeEditor($editor);
             }
         } catch (\InvalidArgumentException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);

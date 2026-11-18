@@ -7,6 +7,7 @@ namespace App\Command;
 use App\Editor\EditorUnavailable;
 use App\Editor\SpeechEditor;
 use App\Enum\VoiceGender;
+use App\Speech\PhononServers;
 use App\Speech\SpeechSynthesizer;
 use App\Speech\VoiceCatalog;
 use App\Text\Language;
@@ -32,6 +33,8 @@ final readonly class DoctorCommand
         private string $ollamaUrl,
         #[Autowire(env: 'MISTRAL_API_KEY')]
         private string $mistralApiKey,
+        #[Autowire(env: 'CRIEUR_PHONON_SERVERS')]
+        private string $phononServers = '',
     ) {
     }
 
@@ -57,12 +60,17 @@ final readonly class DoctorCommand
         $engine = $this->voices->defaultEngine();
         $check('Voice engine', true, \sprintf('%s (%s)', $engine->name, $engine->label));
 
+        $servers = PhononServers::fromString($this->phononServers);
         $ollamaModels = $this->ollamaModels();
-        if ($engine->local || 'ollama' === $this->editor->backend()) {
+        if (($engine->local && $servers->isEmpty()) || 'ollama' === $this->editor->backend()) {
             $check('Ollama', null !== $ollamaModels, $this->ollamaUrl, 'is not reachable. Install Ollama 0.40.11 or later and start it.');
         }
 
-        if ('phonon' === $engine->name) {
+        if ('phonon' === $engine->name && !$servers->isEmpty()) {
+            foreach ($servers->displayed() as $language => $url) {
+                $check(\sprintf('Phonon server (%s)', $language), $this->answers($url.'/v1/models'), $url, 'does not answer GET /v1/models.');
+            }
+        } elseif ('phonon' === $engine->name) {
             $installed = null !== $ollamaModels && \in_array($engine->model, $ollamaModels, true);
             $check('Phonon voices', $installed, $engine->model, \sprintf('is not pulled. Run: ollama pull %s', $engine->model));
         }
@@ -145,6 +153,17 @@ final readonly class DoctorCommand
 
         try {
             return 200 === $this->httpClient->request('GET', 'https://api.mistral.ai/v1/models', ['auth_bearer' => $this->mistralApiKey, 'timeout' => 5])->getStatusCode();
+        } catch (\Throwable) {
+            return false;
+        }
+    }
+
+    private function answers(string $url): bool
+    {
+        try {
+            $this->httpClient->request('GET', $url, ['timeout' => 3, 'max_duration' => 6])->toArray();
+
+            return true;
         } catch (\Throwable) {
             return false;
         }

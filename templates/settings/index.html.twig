@@ -55,7 +55,7 @@
                     <dd class="check__detail">
                         <span>{{ ('engine.' ~ engine.name ~ '.label')|trans }}</span>
                         <span class="muted"><code>{{ engine.model }}</code> · {{ (engine.local ? 'setup.local' : 'setup.cloud')|trans }}</span>
-                        {% if engine.issue %}<span class="check__issue">{{ engine.issue|trans({'%url%': report.ollamaUrl, '%model%': engine.model}) }}</span>{% endif %}
+                        {% if engine.issue %}<span class="check__issue">{{ engine.issue|trans({'%url%': engine.local and report.phononServers ? report.phononServers|join(', ') : report.ollamaUrl, '%model%': engine.model}) }}</span>{% endif %}
                     </dd>
                     <dd class="check__state">
                         {% if engine.active or engine.ready %}{{ ui.check_state(engine) }}{% else %}<span class="status status--queued">{{ icon('clock') }}<span>{{ 'setup.available_later'|trans }}</span></span>{% endif %}
@@ -80,6 +80,13 @@
         </dl>
 
         <dl class="facts">
+            {% for language, url in report.phononServers %}
+                <div>
+                    <dt>{{ 'settings.phonon.server'|trans({'%language%': language|upper}) }}</dt>
+                    <dd><code>{{ url }}</code></dd>
+                </div>
+            {% endfor %}
+            {% if not report.phononServers or report.editorSetting == 'ollama' %}
             <div>
                 <dt>Ollama</dt>
                 <dd>
@@ -90,6 +97,7 @@
                     {% endif %}
                 </dd>
             </div>
+            {% endif %}
             <div>
                 <dt>{{ 'settings.mistral.key'|trans }}</dt>
                 <dd>
@@ -114,26 +122,20 @@
                     {% for engine in report.engines %}
                         <label class="segmented__option">
                             <input class="segmented__input" type="radio" name="voice_engine" value="{{ engine.name }}" data-action="autosubmit#submit"
-                                {%- if engine.active %} checked{% elseif not engine.ready %} disabled{% endif %}>
+                                {%- if engine.active %} checked{% elseif not report.canUseEngine(engine.name) %} disabled{% endif %}>
                             <span>{{ engine.name == 'phonon' ? 'Phonon' : 'Voxtral' }}</span>
                         </label>
                     {% endfor %}
                 </div>
             </fieldset>
 
-            {% set editor_ready = {
-                auto: true,
-                mistral: report.mistralKeySet,
-                ollama: report.ollamaReachable and 'ministral-3:8b' in report.ollamaModels,
-                off: true,
-            } %}
             <fieldset class="segmented">
                 <legend class="segmented__legend">{{ icon('sparkle') }}{{ 'settings.engines.editor'|trans }}</legend>
                 <div class="segmented__options">
                     {% for choice in ['auto', 'mistral', 'ollama', 'off'] %}
                         <label class="segmented__option">
                             <input class="segmented__input" type="radio" name="editor" value="{{ choice }}" data-action="autosubmit#submit"
-                                {%- if report.editorSetting == choice %} checked{% elseif not editor_ready[choice] %} disabled{% endif %}>
+                                {%- if report.editorSetting == choice %} checked{% elseif not report.canUseEditor(choice) %} disabled{% endif %}>
                             <span>{{ ('settings.engines.editor_choice.' ~ choice)|trans }}</span>
                         </label>
                     {% endfor %}

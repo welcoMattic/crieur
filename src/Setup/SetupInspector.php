@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Setup;
 
 use App\Settings\EngineSettings;
+use App\Speech\PhononServers;
 use App\Speech\VoiceCatalog;
 use App\Speech\VoiceEngine;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -13,7 +14,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
  * Tells which voice engine and which speech editor are active, and whether they can work now:
- * Ollama reachable with the Phonon and Ministral models pulled, the Mistral API key set.
+ * Ollama reachable with the Phonon and Ministral models pulled (or the Phonon servers answering,
+ * when CRIEUR_PHONON_SERVERS lists them), the Mistral API key set.
  */
 final readonly class SetupInspector
 {
@@ -34,6 +36,8 @@ final readonly class SetupInspector
         private string $editorSetting,
         private float $timeout = 1.5,
         private ?EngineSettings $settings = null,
+        #[Autowire(env: 'CRIEUR_PHONON_SERVERS')]
+        private string $phononServers = '',
     ) {
     }
 
@@ -47,9 +51,11 @@ final readonly class SetupInspector
         $models = $this->ollamaModels();
         $keySet = '' !== trim($this->mistralApiKey);
         $active = $this->voices->defaultEngine()->name;
+        $servers = PhononServers::fromString($this->phononServers);
+        $serversDown = $servers->isEmpty() ? null : $this->serversDown($servers);
 
         $engines = array_map(
-            fn (VoiceEngine $engine): Check => $this->engine($engine, $engine->name === $active, $models, $keySet),
+            fn (VoiceEngine $engine): Check => $this->engine($engine, $engine->name === $active, $models, $keySet, $serversDown),
             $this->voices->engines(),
         );
 
@@ -61,17 +67,22 @@ final readonly class SetupInspector
             ollamaReachable: null !== $models,
             ollamaModels: $models ?? [],
             mistralKeySet: $keySet,
+            phononServers: $servers->displayed(),
         );
     }
 
     /**
-     * @param ?list<string> $models null when Ollama cannot be reached
+     * @param ?list<string> $models      null when Ollama cannot be reached
+     * @param ?list<string> $serversDown the Phonon servers that do not answer, null without Phonon servers
      */
-    private function engine(VoiceEngine $engine, bool $active, ?array $models, bool $keySet): Check
+    private function engine(VoiceEngine $engine, bool $active, ?array $models, bool $keySet, ?array $serversDown): Check
     {
-        $issue = $engine->local
-            ? (null === $models ? 'setup.issue.ollama_unreachable' : (self::hasModel($models, $engine->model) ? null : 'setup.issue.model_missing'))
-            : ($keySet ? null : 'setup.issue.key_missing');
+        $issue = match (true) {
+            !$engine->local => $keySet ? null : 'setup.issue.key_missing',
+            null !== $serversDown => [] === $serversDown ? null : 'setup.issue.phonon_unreachable',
+            null === $models => 'setup.issue.ollama_unreachable',
+            default => self::hasModel($models, $engine->model) ? null : 'setup.issue.model_missing',
+        };
 
         return new Check($engine->name, $engine->label, $engine->model, $active, $engine->local, null === $issue, $issue);
     }
@@ -123,6 +134,26 @@ final readonly class SetupInspector
         }
 
         return $models;
+    }
+
+    /**
+     * @return list<string> the languages whose Phonon server does not answer GET /v1/models
+     */
+    private function serversDown(PhononServers $servers): array
+    {
+        $down = [];
+        foreach ($servers->servers as $language => $url) {
+            try {
+                $this->httpClient->request('GET', $url.'/v1/models', [
+                    'timeout' => $this->timeout,
+                    'max_duration' => $this->timeout * 2,
+                ])->toArray();
+            } catch (ExceptionInterface) {
+                $down[] = $language;
+            }
+        }
+
+        return $down;
     }
 
     /**

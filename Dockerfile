@@ -1,6 +1,7 @@
 # Crieur in one image: FrankenPHP serves the app, the same image runs the queue workers.
 # Phonon voices need Ollama on an Apple Silicon host (reached through host.docker.internal);
-# anywhere else, set MISTRAL_API_KEY and CRIEUR_VOICE_ENGINE=voxtral.
+# anywhere else, use docker/clever/Dockerfile (the Phonon servers of Gradium in the same image),
+# or set MISTRAL_API_KEY and CRIEUR_VOICE_ENGINE=voxtral.
 FROM dunglas/frankenphp:1-php8.4-bookworm
 
 RUN install-php-extensions intl pdo_sqlite zip opcache \

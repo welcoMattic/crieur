@@ -34,7 +34,7 @@ final readonly class SpeechSynthesizer
             return ['key' => $key, 'durationMs' => Wav::fromBytes($this->store->read($key))->durationMs()];
         }
 
-        $result = $this->platform->invoke($voice->model, $spoken, ['voice' => $voice->id])->getResult();
+        $result = $this->platform->invoke($voice->model, $spoken, ['voice' => $voice->id, 'language' => $voice->language->value])->getResult();
         if (!$result instanceof BinaryResult) {
             throw new \UnexpectedValueException(\sprintf('The speech platform answered "%s" instead of audio.', $result::class));
         }

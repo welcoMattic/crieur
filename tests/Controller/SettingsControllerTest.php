@@ -84,6 +84,22 @@ final class SettingsControllerTest extends ControllerTestCase
         self::assertSame('phonon', self::getContainer()->get(EngineSettings::class)->voiceEngine());
     }
 
+    public function testAnEngineThatCannotWorkIsRefused(): void
+    {
+        // Without a key, Voxtral and the Mistral editor would stop every reading of a shared Crieur.
+        $_ENV['MISTRAL_API_KEY'] = $_SERVER['MISTRAL_API_KEY'] = '';
+        self::ensureKernelShutdown();
+        $this->client = static::createClient();
+
+        $this->client->request('POST', '/settings/engines', ['voice_engine' => 'voxtral', '_token' => 'csrf-token'], server: self::sameOrigin());
+        self::assertResponseStatusCodeSame(400);
+        $this->client->request('POST', '/settings/engines', ['editor' => 'mistral', '_token' => 'csrf-token'], server: self::sameOrigin());
+        self::assertResponseStatusCodeSame(400);
+
+        self::assertSame('phonon', self::getContainer()->get(EngineSettings::class)->voiceEngine());
+        self::assertSame('auto', self::getContainer()->get(EngineSettings::class)->editor());
+    }
+
     public function testTheChoiceNeedsAFormOfThisSite(): void
     {
         $this->client->request('POST', '/settings/engines', ['voice_engine' => 'voxtral', '_token' => 'csrf-token'], server: self::crossSite());

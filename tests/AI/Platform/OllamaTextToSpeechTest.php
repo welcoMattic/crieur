@@ -40,6 +40,25 @@ final class OllamaTextToSpeechTest extends TestCase
     }
 
     #[Test]
+    public function itSendsEachLanguageToItsPhononServerWhenThereAreSome(): void
+    {
+        $urls = [];
+        $httpClient = new MockHttpClient(static function (string $method, string $url) use (&$urls): MockResponse {
+            $urls[] = $url;
+
+            return new MockResponse(self::WAV);
+        });
+        $provider = Factory::createProvider('http://ollama:11434', $httpClient, null, 'fr=http://127.0.0.1:8880/, en=http://127.0.0.1:8881');
+        $platform = new Platform([$provider], new CatalogBasedModelRouter());
+
+        $platform->invoke('phonon:40m', 'Bonjour.', ['voice' => 'Tiphaine', 'language' => 'fr'])->getResult();
+        $platform->invoke('phonon:40m', 'Hello.', ['voice' => 'Hadley', 'language' => 'en'])->getResult();
+        $platform->invoke('phonon:40m', 'Hallo.', ['voice' => 'Hadley', 'language' => 'de'])->getResult();
+
+        static::assertSame(['http://127.0.0.1:8880/v1/audio/speech', 'http://127.0.0.1:8881/v1/audio/speech', 'http://ollama:11434/v1/audio/speech'], $urls);
+    }
+
+    #[Test]
     public function itTurnsARefusalIntoAPlatformException(): void
     {
         $httpClient = new MockHttpClient(new JsonMockResponse(['error' => ['message' => 'voice "Nobody" not found']], ['http_code' => 400]));
