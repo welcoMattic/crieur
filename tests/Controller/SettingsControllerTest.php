@@ -115,5 +115,4 @@ final class SettingsControllerTest extends ControllerTestCase
         self::assertSame('phonon', $settings->voiceEngine());
         self::assertSame('auto', $settings->editor());
     }
-
 }

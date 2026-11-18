@@ -7,10 +7,10 @@ namespace App\Tests\Text;
 use App\Text\Block;
 use App\Text\BlockKind;
 use App\Text\HtmlBlockExtractor;
-use Symfony\Component\Process\Process;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\Process\Process;
 
 final class HtmlBlockExtractorTest extends TestCase
 {

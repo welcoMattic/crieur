@@ -79,5 +79,4 @@ final class HomeControllerTest extends ControllerTestCase
         self::assertSelectorTextContains('.compose .models', 'Rules only');
         self::assertSelectorExists('.compose .models a[href="/settings#voice"]');
     }
-
 }

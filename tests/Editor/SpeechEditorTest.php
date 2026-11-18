@@ -128,5 +128,4 @@ final class SpeechEditorTest extends TestCase
 
         static::assertSame([2 => 'is an officer of a royal court or public authority.'], $edited->spoken);
     }
-
 }

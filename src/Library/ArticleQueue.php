@@ -4,18 +4,18 @@ declare(strict_types=1);
 
 namespace App\Library;
 
+use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
+use App\Enum\ArticleStatus;
 use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
-use App\Editor\SpeechEditor;
 use App\Extraction\ExtractedArticle;
 use App\Extraction\ExtractionFailed;
 use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
 use App\Repository\ArticleRepository;
-use App\Enum\ArticleStatus;
 use App\Speech\SpeechSynthesizer;
 use App\Speech\VoiceCatalog;
 use App\Text\NoReadableText;

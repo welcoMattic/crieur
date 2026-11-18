@@ -263,5 +263,4 @@ final class TextNormalizerTest extends TestCase
         );
         self::assertSame('trois millions de dollars et douze livres', $normalizer->writeOutSymbols('3 M$ et 12 £', Language::French));
     }
-
 }

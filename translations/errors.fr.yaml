@@ -12,9 +12,6 @@ synthesis:
     engine_unavailable: "Le moteur de voix n’est pas disponible : vérifiez les réglages."
     failed: "La voix n’a pas pu lire une partie de l’article."
 
-editor:
-    failed: "L’éditeur vocal n’a pas pu préparer le texte."
-
 url:
     empty: "Collez le lien d’un article."
     too_long: "Ce lien est trop long."

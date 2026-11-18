@@ -76,7 +76,7 @@ final readonly class NumberSpeller
      * "3,50 €" gives "trois euros cinquante", "2 M€" gives "deux millions d’euros", "$1,200" gives
      * "one thousand two hundred dollars".
      *
-     * @param '€'|'$'|'£' $currency
+     * @param '€'|'$'|'£'    $currency
      */
     public function money(string $integerPart, ?string $decimalPart, ?string $scale, string $currency = '€'): string
     {

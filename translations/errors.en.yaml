@@ -12,9 +12,6 @@ synthesis:
     engine_unavailable: "The voice engine is not available: check the settings."
     failed: "The voice could not read part of the article."
 
-editor:
-    failed: "The speech editor could not prepare the text."
-
 url:
     empty: "Paste the link to an article."
     too_long: "This link is too long."
