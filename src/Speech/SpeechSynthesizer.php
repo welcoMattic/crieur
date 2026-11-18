@@ -39,7 +39,12 @@ final readonly class SpeechSynthesizer
             throw new \UnexpectedValueException(\sprintf('The speech platform answered "%s" instead of audio.', $result::class));
         }
 
-        $wav = $this->postProcessor->process(Wav::fromBytes($result->getContent()));
+        try {
+            $wav = Wav::fromBytes($result->getContent());
+        } catch (\InvalidArgumentException $e) {
+            throw new \UnexpectedValueException(\sprintf('The speech platform answered audio Crieur cannot read: %s', $e->getMessage()), 0, $e);
+        }
+        $wav = $this->postProcessor->process($wav);
         $this->store->write($key, $wav->toBytes());
 
         return ['key' => $key, 'durationMs' => $wav->durationMs()];

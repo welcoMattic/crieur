@@ -92,7 +92,8 @@ final readonly class EditArticleHandler
                 $article->edit('rules', null, $this->clock->now());
                 $this->entityManager->flush();
 
-                return;
+                // Chunks an earlier batch rewrote after the voice read them are still read again.
+                break;
             }
 
             if (!$this->isCurrent($article, $message->revision)) {

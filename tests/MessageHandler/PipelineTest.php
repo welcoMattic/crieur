@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace App\Tests\MessageHandler;
 
+use App\Editor\SpeechEditor;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
 use App\Enum\ArticleStatus;
 use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
 use App\Library\ArticleQueue;
-use App\Editor\SpeechEditor;
 use App\Message\EditArticle;
 use App\Message\ExtractArticle;
 use App\Message\SynthesizeArticle;
@@ -29,11 +29,12 @@ use PHPUnit\Framework\Attributes\Test;
 use Psr\Log\NullLogger;
 use Symfony\AI\Agent\Agent;
 use Symfony\AI\Platform\Model;
+use Symfony\AI\Platform\Result\BinaryResult;
 use Symfony\AI\Platform\StructuredOutput\PlatformSubscriber;
 use Symfony\AI\Platform\Test\MockPlatformFactory;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\DependencyInjection\ServiceLocator;
 use Symfony\Component\EventDispatcher\EventDispatcher;
-use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpClient\Response\MockResponse;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
@@ -128,6 +129,31 @@ final class PipelineTest extends KernelTestCase
             static::assertStringStartsWith('Heard: ', $segment->getSpoken());
             static::assertSame(AudioStore::key(self::getContainer()->get(VoiceCatalog::class)->voice('phonon', Language::English, VoiceGender::Female), $segment->getSpoken()), $segment->getAudioKey());
         }
+    }
+
+    #[Test]
+    public function anEditorThatStopsAnsweringLeavesNoChunkWithoutAudio(): void
+    {
+        $faithful = self::faithfulEditor();
+        $calls = 0;
+        $this->useEditor(static function (Model $model, array|string|object $input) use ($faithful, &$calls): string {
+            if (++$calls > 1) {
+                throw new \RuntimeException('The editor is gone.');
+            }
+
+            return $faithful($model, $input);
+        });
+        $this->servePage((string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+
+        // The voice reads everything first; the editor rewrites one batch, then stops answering.
+        $article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline(['extract', 'synthesize']);
+        $this->runPipeline(['edit', 'synthesize']);
+        static::assertGreaterThan(1, $calls);
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        static::assertSame($article->getSegments()->count(), $article->countReadySegments());
     }
 
     #[Test]
@@ -229,6 +255,39 @@ final class PipelineTest extends KernelTestCase
         $article = $this->reload($article);
         static::assertSame(ArticleStatus::Ready, $article->getStatus());
         static::assertSame('Preston', $article->getVoiceName());
+    }
+
+    #[Test]
+    public function aVoiceChangeWhileAChunkIsSynthesizedKeepsTheOldVoiceOut(): void
+    {
+        // The listener picks another voice while the worker waits for the audio of a chunk.
+        $state = new class {
+            public ?Article $article = null;
+            public bool $changed = false;
+        };
+        self::getContainer()->set('crieur.platform.speech', MockPlatformFactory::createPlatform(function (Model $model, array|string|object $payload) use ($state): BinaryResult {
+            if (!$state->changed && $state->article instanceof Article) {
+                $state->changed = true;
+                $this->queue()->changeVoice($this->articleOf($state->article), VoiceGender::Male);
+            }
+
+            return new BinaryResult(Wav::silence(60 * mb_strlen(\is_string($payload) ? $payload : '-'))->toBytes(), 'audio/wav');
+        }));
+        // A text of its own: audio the store holds already from another test is not synthesized again.
+        $page = str_replace('The reason is not speed', 'The reason, '.strtr(bin2hex(random_bytes(6)), '0123456789', 'ghijklmnop').', is not speed', (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $this->servePage($page);
+        $article = $state->article = $this->queue()->queue('https://example.org/essay', ArticleSource::Web);
+        $this->runPipeline();
+        static::assertTrue($state->changed);
+
+        $article = $this->reload($article);
+        static::assertSame(ArticleStatus::Ready, $article->getStatus());
+        $voice = self::getContainer()->get(VoiceCatalog::class)->voice($article->getVoiceEngine(), Language::English, VoiceGender::Male);
+        foreach ($article->getSegments() as $segment) {
+            if ('' !== trim($segment->getSpoken())) {
+                static::assertSame(AudioStore::key($voice, $segment->getSpoken()), $segment->getAudioKey(), 'Every chunk is read by the new voice.');
+            }
+        }
     }
 
     #[Test]
@@ -342,6 +401,17 @@ final class PipelineTest extends KernelTestCase
         }
 
         static::fail('The pipeline did not settle in 20 rounds.');
+    }
+
+    /**
+     * The article as the entity manager of the workers holds it, without clearing it.
+     */
+    private function articleOf(Article $article): Article
+    {
+        $managed = self::getContainer()->get(ArticleRepository::class)->get($article->getId());
+        static::assertNotNull($managed);
+
+        return $managed;
     }
 
     private function reload(Article $article): Article

@@ -40,7 +40,6 @@ final readonly class SynthesizeArticleHandler
      */
     private const float SLICE_SECONDS = 5.0;
 
-
     public function __construct(
         private ArticleRepository $articles,
         private EntityManagerInterface $entityManager,
@@ -119,6 +118,10 @@ final readonly class SynthesizeArticleHandler
             // The editor may have rewritten the chunk meanwhile: its new text gets its own audio.
             // The listener may have removed it: it keeps the silence the web request attached.
             $this->entityManager->refresh($segment);
+            if (!$this->isCurrent($article, $message->revision)) {
+                // Another voice was picked meanwhile: this audio is of the old one.
+                return;
+            }
             if ($segment->isRemoved()) {
                 continue;
             }
@@ -138,14 +141,14 @@ final readonly class SynthesizeArticleHandler
         }
 
         $this->entityManager->refresh($article);
-        if ($article->getRevision() === $message->revision && $article->countReadySegments() === $article->getSegments()->count()) {
+        // Counted in the database: the editor worker may have cleared the audio of a chunk this
+        // worker still holds in memory with its old audio.
+        $missing = (int) $this->entityManager->getConnection()->fetchOne('SELECT COUNT(*) FROM segment WHERE article_id = ? AND audio_key IS NULL', [$article->getId()->toBinary()]);
+        if ($article->getRevision() === $message->revision && 0 === $missing) {
             $article->markReady($this->clock->now());
             $this->entityManager->flush();
         }
     }
-
-
-
 
     /**
      * Gives the editor worker a few seconds to rewrite the chunk the voice is about to read, then
@@ -168,7 +171,7 @@ final readonly class SynthesizeArticleHandler
      */
     private function synthesize(string $spoken, Voice $voice): array
     {
-        for ($attempt = 1; ; ++$attempt) {
+        for ($attempt = 1;; ++$attempt) {
             try {
                 return $this->synthesizer->synthesize($spoken, $voice);
             } catch (PlatformException|TransportExceptionInterface|\RuntimeException $e) {

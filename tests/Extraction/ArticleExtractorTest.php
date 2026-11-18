@@ -33,6 +33,15 @@ final class ArticleExtractorTest extends TestCase
     }
 
     #[Test]
+    public function itReadsAPageWithAnUnknownCharsetAsUtf8(): void
+    {
+        $html = str_replace('<head>', '<head><meta charset="x-unknown-charset">', (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse($html, ['response_headers' => ['content-type' => 'text/html']])), allowPrivateNetworks: true);
+
+        static::assertSame('Why we read slower than we listen', $extractor->extract('https://example.org/essay')->title);
+    }
+
+    #[Test]
     public function itReportsAnHttpError(): void
     {
         $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse('Gone', ['http_code' => 404])), allowPrivateNetworks: true);
@@ -116,5 +125,4 @@ final class ArticleExtractorTest extends TestCase
         static::assertNull($extractor->defuddleVersion());
         static::assertSame('0.19.6', (new ArticleExtractor(new MockHttpClient()))->defuddleVersion());
     }
-
 }

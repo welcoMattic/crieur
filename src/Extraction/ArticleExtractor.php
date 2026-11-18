@@ -9,9 +9,9 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpClient\Exception\TimeoutException;
 use Symfony\Component\HttpClient\Exception\TransportException;
 use Symfony\Component\HttpClient\NoPrivateNetworkHttpClient;
-use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
+use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 /**
@@ -205,7 +205,12 @@ final readonly class ArticleExtractor
             return mb_scrub($html, 'UTF-8');
         }
 
-        $converted = @mb_convert_encoding($html, 'UTF-8', $charset);
+        try {
+            $converted = @mb_convert_encoding($html, 'UTF-8', $charset);
+        } catch (\ValueError) {
+            // A charset mbstring does not know: the page is read as UTF-8.
+            $converted = false;
+        }
 
         return mb_scrub(false === $converted ? $html : $converted, 'UTF-8');
     }
