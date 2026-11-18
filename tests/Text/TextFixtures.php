@@ -66,7 +66,7 @@ final class TextFixtures
 
     public static function frenchHtml(): string
     {
-        return '<div id="readability-page-1" class="page"><div>
+        return '<div id="article" class="page"><div>
             <h1>Le retour des trains de nuit en Europe</h1>
             <p>Après des années de déclin, les trains de nuit reviennent en Europe. Selon une étude publiée en 2023 par
             <a href="https://example.org/agence" title="Agence">l’Agence européenne</a>, la fréquentation a augmenté
@@ -100,7 +100,7 @@ final class TextFixtures
 
     public static function englishHtml(): string
     {
-        return '<div id="readability-page-1" class="page"><div>
+        return '<div id="article" class="page"><div>
             <h1>The return of night trains in Europe</h1>
             <p>After years of decline, night trains are coming back to Europe. According to a study published in 2023
             by <a href="https://example.org/agency">the European Agency</a>, ridership grew by 3.5% in one
