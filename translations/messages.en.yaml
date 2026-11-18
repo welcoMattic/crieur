@@ -144,12 +144,6 @@ reader:
     detected: "detected"
     voice_by: "Read by %voice%"
     words: "one word|%words% words"
-    editor:
-        prefix: "Spoken text:"
-        rules: "Rules"
-        rules_title: "Deterministic rules prepared the text for the ear: numbers, units, abbreviations."
-        label: "Speech editor:"
-        model_title: "A language model rewrote the text for the ear before the voice read it."
     listen: "Listen"
     download: "Download the episode"
     retry: "Try again"
@@ -246,3 +240,12 @@ error:
     not_found: "This page does not exist, or not anymore."
     forbidden: "This action was refused. Reload the page and try again."
     generic: "Something went wrong. Try again in a moment."
+
+models:
+    label: "Models"
+    voice: "Voice"
+    editor: "Speech editor"
+    rules: "Rules only"
+    unknown: "Engine no longer configured"
+    at_work: "At work"
+    change: "Change"

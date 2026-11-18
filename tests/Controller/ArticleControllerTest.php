@@ -74,7 +74,8 @@ final class ArticleControllerTest extends ControllerTestCase
         self::assertResponseIsSuccessful();
         self::assertSelectorTextContains('h1', 'On listening');
         self::assertSelectorTextContains('.reader__summary', 'A short walk');
-        self::assertSelectorTextContains('.reader__editor', 'ministral-3:8b');
+        self::assertSelectorTextContains('.models', 'ministral-3:8b');
+        self::assertSelectorTextContains('.models', 'phonon:40m-multilingual');
         self::assertCount(4, $crawler->filter('.seg[data-position]'));
         self::assertCount(1, $crawler->filter('.seg[data-rewritten]'));
         self::assertSelectorTextContains('.seg[data-rewritten] .seg__spoken', 'three and a half kilometres');

@@ -36,6 +36,8 @@
                 {% endfor %}
             </div>
         {{ form_end(form) }}
+        {% set current = voice_engine() %}
+        {{ include('components/_models.html.twig', {engine: current, voice: null, editor: editor_model(), in_progress: false, change_link: true}) }}
     </section>
 
     <section class="library-section" aria-labelledby="library-title">

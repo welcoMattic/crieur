@@ -1,0 +1,33 @@
+{#
+    The models behind a reading: the voice engine and its model, the speech editor and its model.
+    engine: VoiceEngine|null, voice: string|null (a voice name), editor: string|null (a model name,
+    null for the rules), in_progress: whether they are at work right now.
+#}
+<ul class="models" aria-label="{{ 'models.label'|trans }}">
+    <li class="models__item">
+        {{ icon('voice') }}
+        <span class="models__role">{{ 'models.voice'|trans }}</span>
+        {% if engine %}
+            <span>{{ engine.name == 'phonon' ? 'Phonon' : 'Voxtral' }}{% if voice %} · {{ voice }}{% endif %}</span>
+            <code>{{ engine.model }}</code>
+            <span class="models__where">{{ (engine.local ? 'setup.local' : 'setup.cloud')|trans }}</span>
+        {% else %}
+            <span class="muted">{{ 'models.unknown'|trans }}</span>
+        {% endif %}
+    </li>
+    <li class="models__item">
+        {{ icon(editor ? 'sparkle' : 'text') }}
+        <span class="models__role">{{ 'models.editor'|trans }}</span>
+        {% if editor %}
+            <code>{{ editor }}</code>
+        {% else %}
+            <span>{{ 'models.rules'|trans }}</span>
+        {% endif %}
+    </li>
+    {% if in_progress %}
+        <li class="models__state">{{ icon('progress') }}<span>{{ 'models.at_work'|trans }}</span></li>
+    {% endif %}
+    {% if change_link ?? false %}
+        <li class="models__change"><a href="{{ path('settings') }}#voice">{{ 'models.change'|trans }}</a></li>
+    {% endif %}
+</ul>

@@ -1,15 +1,16 @@
-# Symfony CLI: "symfony serve" also starts the two queue workers of Crieur.
+# Symfony CLI: "symfony serve" also starts the three queue workers of Crieur. No --time-limit:
+# the CLI does not start a worker again after it exits on its own (it does after a code change).
 http:
     port: 8000
     no_tls: true
 workers:
     # Extraction is quick and has its own queue: a new article never waits behind a long synthesis.
     messenger_extract:
-        cmd: ['symfony', 'console', 'messenger:consume', 'extract', '--time-limit=3600', '--memory-limit=256M']
+        cmd: ['symfony', 'console', 'messenger:consume', 'extract', '--memory-limit=256M']
         watch: ['config', 'src', 'templates', 'vendor/composer']
     messenger_synthesize:
-        cmd: ['symfony', 'console', 'messenger:consume', 'synthesize', '--time-limit=3600', '--memory-limit=512M']
+        cmd: ['symfony', 'console', 'messenger:consume', 'synthesize', '--memory-limit=512M']
         watch: ['config', 'src', 'templates', 'vendor/composer']
     messenger_edit:
-        cmd: ['symfony', 'console', 'messenger:consume', 'edit', '--time-limit=3600', '--memory-limit=256M']
+        cmd: ['symfony', 'console', 'messenger:consume', 'edit', '--memory-limit=256M']
         watch: ['config', 'src', 'templates', 'vendor/composer']

@@ -68,17 +68,13 @@
                 {% if article.wordCount > 0 %}<span>{{ 'reader.words'|trans({'%count%': article.wordCount, '%words%': article.wordCount|number_format(0, '.', app.request.locale == 'fr' ? ' ' : ',')}) }}</span>{% endif %}
             </p>
 
-            {% if article.editor %}
-                {% if article.editor == 'rules' %}
-                    <p class="reader__editor reader__editor--rules" title="{{ 'reader.editor.rules_title'|trans }}">
-                        {{ icon('text') }}<span><span class="reader__editor-prefix">{{ 'reader.editor.prefix'|trans }}</span> {{ 'reader.editor.rules'|trans }}</span>
-                    </p>
-                {% else %}
-                    <p class="reader__editor" title="{{ 'reader.editor.model_title'|trans }}">
-                        {{ icon('sparkle') }}<span>{{ 'reader.editor.label'|trans }} <code>{{ article.editor }}</code></span>
-                    </p>
-                {% endif %}
-            {% endif %}
+            {% set article_editor = article.editor and article.editor != 'rules' ? article.editor : (status.inProgress ? editor_model() : null) %}
+            {{ include('components/_models.html.twig', {
+                engine: voice_engine_named(article.voiceEngine),
+                voice: article.voiceName,
+                editor: article_editor,
+                in_progress: status.inProgress,
+            }) }}
 
             <div class="reader__actions">
                 {% if status.playable %}

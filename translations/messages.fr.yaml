@@ -144,12 +144,6 @@ reader:
     detected: "détecté"
     voice_by: "Lu par %voice%"
     words: "un mot|%words% mots"
-    editor:
-        prefix: "Texte lu :"
-        rules: "Règles"
-        rules_title: "Des règles fixes ont préparé le texte pour l’oreille : nombres, unités, abréviations."
-        label: "Éditeur vocal :"
-        model_title: "Un modèle de langue a réécrit le texte pour l’oreille avant la lecture."
     listen: "Écouter"
     download: "Télécharger l’épisode"
     retry: "Réessayer"
@@ -246,3 +240,12 @@ error:
     not_found: "Cette page n’existe pas, ou plus."
     forbidden: "Cette action a été refusée. Rechargez la page et réessayez."
     generic: "Une erreur est survenue. Réessayez dans un instant."
+
+models:
+    label: "Modèles"
+    voice: "Voix"
+    editor: "Éditeur vocal"
+    rules: "Règles seules"
+    unknown: "Moteur qui n’est plus configuré"
+    at_work: "Au travail"
+    change: "Changer"

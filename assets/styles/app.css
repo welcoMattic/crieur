@@ -997,36 +997,10 @@ form[aria-busy="true"] .button--primary {
     color: var(--text-tertiary);
 }
 
-.reader__editor {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    margin: var(--space-3) 0 0;
-    padding: 4px 10px 4px 8px;
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--accent-text);
-    font-size: 13px;
-    font-weight: 500;
-}
 
-.reader__editor .icon {
-    width: 16px;
-    height: 16px;
-}
 
-.reader__editor code {
-    font-size: 12.5px;
-}
 
-.reader__editor--rules {
-    background: var(--surface-sunken);
-    color: var(--text-secondary);
-}
 
-.reader__editor-prefix {
-    opacity: 0.8;
-}
 
 .reader__actions {
     display: flex;
@@ -2271,4 +2245,82 @@ html[data-show-spoken] .seg[data-rewritten] .seg__spoken[data-skipped] {
 .segmented__input:disabled + span {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+/* The models behind a reading: home page (in use) and article page (used, or at work) */
+
+.models {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-4) 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.models__item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 5px var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-m);
+    background: var(--surface);
+}
+
+.models__item .icon {
+    width: 15px;
+    height: 15px;
+    color: var(--accent-text);
+}
+
+.models__role {
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.models__item code {
+    font: 12px/1.4 var(--font-mono);
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.models__where {
+    color: var(--text-tertiary);
+}
+
+.models__state,
+.models__change {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 var(--space-1);
+}
+
+.models__state .icon {
+    width: 15px;
+    height: 15px;
+    color: var(--accent-text);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .models__state .icon {
+        animation: models-spin 1.2s linear infinite;
+    }
+}
+
+@keyframes models-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.models__change a {
+    color: var(--accent-text);
+    font-weight: 500;
 }

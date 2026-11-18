@@ -69,4 +69,15 @@ final class HomeControllerTest extends ControllerTestCase
 
         self::assertResponseRedirects('/');
     }
+
+    public function testTheHomePageShowsTheModelsInUse(): void
+    {
+        $this->client->request('GET', '/');
+
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.compose .models', 'phonon:40m-multilingual');
+        self::assertSelectorTextContains('.compose .models', 'Rules only');
+        self::assertSelectorExists('.compose .models a[href="/settings#voice"]');
+    }
+
 }
