@@ -60,13 +60,19 @@
         }
         button.disabled = true;
         label.textContent = t('popupReading');
-        const answer = await ext.runtime.sendMessage({
-            type: 'crieur:send',
-            tabId: tab.id,
-            choices: { voice: form.voice.value, language: form.language.value },
-        });
-        button.disabled = false;
-        label.textContent = t('popupRead');
+        let answer = null;
+        try {
+            answer = await ext.runtime.sendMessage({
+                type: 'crieur:send',
+                tabId: tab.id,
+                choices: { voice: form.voice.value, language: form.language.value },
+            });
+        } catch (error) {
+            // No answer from the background script: told below as a server error.
+        } finally {
+            button.disabled = false;
+            label.textContent = t('popupRead');
+        }
 
         if (answer && answer.ok) {
             const open = document.createElement('a');

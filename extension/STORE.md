@@ -93,7 +93,7 @@ Crieur est un logiciel libre, sous licence MIT.
 | Host permissions (optional) | Crieur is self-hosted: the reader chooses the server address. The options page requests the origin of that server only, at the moment it is saved, to send the article to it. No other host is ever requested. |
 
 - Remote code: **No.** All the code is in the package, Defuddle included.
-- Data usage: check **Website content** (the text of the article) and **Web history** (the address and title of the page sent). They go to the reader's own Crieur server only. The API token is a credential of that same server, typed by the reader and sent only to it.
+- Data usage: check **Website content** (the article as Defuddle extracts it: its text, links and image addresses) and **Web history** (the address and title of the page sent). They go to the reader's own Crieur server only. The API token is a credential of that same server, typed by the reader and sent only to it.
 - Certify the three statements (not sold to third parties, not used for purposes unrelated to the single purpose, not used for creditworthiness or lending).
 - Privacy policy: the public URL of [PRIVACY.md](PRIVACY.md).
 

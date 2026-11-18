@@ -36,7 +36,13 @@
             return;
         }
         const token = form.token.value.trim();
+        const previous = normalizeServerUrl(stored.serverUrl);
         await ext.storage.local.set({ serverUrl: server, token });
+        stored.serverUrl = server;
+        if (previous && originPattern(previous) !== originPattern(server)) {
+            // The extension keeps the right to reach its current server only.
+            await ext.permissions.remove({ origins: [originPattern(previous)] }).catch(() => false);
+        }
         form.server.value = server;
 
         try {

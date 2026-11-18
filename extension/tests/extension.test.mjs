@@ -37,6 +37,24 @@ test('the payload keeps what the server expects and nothing else', () => {
     });
 });
 
+test('addresses are strictly encoded and long values cut to what the server takes', () => {
+    assert.equal(shared.encodeUrl('https://example.org/a?tags=x|y&q={1}^2#top'), 'https://example.org/a?tags=x%7Cy&q=%7B1%7D%5E2#top');
+    assert.equal(shared.encodeUrl('https://example.org/50%-off/%C3%A9t%C3%A9'), 'https://example.org/50%25-off/%C3%A9t%C3%A9');
+    assert.equal(shared.encodeUrl('https://fr.wikipedia.org/wiki/Crieur_public'), 'https://fr.wikipedia.org/wiki/Crieur_public');
+    assert.equal(shared.encodeUrl('https://example.org/a#one#two'), 'https://example.org/a#one%23two');
+    assert.equal(shared.encodeUrl('javascript:alert(1)'), null);
+
+    const payload = shared.buildPayload({
+        url: 'https://example.org/a?tags=x|y', title: 'T', content: '<p>Text</p>',
+        siteName: 's'.repeat(300), excerpt: 'e'.repeat(2500), image: 'https://example.org/' + 'i'.repeat(2100) + '.png',
+    }, {});
+
+    assert.equal(payload.url, 'https://example.org/a?tags=x%7Cy');
+    assert.equal(payload.siteName.length, 255);
+    assert.equal(payload.excerpt.length, 2000);
+    assert.equal(payload.image, undefined);
+});
+
 test('the name of the site leaves the title', () => {
     assert.equal(shared.cleanTitle('Crieur public \u2014 Wikip\u00e9dia', 'Wikipedia', 'https://fr.wikipedia.org/wiki/Crieur_public'), 'Crieur public');
     assert.equal(shared.cleanTitle('Town crier - Wikipedia', '', 'https://en.wikipedia.org/wiki/Town_crier'), 'Town crier');

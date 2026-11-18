@@ -25,7 +25,7 @@ when you ask.
 
 ## Server side
 
-- `GET /api/ping` tells whether a token is needed; `POST /api/articles` takes the article as JSON
+- `GET /api/ping` checks the address and the token (401 when the token is missing or wrong); `POST /api/articles` takes the article as JSON
   (`src/Api/BrowserArticle.php`) and answers with the address to listen to.
 - Set `CRIEUR_API_TOKEN` (a long random value) as soon as Crieur is reachable by anyone else: without
   it, any extension can add articles. Requests from other web pages are always refused.

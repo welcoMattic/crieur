@@ -11,7 +11,8 @@ Only when you ask for it: the toolbar button (or its keyboard shortcut) followed
 or the page menu *Listen to this article with Crieur*. It then reads the page of the current tab,
 as your browser shows it, and takes out of it:
 
-- the text of the article and its title;
+- the article and its title, as Defuddle extracts them: the text, with its links and the addresses
+  of its images;
 - the address of the page;
 - when the page gives them: the site name, the author, the language, the summary, the address of
   its main image and the publication date.
