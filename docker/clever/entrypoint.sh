@@ -4,6 +4,11 @@
 # Each one runs in a loop: Clever Cloud restarts the container, not a process that stopped in it.
 set -e
 mkdir -p var
+if [ -z "${APP_SECRET:-}" ]; then
+    [ -s var/app_secret ] || php -r 'echo bin2hex(random_bytes(16));' > var/app_secret
+    APP_SECRET="$(cat var/app_secret)"
+    export APP_SECRET
+fi
 php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
 
 keep() {
