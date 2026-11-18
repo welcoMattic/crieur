@@ -12,7 +12,7 @@ Everything below is ready to paste. Nothing has been submitted.
 | Try by hand | **To do.** The toolbar click that grants `activeTab` cannot be automated: load `dist/chrome` and `dist/firefox` once and send one article from the button. Firefox for Android has never been tried. |
 | Developer accounts | **To do.** Chrome Web Store: one-time registration fee, 2-step verification. AMO: a Firefox account, free. |
 | Privacy policy URL | **To do.** [PRIVACY.md](PRIVACY.md) once the repository is public, for instance `https://github.com/welcoMattic/crieur/blob/main/extension/PRIVACY.md`. |
-| A Crieur for the reviewers | **To do.** Reviewers cannot test without a server: an instance they can reach (for instance on Clever Cloud) with `CRIEUR_API_TOKEN` set, its address and token in the test notes below. |
+| A Crieur for the reviewers | `https://crieur.cleverapps.io` (Clever Cloud, `CRIEUR_API_TOKEN` set): put its address and token in the test notes below. Its library starts again empty at each restart. |
 | `homepage_url` | `https://github.com/welcoMattic/crieur` in `src/manifest.json`: change it if the repository lives elsewhere. |
 | Add-on id (Firefox) | `{6f1c4d1e-3b7a-4a49-9c55-2f6e8f0b9d21}` in `build.mjs`: never change it after the first upload. |
 
