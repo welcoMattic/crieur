@@ -6,7 +6,7 @@ namespace App\Command;
 
 use App\Demo\LibraryReset;
 use App\Demo\PublicDemo;
-use Psr\Clock\ClockInterface;
+use Symfony\Component\Clock\ClockInterface;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Attribute\Option;
 use Symfony\Component\Console\Command\Command;
@@ -37,8 +37,11 @@ final readonly class DemoResetCommand
         if ($atNextReset) {
             $next = $this->demo->nextReset();
             $io->writeln(\sprintf('Next reset at %s.', $next->format('Y-m-d H:i T')));
-            // At the reset time or just after it, never just before.
-            sleep(max(0, $next->getTimestamp() - $this->clock->now()->getTimestamp()) + 1);
+            // A minute at most at a time, against the clock: sleep() stops counting while the
+            // machine itself sleeps. At the reset time or just after it, never just before.
+            while (($left = $next->getTimestamp() - $this->clock->now()->getTimestamp()) >= 0) {
+                $this->clock->sleep(min(60, $left + 1));
+            }
         }
 
         $io->success(\sprintf('%s: the library is empty, %d article(s) removed.', $this->clock->now()->format('Y-m-d H:i T'), $this->reset->reset()));
