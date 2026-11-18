@@ -43,6 +43,8 @@ Open <http://127.0.0.1:8000> and paste a link. `castor list` shows the other tas
 
 **Browser extension:** `castor install` builds it in `extension/dist/`. In Chrome, open `chrome://extensions`, turn on *Developer mode*, *Load unpacked*, and choose `extension/dist/chrome`. In Firefox, open `about:debugging#/runtime/this-firefox`, *Load Temporary Add-on*, and choose `extension/dist/firefox/manifest.json`. Then set the address of your Crieur in its options.
 
+**AI assistants (MCP):** Settings shows how to add Crieur to Claude Code or another MCP client, over HTTP (`/mcp`) or stdio (`php bin/console mcp:server`). Over HTTP, Crieur answers for `localhost` only: add its public host name to `CRIEUR_MCP_HOSTS` in `.env.local` to reach it from another machine.
+
 **With Docker:** `castor docker:up` serves Crieur on <http://localhost:8000>, with Phonon through the Ollama of the host (Apple Silicon), or Voxtral with `MISTRAL_API_KEY` and `CRIEUR_VOICE_ENGINE=voxtral` in `.env.docker`. `castor docker:build-server` builds the all-in-one image for hosts without Ollama (Phonon servers of Gradium inside, as on the live demo; it listens on port 8080 and needs a Hugging Face `HF_TOKEN` with access to the Phonon models).
 
 ## License

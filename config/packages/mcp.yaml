@@ -13,3 +13,5 @@ mcp:
                 http: true
             http:
                 path: /mcp
+                # The host names the HTTP transport answers for (DNS rebinding protection).
+                allowed_hosts: '%env(csv:CRIEUR_MCP_HOSTS)%'
