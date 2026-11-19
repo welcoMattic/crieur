@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b7a6a28938959ec9e7bb7b9e2bb0ee87",
+    "content-hash": "ba181c509efddddfe16dcd7ac36876eb",
     "packages": [
         {
             "name": "composer/semver",
@@ -2884,6 +2884,93 @@
                 }
             ],
             "time": "2026-11-18T23:19:42+00:00"
+        },
+        {
+            "name": "symfony/ai-docker-model-runner-platform",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/ai-docker-model-runner-platform.git",
+                "reference": "b8d1797293060e5514aa457661716125b8bcc052"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/ai-docker-model-runner-platform/zipball/b8d1797293060e5514aa457661716125b8bcc052",
+                "reference": "b8d1797293060e5514aa457661716125b8bcc052",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.2",
+                "symfony/ai-generic-platform": "^1.0",
+                "symfony/ai-platform": "^1.0",
+                "symfony/http-client": "^7.4|^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.1",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpstan/phpstan-strict-rules": "^2.0",
+                "phpunit/phpunit": "^11.5.53"
+            },
+            "default-branch": true,
+            "type": "symfony-ai-platform",
+            "extra": {
+                "thanks": {
+                    "url": "https://github.com/symfony/ai",
+                    "name": "symfony/ai"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Symfony\\AI\\Platform\\Bridge\\DockerModelRunner\\": ""
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Christopher Hertel",
+                    "email": "mail@christopher-hertel.de"
+                },
+                {
+                    "name": "Oskar Stark",
+                    "email": "oskarstark@googlemail.com"
+                },
+                {
+                    "name": "Symfony Community",
+                    "homepage": "https://symfony.com/contributors"
+                }
+            ],
+            "description": "Docker Model Runner platform bridge for Symfony AI",
+            "keywords": [
+                "Bridge",
+                "ai",
+                "docker",
+                "platform"
+            ],
+            "support": {
+                "source": "https://github.com/symfony/ai-docker-model-runner-platform/tree/main"
+            },
+            "funding": [
+                {
+                    "url": "https://symfony.com/sponsor",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/fabpot",
+                    "type": "github"
+                },
+                {
+                    "url": "https://github.com/nicolas-grekas",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/symfony/symfony",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2026-11-18T23:01:02+00:00"
         },
         {
             "name": "symfony/ai-generic-platform",
@@ -12268,6 +12355,12 @@
             "alias_normalized": "1.0.9999999.9999999-dev"
         },
         {
+            "package": "symfony/ai-docker-model-runner-platform",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
             "package": "symfony/ai-generic-platform",
             "version": "dev-main",
             "alias": "1.0.x-dev",
@@ -12302,6 +12395,7 @@
     "stability-flags": {
         "symfony/ai-agent": 20,
         "symfony/ai-bundle": 20,
+        "symfony/ai-docker-model-runner-platform": 20,
         "symfony/ai-generic-platform": 20,
         "symfony/ai-mistral-platform": 20,
         "symfony/ai-ollama-platform": 20,
@@ -12311,11 +12405,11 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
+        "php": ">=8.4.1",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-intl": "*",
-        "ext-pdo_sqlite": "*",
-        "php": ">=8.4.1"
+        "ext-pdo_sqlite": "*"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"

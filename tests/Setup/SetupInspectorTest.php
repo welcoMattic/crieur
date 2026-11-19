@@ -17,25 +17,36 @@ final class SetupInspectorTest extends TestCase
 
     public function testEverythingLocalIsReady(): void
     {
-        $report = $this->inspector(['phonon:40m-multilingual', 'ministral-3:8b'], key: '', editor: 'ollama')->inspect();
+        $report = $this->inspector(['phonon:40m-multilingual'], key: '', editor: 'dmr', dmrModels: ['docker.io/ai/ministral3:8B-Q4_K_M'])->inspect();
 
         self::assertTrue($report->ollamaReachable);
         self::assertSame('phonon', $report->activeEngine()?->name);
         self::assertTrue($report->activeEngine()->ready);
-        self::assertSame('ministral-3:8b', $report->editor->model);
+        self::assertSame('ai/ministral3:8B-Q4_K_M', $report->editor->model);
+        self::assertTrue($report->canUseEditor('dmr'));
         self::assertTrue($report->editor->ready);
         self::assertTrue($report->isReady());
         self::assertSame('setup.issue.key_missing', $report->engines[1]->issue);
     }
 
-    public function testOllamaDown(): void
+    public function testOllamaAndDockerModelRunnerDown(): void
     {
-        $report = $this->inspector(null, key: '', editor: 'ollama')->inspect();
+        $report = $this->inspector(null, key: '', editor: 'dmr')->inspect();
 
         self::assertFalse($report->ollamaReachable);
         self::assertSame('setup.issue.ollama_unreachable', $report->activeEngine()?->issue);
-        self::assertSame('setup.issue.ollama_unreachable', $report->editor->issue);
+        self::assertSame('setup.issue.dmr_unreachable', $report->editor->issue);
+        self::assertFalse($report->canUseEditor('dmr'));
         self::assertFalse($report->isReady());
+    }
+
+    public function testTheEditorModelNotPulledInDockerModelRunner(): void
+    {
+        $report = $this->inspector(['phonon:40m-multilingual'], key: '', editor: 'ollama', dmrModels: ['docker.io/ai/gemma3:latest'])->inspect();
+
+        self::assertSame('dmr', $report->editorSetting, 'ollama, the local editor of earlier versions, is Docker Model Runner now.');
+        self::assertSame('setup.issue.dmr_model_missing', $report->editor->issue);
+        self::assertFalse($report->editor->ready);
     }
 
     public function testAModelNotPulled(): void
@@ -92,12 +103,20 @@ final class SetupInspectorTest extends TestCase
     }
 
     /**
-     * @param ?list<string> $models the models pulled in Ollama, null when it does not answer
+     * @param ?list<string> $models    the models pulled in Ollama, null when it does not answer
+     * @param ?list<string> $dmrModels the models of Docker Model Runner, null when it does not answer
      */
-    private function inspector(?array $models, string $key, string $editor, string $ollamaUrl = 'http://127.0.0.1:11434'): SetupInspector
+    private function inspector(?array $models, string $key, string $editor, string $ollamaUrl = 'http://127.0.0.1:11434', ?array $dmrModels = null): SetupInspector
     {
-        $http = new MockHttpClient(static function (string $method, string $url) use ($models): MockResponse {
+        $http = new MockHttpClient(static function (string $method, string $url) use ($models, $dmrModels): MockResponse {
             self::assertSame('GET', $method);
+            if (str_ends_with($url, '/engines/v1/models')) {
+                if (null === $dmrModels) {
+                    throw new TransportException('Connection refused.');
+                }
+
+                return new MockResponse(json_encode(['object' => 'list', 'data' => array_map(static fn (string $id): array => ['id' => $id], $dmrModels)], \JSON_THROW_ON_ERROR));
+            }
             self::assertStringEndsWith('/api/tags', $url);
             if (null === $models) {
                 throw new TransportException('Connection refused.');

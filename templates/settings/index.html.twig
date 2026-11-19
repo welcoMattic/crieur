@@ -73,7 +73,7 @@
                         {%- endif -%}
                     </span>
                     <span class="muted">{{ 'settings.editor.setting'|trans }} <code>{{ report.editorSetting }}</code></span>
-                    {% if report.editor.issue %}<span class="check__issue">{{ report.editor.issue|trans({'%url%': report.ollamaUrl, '%model%': report.editor.model ?? ''}) }}</span>{% endif %}
+                    {% if report.editor.issue %}<span class="check__issue">{{ report.editor.issue|trans({'%url%': report.editor.name == 'dmr' ? report.dmrUrl : report.ollamaUrl, '%model%': report.editor.model ?? ''}) }}</span>{% endif %}
                 </dd>
                 <dd class="check__state">{{ ui.check_state(report.editor) }}</dd>
             </div>
@@ -86,7 +86,7 @@
                     <dd><code>{{ url }}</code></dd>
                 </div>
             {% endfor %}
-            {% if not report.phononServers or report.editorSetting == 'ollama' %}
+            {% if not report.phononServers %}
             <div>
                 <dt>Ollama</dt>
                 <dd>
@@ -94,6 +94,18 @@
                         <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'settings.ollama.reachable'|trans({'%url%': report.ollamaUrl}) }}</span></span>
                     {% else %}
                         <span class="status status--failed">{{ icon('alert') }}<span>{{ 'settings.ollama.unreachable'|trans({'%url%': report.ollamaUrl}) }}</span></span>
+                    {% endif %}
+                </dd>
+            </div>
+            {% endif %}
+            {% if report.editorSetting == 'dmr' %}
+            <div>
+                <dt>Docker Model Runner</dt>
+                <dd>
+                    {% if report.dmrModels is not null %}
+                        <span class="status status--ready">{{ icon('check-circle') }}<span>{{ 'settings.ollama.reachable'|trans({'%url%': report.dmrUrl}) }}</span></span>
+                    {% else %}
+                        <span class="status status--failed">{{ icon('alert') }}<span>{{ 'settings.ollama.unreachable'|trans({'%url%': report.dmrUrl}) }}</span></span>
                     {% endif %}
                 </dd>
             </div>
@@ -132,7 +144,7 @@
             <fieldset class="segmented">
                 <legend class="segmented__legend">{{ icon('sparkle') }}{{ 'settings.engines.editor'|trans }}</legend>
                 <div class="segmented__options">
-                    {% for choice in ['auto', 'mistral', 'ollama', 'off'] %}
+                    {% for choice in ['auto', 'mistral', 'dmr', 'off'] %}
                         <label class="segmented__option">
                             <input class="segmented__input" type="radio" name="editor" value="{{ choice }}" data-action="autosubmit#submit"
                                 {%- if report.editorSetting == choice %} checked{% elseif not report.canUseEditor(choice) %} disabled{% endif %}>

@@ -14,6 +14,7 @@ final readonly class SetupReport
      * @param list<Check>           $engines
      * @param list<string>          $ollamaModels
      * @param array<string, string> $phononServers the Phonon servers by language, when Phonon does not go through Ollama
+     * @param ?list<string>         $dmrModels     the models of Docker Model Runner, null when it does not answer
      */
     public function __construct(
         public array $engines,
@@ -24,6 +25,8 @@ final readonly class SetupReport
         public array $ollamaModels,
         public bool $mistralKeySet,
         public array $phononServers = [],
+        public string $dmrUrl = '',
+        public ?array $dmrModels = null,
     ) {
     }
 
@@ -65,7 +68,7 @@ final readonly class SetupReport
         return match ($choice) {
             'auto', 'off' => true,
             'mistral' => $this->mistralKeySet,
-            'ollama' => $this->ollamaReachable && \in_array(SetupInspector::EDITOR_MODEL_OLLAMA, $this->ollamaModels, true),
+            'dmr' => null !== $this->dmrModels && SetupInspector::hasDmrModel($this->dmrModels),
             default => false,
         };
     }

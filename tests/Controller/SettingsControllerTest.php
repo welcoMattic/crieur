@@ -6,6 +6,7 @@ namespace App\Tests\Controller;
 
 use App\Editor\SpeechEditor;
 use App\Settings\EngineSettings;
+use Doctrine\DBAL\Connection;
 use App\Speech\VoiceCatalog;
 
 final class SettingsControllerTest extends ControllerTestCase
@@ -106,6 +107,14 @@ final class SettingsControllerTest extends ControllerTestCase
 
         self::assertResponseStatusCodeSame(403);
         self::assertSame('phonon', self::getContainer()->get(EngineSettings::class)->voiceEngine());
+    }
+
+    public function testAnOllamaEditorChosenBeforeIsDockerModelRunnerNow(): void
+    {
+        self::getContainer()->get(Connection::class)->insert('setting', ['name' => 'editor', 'value' => 'ollama']);
+
+        self::assertSame('dmr', self::getContainer()->get(EngineSettings::class)->editor());
+        self::assertSame('dmr', self::getContainer()->get(SpeechEditor::class)->backend());
     }
 
     public function testWithoutAChoiceTheEnvironmentDecides(): void

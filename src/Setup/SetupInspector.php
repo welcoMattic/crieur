@@ -22,7 +22,7 @@ final readonly class SetupInspector
     /**
      * The models of the speech editor, as config/packages/ai.yaml names them.
      */
-    public const string EDITOR_MODEL_OLLAMA = 'ministral-3:8b';
+    public const string EDITOR_MODEL_DMR = 'ai/ministral3:8B-Q4_K_M';
     public const string EDITOR_MODEL_MISTRAL = 'mistral-small-latest';
 
     public function __construct(
@@ -38,17 +38,22 @@ final readonly class SetupInspector
         private ?EngineSettings $settings = null,
         #[Autowire(env: 'CRIEUR_PHONON_SERVERS')]
         private string $phononServers = '',
+        #[Autowire(env: 'DOCKER_MODEL_RUNNER_URL')]
+        private string $dmrUrl = 'http://127.0.0.1:12434',
     ) {
     }
 
     public function editorSetting(): string
     {
-        return $this->settings?->editor() ?? $this->editorSetting;
+        $setting = $this->settings?->editor() ?? $this->editorSetting;
+
+        return 'ollama' === $setting ? 'dmr' : $setting;
     }
 
     public function inspect(): SetupReport
     {
         $models = $this->ollamaModels();
+        $dmrModels = $this->dmrModels();
         $keySet = '' !== trim($this->mistralApiKey);
         $active = $this->voices->defaultEngine()->name;
         $servers = PhononServers::fromString($this->phononServers);
@@ -61,13 +66,15 @@ final readonly class SetupInspector
 
         return new SetupReport(
             engines: $engines,
-            editor: $this->editor($models, $keySet),
+            editor: $this->editor($dmrModels, $keySet),
             editorSetting: $this->editorSetting(),
             ollamaUrl: $this->displayedOllamaUrl(),
             ollamaReachable: null !== $models,
             ollamaModels: $models ?? [],
             mistralKeySet: $keySet,
             phononServers: $servers->displayed(),
+            dmrUrl: self::displayed($this->dmrUrl),
+            dmrModels: $dmrModels,
         );
     }
 
@@ -90,20 +97,20 @@ final readonly class SetupInspector
     /**
      * Mirrors CRIEUR_EDITOR: "auto" uses Mistral when the key is set, else the rules only.
      *
-     * @param ?list<string> $models
+     * @param ?list<string> $dmrModels the models of Docker Model Runner, null when it does not answer
      */
-    private function editor(?array $models, bool $keySet): Check
+    private function editor(?array $dmrModels, bool $keySet): Check
     {
         return match ($this->editorSetting()) {
             'mistral' => new Check('mistral', 'Mistral AI', self::EDITOR_MODEL_MISTRAL, true, false, $keySet, $keySet ? null : 'setup.issue.key_missing'),
-            'ollama' => new Check(
-                'ollama',
-                'Ollama',
-                self::EDITOR_MODEL_OLLAMA,
+            'dmr' => new Check(
+                'dmr',
+                'Docker Model Runner',
+                self::EDITOR_MODEL_DMR,
                 true,
                 true,
-                null !== $models && self::hasModel($models, self::EDITOR_MODEL_OLLAMA),
-                null === $models ? 'setup.issue.ollama_unreachable' : (self::hasModel($models, self::EDITOR_MODEL_OLLAMA) ? null : 'setup.issue.model_missing'),
+                null !== $dmrModels && self::hasDmrModel($dmrModels),
+                null === $dmrModels ? 'setup.issue.dmr_unreachable' : (self::hasDmrModel($dmrModels) ? null : 'setup.issue.dmr_model_missing'),
             ),
             'auto' => $keySet
                 ? new Check('mistral', 'Mistral AI', self::EDITOR_MODEL_MISTRAL, true, false, true)
@@ -134,6 +141,46 @@ final readonly class SetupInspector
         }
 
         return $models;
+    }
+
+    /**
+     * @return ?list<string> the models of Docker Model Runner, null when it does not answer
+     */
+    private function dmrModels(): ?array
+    {
+        try {
+            $data = $this->httpClient->request('GET', rtrim($this->dmrUrl, '/').'/engines/v1/models', [
+                'timeout' => $this->timeout,
+                'max_duration' => $this->timeout * 2,
+            ])->toArray();
+        } catch (ExceptionInterface) {
+            return null;
+        }
+
+        $models = [];
+        foreach (\is_array($data['data'] ?? null) ? $data['data'] : [] as $model) {
+            if (\is_array($model) && \is_string($model['id'] ?? null)) {
+                $models[] = $model['id'];
+            }
+        }
+
+        return $models;
+    }
+
+    /**
+     * Docker Model Runner names its models with their registry: "docker.io/ai/ministral3:8B-Q4_K_M".
+     *
+     * @param list<string> $models
+     */
+    public static function hasDmrModel(array $models): bool
+    {
+        foreach ($models as $model) {
+            if (0 === strcasecmp(preg_replace('~^docker\.io/~', '', $model) ?? $model, self::EDITOR_MODEL_DMR)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -175,9 +222,14 @@ final readonly class SetupInspector
      */
     private function displayedOllamaUrl(): string
     {
-        $parts = parse_url($this->ollamaUrl);
+        return self::displayed($this->ollamaUrl);
+    }
+
+    private static function displayed(string $url): string
+    {
+        $parts = parse_url($url);
         if (false === $parts || !isset($parts['host'])) {
-            return $this->ollamaUrl;
+            return $url;
         }
 
         return \sprintf('%s://%s%s%s', $parts['scheme'] ?? 'http', $parts['host'], isset($parts['port']) ? ':'.$parts['port'] : '', $parts['path'] ?? '');

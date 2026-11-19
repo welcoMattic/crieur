@@ -19,7 +19,7 @@ final readonly class EngineSettings
 {
     public const string VOICE_ENGINE = 'voice_engine';
     public const string EDITOR = 'editor';
-    public const array EDITORS = ['auto', 'mistral', 'ollama', 'off'];
+    public const array EDITORS = ['auto', 'mistral', 'dmr', 'off'];
 
     /**
      * @param array<string, mixed> $engines the "crieur.voice_engines" parameter, by engine name
@@ -45,8 +45,11 @@ final readonly class EngineSettings
     public function editor(): string
     {
         $value = $this->read(self::EDITOR);
+        // "ollama", the local editor of earlier versions, is now Docker Model Runner.
+        $value = 'ollama' === $value ? 'dmr' : $value;
+        $default = 'ollama' === $this->defaultEditor ? 'dmr' : $this->defaultEditor;
 
-        return null !== $value && \in_array($value, self::EDITORS, true) ? $value : $this->defaultEditor;
+        return null !== $value && \in_array($value, self::EDITORS, true) ? $value : $default;
     }
 
     /**
@@ -62,7 +65,7 @@ final readonly class EngineSettings
     }
 
     /**
-     * @throws \InvalidArgumentException for another value than auto, mistral, ollama or off
+     * @throws \InvalidArgumentException for another value than auto, mistral, dmr or off
      */
     public function changeEditor(string $editor): void
     {

@@ -69,14 +69,14 @@ function doctor(
     run(['php', 'bin/console', 'crieur:doctor', ...($live ? ['--live'] : [])], context: context()->withAllowFailure());
 }
 
-#[AsTask(description: 'Pulls the local models in Ollama: the Phonon voices, and the Ministral speech editor')]
+#[AsTask(description: 'Pulls the local models: the Phonon voices in Ollama, the Ministral speech editor in Docker Model Runner')]
 function models(
-    #[AsOption(description: 'Phonon voices only, without the speech editor (6 GB)')]
+    #[AsOption(description: 'Phonon voices only, without the speech editor (5 GB)')]
     bool $voicesOnly = false,
 ): void {
     run(['ollama', 'pull', 'phonon:40m-multilingual']);
     if (!$voicesOnly) {
-        run(['ollama', 'pull', 'ministral-3:8b']);
+        run(['docker', 'model', 'pull', 'ai/ministral3:8B-Q4_K_M']);
     }
 }
 
@@ -125,7 +125,7 @@ function extension_e2e(
     }
 }
 
-#[AsTask(name: 'up', namespace: 'docker', description: 'Builds and starts Crieur with Docker Compose (Phonon through the Ollama of the host)')]
+#[AsTask(name: 'up', namespace: 'docker', description: 'Builds and starts Crieur with Docker Compose (Mac: Phonon through the Ollama of this Mac)')]
 function docker_up(): void
 {
     run(['docker', 'compose', 'up', '--detach', '--build']);

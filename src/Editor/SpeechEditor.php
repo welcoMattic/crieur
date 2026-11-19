@@ -30,16 +30,12 @@ final class SpeechEditor
      */
     public const array MODELS = [
         'mistral' => 'mistral-small-latest',
-        'ollama' => 'ministral-3:8b',
+        'dmr' => 'ai/ministral3:8B-Q4_K_M',
     ];
 
-    /**
-     * Ollama loads a model with its largest context by default: hundreds of thousands of tokens of
-     * cache that no longer fit in memory, and a model ten times slower. A batch needs a few thousand.
-     */
     private const array OPTIONS = [
         'mistral' => ['temperature' => 0.0],
-        'ollama' => ['temperature' => 0.0, 'num_ctx' => 8192, 'keep_alive' => '30m'],
+        'dmr' => ['temperature' => 0.0],
     ];
 
     public const int FIRST_BATCH_CHARACTERS = 120;
@@ -47,7 +43,7 @@ final class SpeechEditor
     public const int BATCH_CHUNKS = 16;
 
     public function __construct(
-        #[AutowireLocator(['mistral' => new Autowire(service: 'ai.agent.speech_editor_mistral'), 'ollama' => new Autowire(service: 'ai.agent.speech_editor_ollama')])]
+        #[AutowireLocator(['mistral' => new Autowire(service: 'ai.agent.speech_editor_mistral'), 'dmr' => new Autowire(service: 'ai.agent.speech_editor_dmr')])]
         private readonly ContainerInterface $agents,
         #[Autowire(param: 'crieur.editor')]
         private readonly string $mode,
@@ -59,15 +55,17 @@ final class SpeechEditor
     }
 
     /**
-     * The agent in use: "mistral", "ollama", or null when only the deterministic rules apply. The
-     * settings page chooses it; until then, CRIEUR_EDITOR does.
+     * The agent in use: "mistral" (Mistral AI), "dmr" (Ministral 3 in Docker Model Runner), or null
+     * when only the deterministic rules apply. The settings page chooses it; until then, CRIEUR_EDITOR
+     * does. "ollama", the local editor of earlier versions, now means Docker Model Runner.
      */
     public function backend(): ?string
     {
         $mode = $this->settings?->editor() ?? $this->mode;
 
         return match ($mode) {
-            'mistral', 'ollama' => $mode,
+            'mistral', 'dmr' => $mode,
+            'ollama' => 'dmr',
             'auto' => '' !== trim($this->mistralApiKey) ? 'mistral' : null,
             default => null,
         };

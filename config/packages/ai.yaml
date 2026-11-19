@@ -1,11 +1,16 @@
 ai:
     platform:
-        # The local stack: Phonon voices (see CrieurPlatform) and an optional local speech editor.
-        ollama:
-            endpoint: '%env(OLLAMA_HOST_URL)%'
-        # The cloud stack: the speech editor, and Voxtral voices (see CrieurPlatform).
+        # The cloud speech editor (Mistral Small); the voices are in config/services.yaml.
         mistral:
             api_key: '%env(MISTRAL_API_KEY)%'
+        # The local speech editor: Ministral 3, open weights of Mistral AI, in Docker Model Runner.
+        dockermodelrunner:
+            host_url: '%env(DOCKER_MODEL_RUNNER_URL)%'
+            model_catalog:
+                models:
+                    'ai/ministral3':
+                        class: 'Symfony\AI\Platform\Bridge\DockerModelRunner\Completions'
+                        capabilities: ['input-messages', 'output-text', 'output-structured']
 
     agent:
         # Rewrites each paragraph for the ear: numbers, units, abbreviations, symbols, lists.
@@ -14,8 +19,8 @@ ai:
             model: 'mistral-small-latest'
             prompt:
                 file: '%kernel.project_dir%/config/prompts/speech_editor.md'
-        speech_editor_ollama:
-            platform: 'ai.platform.ollama'
-            model: 'ministral-3:8b'
+        speech_editor_dmr:
+            platform: 'ai.platform.dockermodelrunner'
+            model: 'ai/ministral3:8B-Q4_K_M'
             prompt:
                 file: '%kernel.project_dir%/config/prompts/speech_editor.md'

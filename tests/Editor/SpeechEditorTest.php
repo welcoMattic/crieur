@@ -33,7 +33,8 @@ final class SpeechEditorTest extends TestCase
     {
         yield 'auto with a Mistral key' => ['auto', 'key', 'mistral'];
         yield 'auto without key' => ['auto', '', null];
-        yield 'ollama' => ['ollama', '', 'ollama'];
+        yield 'dmr' => ['dmr', '', 'dmr'];
+        yield 'ollama, the local editor of earlier versions' => ['ollama', '', 'dmr'];
         yield 'off' => ['off', 'key', null];
     }
 
@@ -112,7 +113,7 @@ final class SpeechEditorTest extends TestCase
         $agent = new Agent(MockPlatformFactory::createPlatform($answer, eventDispatcher: $dispatcher), 'mock-model');
 
         return new SpeechEditor(
-            new ServiceLocator(['mistral' => static fn () => $agent, 'ollama' => static fn () => $agent]),
+            new ServiceLocator(['mistral' => static fn () => $agent, 'dmr' => static fn () => $agent]),
             $mode,
             $key,
             new NullLogger(),

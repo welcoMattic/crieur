@@ -23,7 +23,7 @@ engine:
 
 editor:
     mistral: "Mistral AI"
-    ollama: "Ollama"
+    dmr: "Docker Model Runner"
     rules: "rules"
 
 demo:
@@ -184,7 +184,7 @@ settings:
     toc: "On this page"
     voice:
         title: "Voice and speech editor"
-        lede: "Crieur reads with Phonon, a local voice (through Ollama, or the Phonon servers of Gradium), or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
+        lede: "Crieur reads with Phonon, a local voice (through Ollama, or the Phonon servers of Gradium), or with Voxtral by Mistral AI in the cloud. First, a speech editor (a language model: Ministral in Docker Model Runner, or Mistral Small in the cloud) can rewrite the text for the ear: numbers, units, abbreviations, symbols."
     engines:
         title: "Choose"
         voice: "Voice"
@@ -192,7 +192,7 @@ settings:
         editor_choice:
             auto: "Auto"
             mistral: "Mistral"
-            ollama: "Ollama"
+            dmr: "Ministral (local)"
             "off": "Rules only"
         note: "Applies at once to the next articles and to voice changes, without restarting anything. Ready articles keep their voice. Auto uses Mistral when a key is set, else the rules. Without a choice here, CRIEUR_VOICE_ENGINE and CRIEUR_EDITOR decide."
         needs_key: "Voxtral and the Mistral editor need MISTRAL_API_KEY in .env.local, then a restart of the server and its workers."
@@ -251,6 +251,8 @@ setup:
     issue:
         ollama_unreachable: "Ollama does not answer at %url%. Start it with “ollama serve”."
         model_missing: "The model is not installed. Run “ollama pull %model%”."
+        dmr_unreachable: "Docker Model Runner does not answer at %url%. Enable it in Docker Desktop (Settings, AI)."
+        dmr_model_missing: "The model is not installed. Run “docker model pull %model%”."
         phonon_unreachable: "A Phonon server does not answer: %url%."
         key_missing: "Needs MISTRAL_API_KEY in .env.local."
 

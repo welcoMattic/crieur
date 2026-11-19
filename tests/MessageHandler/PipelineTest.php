@@ -376,7 +376,7 @@ final class PipelineTest extends KernelTestCase
         $dispatcher->addSubscriber(new PlatformSubscriber());
         $agent = new Agent(MockPlatformFactory::createPlatform($answer, eventDispatcher: $dispatcher), 'mock-model');
         self::getContainer()->set(SpeechEditor::class, new SpeechEditor(
-            new ServiceLocator(['mistral' => static fn () => $agent, 'ollama' => static fn () => $agent]),
+            new ServiceLocator(['mistral' => static fn () => $agent, 'dmr' => static fn () => $agent]),
             'mistral',
             'key',
             new NullLogger(),

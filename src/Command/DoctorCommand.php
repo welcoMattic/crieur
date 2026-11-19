@@ -8,6 +8,7 @@ use App\Editor\EditorUnavailable;
 use App\Editor\SpeechEditor;
 use App\Enum\VoiceGender;
 use App\Extraction\ArticleExtractor;
+use App\Setup\SetupInspector;
 use App\Speech\PhononServers;
 use App\Speech\SpeechSynthesizer;
 use App\Speech\VoiceCatalog;
@@ -37,6 +38,8 @@ final readonly class DoctorCommand
         private string $mistralApiKey,
         #[Autowire(env: 'CRIEUR_PHONON_SERVERS')]
         private string $phononServers = '',
+        #[Autowire(env: 'DOCKER_MODEL_RUNNER_URL')]
+        private string $dmrUrl = 'http://127.0.0.1:12434',
     ) {
     }
 
@@ -67,7 +70,7 @@ final readonly class DoctorCommand
 
         $servers = PhononServers::fromString($this->phononServers);
         $ollamaModels = $this->ollamaModels();
-        if (($engine->local && $servers->isEmpty()) || 'ollama' === $this->editor->backend()) {
+        if ($engine->local && $servers->isEmpty()) {
             $check('Ollama', null !== $ollamaModels, $this->ollamaUrl, 'is not reachable. Install Ollama 0.40.11 or later and start it.');
         }
 
@@ -86,10 +89,13 @@ final readonly class DoctorCommand
 
         $backend = $this->editor->backend();
         if (null === $backend) {
-            $check('Speech editor', true, 'off: deterministic rules only (set CRIEUR_EDITOR=mistral or ollama for the LLM editor)');
-        } elseif ('ollama' === $backend) {
-            $model = SpeechEditor::MODELS['ollama'];
-            $check('Speech editor', null !== $ollamaModels && \in_array($model, $ollamaModels, true), \sprintf('%s through Ollama', $model), \sprintf('is not pulled. Run: ollama pull %s', $model));
+            $check('Speech editor', true, 'off: deterministic rules only (set CRIEUR_EDITOR=dmr or mistral for the LLM editor)');
+        } elseif ('dmr' === $backend) {
+            $model = SpeechEditor::MODELS['dmr'];
+            $dmrModels = $this->dmrModels();
+            $check('Speech editor', null !== $dmrModels && SetupInspector::hasDmrModel($dmrModels), \sprintf('%s through Docker Model Runner (%s)', $model, $this->dmrUrl), null === $dmrModels
+                ? 'Docker Model Runner does not answer: enable it in Docker Desktop (Settings, AI), with host-side TCP support.'
+                : \sprintf('is not pulled. Run: docker model pull %s', $model));
         } else {
             $check('Speech editor', true, \sprintf('%s through Mistral AI', SpeechEditor::MODELS['mistral']));
         }
@@ -148,6 +154,20 @@ final readonly class DoctorCommand
         }
 
         return $models;
+    }
+
+    /**
+     * @return list<string>|null the models of Docker Model Runner, or null when it does not answer
+     */
+    private function dmrModels(): ?array
+    {
+        try {
+            $data = $this->httpClient->request('GET', rtrim($this->dmrUrl, '/').'/engines/v1/models', ['timeout' => 3])->toArray();
+        } catch (\Throwable) {
+            return null;
+        }
+
+        return array_values(array_filter(array_map(static fn (mixed $model): ?string => \is_array($model) && \is_string($model['id'] ?? null) ? $model['id'] : null, $data['data'] ?? [])));
     }
 
     private function mistralKeyWorks(): bool

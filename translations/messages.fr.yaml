@@ -23,7 +23,7 @@ engine:
 
 editor:
     mistral: "Mistral AI"
-    ollama: "Ollama"
+    dmr: "Docker Model Runner"
     rules: "règles"
 
 demo:
@@ -184,7 +184,7 @@ settings:
     toc: "Sur cette page"
     voice:
         title: "Voix et éditeur vocal"
-        lede: "Crieur lit avec Phonon, une voix locale (via Ollama, ou les serveurs Phonon de Gradium), ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
+        lede: "Crieur lit avec Phonon, une voix locale (via Ollama, ou les serveurs Phonon de Gradium), ou avec Voxtral de Mistral AI dans le cloud. Avant cela, un éditeur vocal (un modèle de langue : Ministral dans Docker Model Runner, ou Mistral Small dans le cloud) peut réécrire le texte pour l’oreille : nombres, unités, abréviations, symboles."
     engines:
         title: "Choisir"
         voice: "Voix"
@@ -192,7 +192,7 @@ settings:
         editor_choice:
             auto: "Auto"
             mistral: "Mistral"
-            ollama: "Ollama"
+            dmr: "Ministral (local)"
             "off": "Règles seules"
         note: "S’applique tout de suite aux prochains articles et aux changements de voix, sans rien redémarrer. Les articles prêts gardent leur voix. Auto prend Mistral quand une clé est définie, sinon les règles. Sans choix ici, CRIEUR_VOICE_ENGINE et CRIEUR_EDITOR décident."
         needs_key: "Voxtral et l’éditeur Mistral demandent MISTRAL_API_KEY dans .env.local, puis un redémarrage du serveur et de ses workers."
@@ -251,6 +251,8 @@ setup:
     issue:
         ollama_unreachable: "Ollama ne répond pas à %url%. Lancez-le avec « ollama serve »."
         model_missing: "Le modèle n’est pas installé. Lancez « ollama pull %model% »."
+        dmr_unreachable: "Docker Model Runner ne répond pas à %url%. Activez-le dans Docker Desktop (Settings, AI)."
+        dmr_model_missing: "Le modèle n’est pas installé. Lancez « docker model pull %model% »."
         phonon_unreachable: "Un serveur Phonon ne répond pas : %url%."
         key_missing: "Nécessite MISTRAL_API_KEY dans .env.local."
 
