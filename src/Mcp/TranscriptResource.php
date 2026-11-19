@@ -6,8 +6,8 @@ namespace App\Mcp;
 
 use App\Repository\ArticleRepository;
 use App\Text\BlockKind;
-use Mcp\Capability\Attribute\McpResourceTemplate;
-use Mcp\Exception\ResourceNotFoundException;
+use Mcp\Server\Capability\Attribute\McpResourceTemplate;
+use Mcp\Server\Exception\ResourceNotFoundException;
 use Symfony\Component\Uid\Uuid;
 
 /**

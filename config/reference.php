@@ -1854,8 +1854,8 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             entity?: string|Param, // FQCN of the entity with #[Embedding] on a field, or on the class when it is mirrored.
  *             metric?: "cosine"|"euclidean"|"inner_product"|Param, // Metric to use for vector similarity search. // Default: "cosine"
  *             entity_manager?: string|Param, // Service id of the entity manager owning the entity. // Default: "doctrine.orm.entity_manager"
- *             vectorizer?: string|Param, // Service id of the vectorizer embedding the entities on flush and through "ai:store:index". // Default: null
- *             mirror_to?: string|Param, // Service id of the store to mirror the entity into, needs a "vectorizer" and #[Embedding] on the entity class. // Default: null
+ *             vectorizer?: string|Param, // Service id of the vectorizer embedding the entities on flush and through "ai:store:index", null turns embedding off. // Default: null
+ *             mirror_to?: string|Param, // Service id of the store to mirror the entity into, needs a "vectorizer" and #[Embedding] on the entity class, null turns mirroring off. // Default: null
  *         }>,
  *         elasticsearch?: array<string, array{ // Default: []
  *             endpoint?: string|Param,
@@ -1939,11 +1939,12 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             http_client?: string|Param,
  *         }>,
  *         pinecone?: array<string, array{ // Default: []
- *             client?: string|Param, // Default: "Probots\\Pinecone\\Client"
+ *             api_key?: string|Param,
+ *             http_client?: string|Param, // Default: "http_client"
  *             index_name?: string|Param,
  *             namespace?: string|Param,
  *             filter?: list<scalar|Param|null>,
- *             top_k?: int|Param,
+ *             limit?: int|Param,
  *             dimensions?: int|Param, // Number of dimensions of the index created by "ai:store:setup"
  *             metric?: "cosine"|"euclidean"|"dotproduct"|Param, // Distance metric of the index created by "ai:store:setup"
  *             cloud?: string|Param, // Cloud of the serverless index created by "ai:store:setup"
@@ -1958,10 +1959,10 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             metric?: "cosine"|"inner_product"|"l1"|"l2"|Param, // Distance metric to use for vector similarity search // Default: "l2"
  *             lang?: string|Param, // Default: "english"
  *             dbal_connection?: string|Param,
- *             dimensions?: int|Param, // Number of dimensions of the vector column created by "ai:store:setup"
- *             vector_type?: "vector"|"halfvec"|Param, // Type of the vector column created by "ai:store:setup"
- *             index_method?: string|Param, // The pgvector index method, "hnsw" by default.
- *             index_opclass?: string|Param, // The operator class of the index, the one of the distance by default (e.g. "vector_l2_ops").
+ *             dimensions?: int|Param, // Number of dimensions of the vector column created by "ai:store:setup" // Default: 1536
+ *             vector_type?: "vector"|"halfvec"|Param, // Type of the vector column created by "ai:store:setup" // Default: "vector"
+ *             index_method?: string|Param, // The pgvector index method // Default: "hnsw"
+ *             index_opclass?: string|Param, // The operator class of the index, the one of the distance by default (e.g. "vector_l2_ops"). // Default: null
  *         }>,
  *         qdrant?: array<string, array{ // Default: []
  *             endpoint?: string|Param,
@@ -1988,7 +1989,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             filter?: list<mixed>,
  *             dimensions?: int|Param, // Number of dimensions of the index created by "ai:store:setup"
  *             metric?: "cosine"|"euclidean"|Param, // Distance metric of the index created by "ai:store:setup"
- *             top_k?: int|Param, // Default number of results to return // Default: 3
+ *             limit?: int|Param, // Default number of results to return // Default: 3
  *         }>,
  *         sqlite?: array<string, array{ // Default: []
  *             dsn?: string|Param,
@@ -2130,6 +2131,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *         },
  *         http?: array{
  *             path?: string|Param, // HTTP endpoint path. Defaults to "/mcp/<name>". // Default: null
+ *             max_body_bytes?: int|Param, // Maximum HTTP request body size in bytes, larger requests are answered with a 413. Leave unset to use the SDK default value. // Default: null
  *             allowed_hosts?: mixed, // DNS rebinding protection hosts (without port). Leave unset to keep the SDK default (localhost only), set an array of hostnames to expose a public MCP server, or false to disable the protection entirely. // Default: null
  *             allowed_origins?: list<scalar|Param|null>,
  *         },
@@ -2152,7 +2154,7 @@ use Symfony\Component\Config\Loader\ParamConfigurator as Param;
  *             lifetime?: float|Param, // Seconds a stream is held before the server closes it gracefully. 0 means until the client or the runtime ends it. // Default: 30.0
  *         },
  *         session?: array{ // Session storage. Every server needs its own store: session ids are not namespaced by server, so a shared store makes a session minted on one server valid on the others.
- *             store?: "file"|"memory"|"cache"|"framework"|Param, // Default: "file"
+ *             store?: "file"|"memory"|"cache"|"framework"|"none"|Param, // With "none", handshake-era HTTP clients are served without sessions, so requests to the client, resource subscriptions and logging are not available to them. // Default: "file"
  *             directory?: string|Param, // Directory for the "file" store. Defaults to "%kernel.cache_dir%/mcp-sessions/<name>". // Default: null
  *             cache_pool?: string|Param, // PSR-16 cache service for the "cache" store. // Default: "cache.mcp.sessions"
  *             prefix?: string|Param, // Key prefix for the "cache" and "framework" stores and a "session.lock.factory" lock. Defaults to "mcp-<name>-". // Default: null

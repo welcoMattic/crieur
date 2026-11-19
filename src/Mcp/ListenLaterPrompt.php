@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace App\Mcp;
 
-use Mcp\Capability\Attribute\McpPrompt;
-use Mcp\Capability\Attribute\Schema;
+use Mcp\Server\Capability\Attribute\McpPrompt;
+use Mcp\Server\Capability\Attribute\Schema;
 
 /**
  * A ready-made request for the assistant: find good articles on a topic and queue them in Crieur.

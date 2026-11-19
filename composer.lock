@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a46157136c05243c8f9c2df81c1a9bd7",
+    "content-hash": "b7a6a28938959ec9e7bb7b9e2bb0ee87",
     "packages": [
         {
             "name": "composer/semver",
@@ -1208,26 +1208,25 @@
         },
         {
             "name": "mcp/sdk",
-            "version": "v0.9.0",
+            "version": "v0.10.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/modelcontextprotocol/php-sdk.git",
-                "reference": "be71c78bc3bce25f50d6a7e592017b8af6a2120f"
+                "reference": "5701e69b3f8dcbaf481f8d1ee28a8796a0b7807f"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/modelcontextprotocol/php-sdk/zipball/be71c78bc3bce25f50d6a7e592017b8af6a2120f",
-                "reference": "be71c78bc3bce25f50d6a7e592017b8af6a2120f",
+                "url": "https://api.github.com/repos/modelcontextprotocol/php-sdk/zipball/5701e69b3f8dcbaf481f8d1ee28a8796a0b7807f",
+                "reference": "5701e69b3f8dcbaf481f8d1ee28a8796a0b7807f",
                 "shasum": ""
             },
             "require": {
-                "ext-fileinfo": "*",
                 "opis/json-schema": "^2.4",
-                "php": "^8.1",
+                "php": "^8.2",
                 "php-http/discovery": "^1.20",
-                "phpdocumentor/reflection-docblock": "^5.6 || ^6.0",
+                "phpdocumentor/reflection-docblock": "^6.0",
                 "psr/clock": "^1.0",
-                "psr/container": "^1.0 || ^2.0",
+                "psr/container": "^1.1 || ^2.0",
                 "psr/event-dispatcher": "^1.0",
                 "psr/http-client": "^1.0",
                 "psr/http-factory": "^1.1",
@@ -1242,7 +1241,10 @@
                 "phpstan/phpstan": "2.3.0"
             },
             "require-dev": {
+                "amphp/amp": "^3.0",
+                "amphp/http-server": "^3.3",
                 "composer/semver": "^3.0",
+                "deptrac/deptrac": "^3.0",
                 "ext-openssl": "*",
                 "firebase/php-jwt": "^6.10 || ^7.0",
                 "laminas/laminas-httphandlerrunner": "^2.12",
@@ -1255,18 +1257,16 @@
                 "phpunit/phpunit": "^10.5",
                 "psr/cache": "^1.0 || ^2.0 || ^3.0",
                 "psr/simple-cache": "^2.0 || ^3.0",
+                "react/async": "^4.3",
+                "react/http": "^1.11",
+                "react/promise": "^3.0",
+                "revolt/event-loop": "^1.0",
                 "symfony/cache": "^5.4 || ^6.4 || ^7.3 || ^8.0",
                 "symfony/console": "^5.4 || ^6.4 || ^7.3 || ^8.0",
                 "symfony/finder": "^5.4 || ^6.4 || ^7.3 || ^8.0",
                 "symfony/http-client": "^5.4 || ^6.4 || ^7.3 || ^8.0",
                 "symfony/lock": "^5.4 || ^6.4 || ^7.3 || ^8.0",
                 "symfony/process": "^5.4 || ^6.4 || ^7.3 || ^8.0"
-            },
-            "suggest": {
-                "firebase/php-jwt": "Required for the JwtTokenValidator.",
-                "psr/cache-implementation": "Required for JwtTokenValidator::fromIssuer() to cache metadata and keys.",
-                "symfony/finder": "Required for file-based discovery.",
-                "symfony/lock": "Required for the SymfonyLockSessionLock."
             },
             "type": "library",
             "autoload": {
@@ -1295,9 +1295,9 @@
             "description": "Model Context Protocol SDK for Client and Server applications in PHP",
             "support": {
                 "issues": "https://github.com/modelcontextprotocol/php-sdk/issues",
-                "source": "https://github.com/modelcontextprotocol/php-sdk/tree/v0.9.0"
+                "source": "https://github.com/modelcontextprotocol/php-sdk/tree/v0.10.0"
             },
-            "time": "2026-10-18T14:29:29+00:00"
+            "time": "2026-11-10T17:11:02+00:00"
         },
         {
             "name": "monolog/monolog",
@@ -2555,17 +2555,68 @@
             "time": "2024-09-11T13:17:53+00:00"
         },
         {
-            "name": "symfony/ai-agent",
-            "version": "v1.0.0-BETA1",
+            "name": "psr/simple-cache",
+            "version": "3.0.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/symfony/ai-agent.git",
-                "reference": "eb39f8c9c42397977f4196271e15cb8a1346df3a"
+                "url": "https://github.com/php-fig/simple-cache.git",
+                "reference": "764e0b3939f5ca87cb904f570ef9be2d78a07865"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-agent/zipball/eb39f8c9c42397977f4196271e15cb8a1346df3a",
-                "reference": "eb39f8c9c42397977f4196271e15cb8a1346df3a",
+                "url": "https://api.github.com/repos/php-fig/simple-cache/zipball/764e0b3939f5ca87cb904f570ef9be2d78a07865",
+                "reference": "764e0b3939f5ca87cb904f570ef9be2d78a07865",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=8.0.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "3.0.x-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Psr\\SimpleCache\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "PHP-FIG",
+                    "homepage": "https://www.php-fig.org/"
+                }
+            ],
+            "description": "Common interfaces for simple caching",
+            "keywords": [
+                "cache",
+                "caching",
+                "psr",
+                "psr-16",
+                "simple-cache"
+            ],
+            "support": {
+                "source": "https://github.com/php-fig/simple-cache/tree/3.0.0"
+            },
+            "time": "2021-10-29T13:26:27+00:00"
+        },
+        {
+            "name": "symfony/ai-agent",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/symfony/ai-agent.git",
+                "reference": "2bb1e4397c8994a4ca4afdf7da0614e3e87a1d80"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/symfony/ai-agent/zipball/2bb1e4397c8994a4ca4afdf7da0614e3e87a1d80",
+                "reference": "2bb1e4397c8994a4ca4afdf7da0614e3e87a1d80",
                 "shasum": ""
             },
             "require": {
@@ -2575,14 +2626,14 @@
                 "phpstan/phpdoc-parser": "^2.1",
                 "psr/log": "^3.0",
                 "symfony/ai-platform": "^1.0",
-                "symfony/clock": "^7.3|^8.0",
-                "symfony/http-client": "^7.3|^8.0",
+                "symfony/clock": "^7.4|^8.0",
+                "symfony/http-client": "^7.4|^8.0",
                 "symfony/polyfill-php85": "^1.33",
-                "symfony/property-access": "^7.3|^8.0",
-                "symfony/property-info": "^7.3|^8.0",
-                "symfony/serializer": "^7.3|^8.0",
-                "symfony/type-info": "^7.3|^8.0",
-                "symfony/uid": "^7.3|^8.0"
+                "symfony/property-access": "^7.4|^8.0",
+                "symfony/property-info": "^7.4|^8.0",
+                "symfony/serializer": "^7.4|^8.0",
+                "symfony/type-info": "^7.4|^8.0",
+                "symfony/uid": "^7.4|^8.0"
             },
             "conflict": {
                 "phpstan/phpstan": "2.2.x-dev || 2.3.x-dev"
@@ -2593,14 +2644,15 @@
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^11.5.53",
                 "symfony/ai-store": "^1.0",
-                "symfony/console": "^7.3|^8.0",
-                "symfony/dependency-injection": "^7.3|^8.0",
-                "symfony/event-dispatcher": "^7.3|^8.0",
-                "symfony/stopwatch": "^7.3|^8.0",
-                "symfony/translation": "^7.3|^8.0",
+                "symfony/console": "^7.4|^8.0",
+                "symfony/dependency-injection": "^7.4|^8.0",
+                "symfony/event-dispatcher": "^7.4|^8.0",
+                "symfony/stopwatch": "^7.4|^8.0",
+                "symfony/translation": "^7.4|^8.0",
                 "symfony/translation-contracts": "^3.6",
-                "symfony/validator": "^7.3|^8.0"
+                "symfony/validator": "^7.4|^8.0"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "thanks": {
@@ -2638,7 +2690,7 @@
                 "llm"
             ],
             "support": {
-                "source": "https://github.com/symfony/ai-agent/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-agent/tree/main"
             },
             "funding": [
                 {
@@ -2658,32 +2710,35 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-19T00:53:57+00:00"
         },
         {
             "name": "symfony/ai-bundle",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-bundle.git",
-                "reference": "01f576b345a7d52df0752761ab806f7d96773f92"
+                "reference": "32c691dbc16288bdb51891e7f1714b7c4ffd4524"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-bundle/zipball/01f576b345a7d52df0752761ab806f7d96773f92",
-                "reference": "01f576b345a7d52df0752761ab806f7d96773f92",
+                "url": "https://api.github.com/repos/symfony/ai-bundle/zipball/32c691dbc16288bdb51891e7f1714b7c4ffd4524",
+                "reference": "32c691dbc16288bdb51891e7f1714b7c4ffd4524",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
                 "symfony/ai-platform": "^1.0",
-                "symfony/clock": "^7.3|^8.0",
-                "symfony/config": "^7.3|^8.0",
-                "symfony/console": "^7.3|^8.0",
-                "symfony/dependency-injection": "^7.3|^8.0",
-                "symfony/framework-bundle": "^7.3|^8.0",
+                "symfony/clock": "^7.4|^8.0",
+                "symfony/config": "^7.4|^8.0",
+                "symfony/console": "^7.4|^8.0",
+                "symfony/dependency-injection": "^7.4|^8.0",
+                "symfony/framework-bundle": "^7.4|^8.0",
                 "symfony/service-contracts": "^2.5|^3",
-                "symfony/string": "^7.3|^8.0"
+                "symfony/string": "^7.4|^8.0"
+            },
+            "conflict": {
+                "symfony/security-core": "<7.4"
             },
             "require-dev": {
                 "google/auth": "^1.47",
@@ -2769,12 +2824,13 @@
                 "symfony/ai-vertex-ai-platform": "^1.0",
                 "symfony/ai-voyage-platform": "^1.0",
                 "symfony/ai-weaviate-store": "^1.0",
-                "symfony/expression-language": "^7.3|^8.0",
+                "symfony/expression-language": "^7.4|^8.0",
                 "symfony/mcp-bundle": "^1.0",
-                "symfony/security-core": "^7.3|^8.0",
-                "symfony/translation": "^7.3|^8.0",
-                "symfony/validator": "^7.3|^8.0"
+                "symfony/security-core": "^7.4|^8.0",
+                "symfony/translation": "^7.4|^8.0",
+                "symfony/validator": "^7.4|^8.0"
             },
+            "default-branch": true,
             "type": "symfony-bundle",
             "extra": {
                 "thanks": {
@@ -2807,7 +2863,7 @@
             ],
             "description": "Integration bundle for Symfony AI components",
             "support": {
-                "source": "https://github.com/symfony/ai-bundle/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-bundle/tree/main"
             },
             "funding": [
                 {
@@ -2827,26 +2883,26 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-18T23:19:42+00:00"
         },
         {
             "name": "symfony/ai-generic-platform",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-generic-platform.git",
-                "reference": "28f4bcdafe815e5bb108c1d62d345dbc7b6780c4"
+                "reference": "904e270139e6166786a0f3a3b387759d1b7c7d40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-generic-platform/zipball/28f4bcdafe815e5bb108c1d62d345dbc7b6780c4",
-                "reference": "28f4bcdafe815e5bb108c1d62d345dbc7b6780c4",
+                "url": "https://api.github.com/repos/symfony/ai-generic-platform/zipball/904e270139e6166786a0f3a3b387759d1b7c7d40",
+                "reference": "904e270139e6166786a0f3a3b387759d1b7c7d40",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
                 "symfony/ai-platform": "^1.0",
-                "symfony/http-client": "^7.3|^8.0"
+                "symfony/http-client": "^7.4|^8.0"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1",
@@ -2854,6 +2910,7 @@
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^11.5.53"
             },
+            "default-branch": true,
             "type": "symfony-ai-platform",
             "extra": {
                 "thanks": {
@@ -2892,7 +2949,7 @@
                 "platform"
             ],
             "support": {
-                "source": "https://github.com/symfony/ai-generic-platform/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-generic-platform/tree/main"
             },
             "funding": [
                 {
@@ -2912,27 +2969,27 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-18T23:42:20+00:00"
         },
         {
             "name": "symfony/ai-mistral-platform",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-mistral-platform.git",
-                "reference": "32e12c9d432e409dcd4206c7f262481ecbd8cf08"
+                "reference": "475124c72a1184cacdd65cdf83d3cd156c3e850e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-mistral-platform/zipball/32e12c9d432e409dcd4206c7f262481ecbd8cf08",
-                "reference": "32e12c9d432e409dcd4206c7f262481ecbd8cf08",
+                "url": "https://api.github.com/repos/symfony/ai-mistral-platform/zipball/475124c72a1184cacdd65cdf83d3cd156c3e850e",
+                "reference": "475124c72a1184cacdd65cdf83d3cd156c3e850e",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
                 "symfony/ai-generic-platform": "^1.0",
                 "symfony/ai-platform": "^1.0",
-                "symfony/http-client": "^7.3|^8.0"
+                "symfony/http-client": "^7.4|^8.0"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1",
@@ -2940,6 +2997,7 @@
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^11.5.53"
             },
+            "default-branch": true,
             "type": "symfony-ai-platform",
             "extra": {
                 "thanks": {
@@ -2978,7 +3036,7 @@
                 "platform"
             ],
             "support": {
-                "source": "https://github.com/symfony/ai-mistral-platform/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-mistral-platform/tree/main"
             },
             "funding": [
                 {
@@ -2998,26 +3056,26 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-18T23:01:07+00:00"
         },
         {
             "name": "symfony/ai-ollama-platform",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-ollama-platform.git",
-                "reference": "19605f1b01b1a0549354b8ac4d1a86751bb1f101"
+                "reference": "33ef302de0b2e9cf7cb7e024621e2bc5982a29ca"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-ollama-platform/zipball/19605f1b01b1a0549354b8ac4d1a86751bb1f101",
-                "reference": "19605f1b01b1a0549354b8ac4d1a86751bb1f101",
+                "url": "https://api.github.com/repos/symfony/ai-ollama-platform/zipball/33ef302de0b2e9cf7cb7e024621e2bc5982a29ca",
+                "reference": "33ef302de0b2e9cf7cb7e024621e2bc5982a29ca",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
                 "symfony/ai-platform": "^1.0",
-                "symfony/http-client": "^7.3|^8.0"
+                "symfony/http-client": "^7.4|^8.0"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1",
@@ -3026,6 +3084,7 @@
                 "phpunit/phpunit": "^11.5.53",
                 "symfony/ai-decision-platform": "^1.0"
             },
+            "default-branch": true,
             "type": "symfony-ai-platform",
             "extra": {
                 "thanks": {
@@ -3065,7 +3124,7 @@
                 "platform"
             ],
             "support": {
-                "source": "https://github.com/symfony/ai-ollama-platform/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-ollama-platform/tree/main"
             },
             "funding": [
                 {
@@ -3085,20 +3144,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-18T23:01:07+00:00"
         },
         {
             "name": "symfony/ai-platform",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/ai-platform.git",
-                "reference": "4ac262078d1f00c03805be2ab4042ae39fe3bc85"
+                "reference": "99e4396ef53c8c359c24aa321e0178f4566f748c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/ai-platform/zipball/4ac262078d1f00c03805be2ab4042ae39fe3bc85",
-                "reference": "4ac262078d1f00c03805be2ab4042ae39fe3bc85",
+                "url": "https://api.github.com/repos/symfony/ai-platform/zipball/99e4396ef53c8c359c24aa321e0178f4566f748c",
+                "reference": "99e4396ef53c8c359c24aa321e0178f4566f748c",
                 "shasum": ""
             },
             "require": {
@@ -3108,34 +3167,39 @@
                 "phpdocumentor/reflection-docblock": "^5.4|^6.0",
                 "phpstan/phpdoc-parser": "^2.1",
                 "psr/log": "^3.0",
-                "symfony/clock": "^7.3|^8.0",
-                "symfony/event-dispatcher": "^7.3|^8.0",
+                "symfony/clock": "^7.4|^8.0",
+                "symfony/event-dispatcher": "^7.4|^8.0",
                 "symfony/polyfill-php85": "^1.33",
-                "symfony/property-access": "^7.3|^8.0",
-                "symfony/property-info": "^7.3|^8.0",
-                "symfony/serializer": "^7.3|^8.0",
-                "symfony/type-info": "^7.3|^8.0",
-                "symfony/uid": "^7.3|^8.0"
+                "symfony/property-access": "^7.4|^8.0",
+                "symfony/property-info": "^7.4|^8.0",
+                "symfony/serializer": "^7.4|^8.0",
+                "symfony/type-info": "^7.4|^8.0",
+                "symfony/uid": "^7.4|^8.0"
+            },
+            "conflict": {
+                "phpdocumentor/reflection-docblock": "<5.6.1",
+                "webmozart/assert": "<1.11"
             },
             "require-dev": {
                 "phpstan/phpstan": "^2.1",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^11.5.53",
-                "symfony/cache": "^7.3|^8.0",
-                "symfony/console": "^7.3|^8.0",
-                "symfony/dotenv": "^7.3|^8.0",
-                "symfony/expression-language": "^7.3|^8.0",
-                "symfony/finder": "^7.3|^8.0",
-                "symfony/http-client": "^7.3|^8.0",
+                "symfony/cache": "^7.4|^8.0",
+                "symfony/console": "^7.4|^8.0",
+                "symfony/dotenv": "^7.4|^8.0",
+                "symfony/expression-language": "^7.4|^8.0",
+                "symfony/finder": "^7.4|^8.0",
+                "symfony/http-client": "^7.4|^8.0",
                 "symfony/http-client-contracts": "^3.5",
-                "symfony/intl": "^7.3|^8.0",
-                "symfony/process": "^7.3|^8.0",
-                "symfony/stopwatch": "^7.3|^8.0",
-                "symfony/validator": "^7.3|^8.0",
-                "symfony/var-dumper": "^7.3|^8.0",
-                "symfony/yaml": "^7.3|^8.0"
+                "symfony/intl": "^7.4|^8.0",
+                "symfony/process": "^7.4|^8.0",
+                "symfony/stopwatch": "^7.4|^8.0",
+                "symfony/validator": "^7.4|^8.0",
+                "symfony/var-dumper": "^7.4|^8.0",
+                "symfony/yaml": "^7.4|^8.0"
             },
+            "default-branch": true,
             "type": "library",
             "extra": {
                 "thanks": {
@@ -3205,7 +3269,7 @@
                 "voyage"
             ],
             "support": {
-                "source": "https://github.com/symfony/ai-platform/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/ai-platform/tree/main"
             },
             "funding": [
                 {
@@ -3225,7 +3289,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-26T14:03:07+00:00"
+            "time": "2026-11-18T23:10:43+00:00"
         },
         {
             "name": "symfony/asset",
@@ -5463,30 +5527,32 @@
         },
         {
             "name": "symfony/mcp-bundle",
-            "version": "v1.0.0-BETA1",
+            "version": "dev-main",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/mcp-bundle.git",
-                "reference": "0ab9d115aea774c93b8629c4a0ccc6751b8326f8"
+                "reference": "512518a511934d5a73ce6aeab96dc0189d55a239"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/mcp-bundle/zipball/0ab9d115aea774c93b8629c4a0ccc6751b8326f8",
-                "reference": "0ab9d115aea774c93b8629c4a0ccc6751b8326f8",
+                "url": "https://api.github.com/repos/symfony/mcp-bundle/zipball/512518a511934d5a73ce6aeab96dc0189d55a239",
+                "reference": "512518a511934d5a73ce6aeab96dc0189d55a239",
                 "shasum": ""
             },
             "require": {
-                "mcp/sdk": "^0.9",
+                "mcp/sdk": "^0.10",
                 "php-http/discovery": "^1.20",
-                "symfony/config": "^7.3|^8.0",
-                "symfony/console": "^7.3|^8.0",
-                "symfony/dependency-injection": "^7.3|^8.0",
-                "symfony/finder": "^7.3|^8.0",
-                "symfony/framework-bundle": "^7.3|^8.0",
-                "symfony/http-foundation": "^7.3|^8.0",
-                "symfony/http-kernel": "^7.3|^8.0",
-                "symfony/psr-http-message-bridge": "^7.3|^8.0",
-                "symfony/routing": "^7.3|^8.0",
+                "psr/http-factory-implementation": "*",
+                "psr/simple-cache": "^1.0|^2.0|^3.0",
+                "symfony/config": "^7.4|^8.0",
+                "symfony/console": "^7.4|^8.0",
+                "symfony/dependency-injection": "^7.4|^8.0",
+                "symfony/finder": "^7.4|^8.0",
+                "symfony/framework-bundle": "^7.4|^8.0",
+                "symfony/http-foundation": "^7.4|^8.0",
+                "symfony/http-kernel": "^7.4|^8.0",
+                "symfony/psr-http-message-bridge": "^7.4|^8.0",
+                "symfony/routing": "^7.4|^8.0",
                 "symfony/service-contracts": "^2.5|^3"
             },
             "require-dev": {
@@ -5495,12 +5561,15 @@
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-strict-rules": "^2.0",
                 "phpunit/phpunit": "^11.5.53",
+                "symfony/http-client": "^7.4|^8.0",
                 "symfony/monolog-bundle": "^3.10 || ^4.0",
-                "symfony/twig-bundle": "^7.3|^8.0"
+                "symfony/security-core": "^7.4|^8.0",
+                "symfony/twig-bundle": "^7.4|^8.0"
             },
             "suggest": {
                 "symfony/lock": "Required for a session lock with any store but \"file\"."
             },
+            "default-branch": true,
             "type": "symfony-bundle",
             "extra": {
                 "thanks": {
@@ -5529,7 +5598,7 @@
             ],
             "description": "Symfony integration bundle for Model Context Protocol (via official mcp/sdk)",
             "support": {
-                "source": "https://github.com/symfony/mcp-bundle/tree/v1.0.0-BETA1"
+                "source": "https://github.com/symfony/mcp-bundle/tree/main"
             },
             "funding": [
                 {
@@ -5549,7 +5618,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-10-22T23:42:24+00:00"
+            "time": "2026-11-18T23:01:07+00:00"
         },
         {
             "name": "symfony/messenger",
@@ -12185,24 +12254,68 @@
             "time": "2026-10-30T12:52:48+00:00"
         }
     ],
-    "aliases": [],
+    "aliases": [
+        {
+            "package": "symfony/ai-agent",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/ai-bundle",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/ai-generic-platform",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/ai-mistral-platform",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/ai-ollama-platform",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/ai-platform",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        },
+        {
+            "package": "symfony/mcp-bundle",
+            "version": "dev-main",
+            "alias": "1.0.x-dev",
+            "alias_normalized": "1.0.9999999.9999999-dev"
+        }
+    ],
     "minimum-stability": "beta",
     "stability-flags": {
-        "symfony/ai-agent": 10,
-        "symfony/ai-bundle": 10,
-        "symfony/ai-mistral-platform": 10,
-        "symfony/ai-ollama-platform": 10,
-        "symfony/ai-platform": 10,
-        "symfony/mcp-bundle": 10
+        "symfony/ai-agent": 20,
+        "symfony/ai-bundle": 20,
+        "symfony/ai-generic-platform": 20,
+        "symfony/ai-mistral-platform": 20,
+        "symfony/ai-ollama-platform": 20,
+        "symfony/ai-platform": 20,
+        "symfony/mcp-bundle": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=8.4.1",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "ext-intl": "*",
-        "ext-pdo_sqlite": "*"
+        "ext-pdo_sqlite": "*",
+        "php": ">=8.4.1"
     },
     "platform-dev": {},
     "plugin-api-version": "2.9.0"
