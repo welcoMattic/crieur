@@ -1,56 +1,71 @@
-# docker compose up --build, then open http://localhost:8000
+# Crieur on your machine (see the README):
+#   Mac (Apple Silicon), voices in Ollama:          docker compose up --detach
+#   Linux and Windows, voices in Docker (HF_TOKEN): docker compose --file compose.yaml --file compose.gradium.yaml up --detach
+# Then open http://localhost:8000. The speech editor (Ministral 3) runs in Docker Model Runner.
+# Settings go in .env.docker (copied from .env.docker.dist); the library (SQLite and audio) stays
+# in the crieur_var volume.
+
+x-app: &app
+    image: crieur:local
+    env_file:
+        - docker/app.env
+        - path: .env.docker
+          required: false
+    environment:
+        DATABASE_URL: "sqlite:////app/var/data_prod.db"
+        DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
+    extra_hosts:
+        - "host.docker.internal:host-gateway"
+    volumes:
+        - crieur_var:/app/var
+    restart: unless-stopped
+
 services:
-  web:
-    build: .
-    ports:
-      - "${CRIEUR_PORT:-8000}:8000"
-    env_file:
-      - path: .env.docker
-        required: false
-    environment:
-      DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
-      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - crieur_var:/app/var
+    # The web pages; it prepares the database at each start.
+    web:
+        <<: *app
+        build: .
+        ports:
+            # This machine only: the web pages have no login.
+            - "127.0.0.1:${CRIEUR_PORT:-8000}:8000"
+        healthcheck:
+            test: ["CMD", "curl", "--fail", "--silent", "--output", "/dev/null", "http://127.0.0.1:8000/"]
+            interval: 5s
+            timeout: 5s
+            retries: 30
+            start_period: 10s
 
-  worker:
-    build: .
-    command: ["php", "bin/console", "messenger:consume", "extract", "synthesize", "--time-limit=3600", "--memory-limit=512M", "-vv"]
-    restart: unless-stopped
-    depends_on:
-      - web
-    env_file:
-      - path: .env.docker
-        required: false
-    environment:
-      DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
-      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - crieur_var:/app/var
+    # Extracts the articles and synthesizes the voice.
+    worker:
+        <<: *app
+        command: ["php", "bin/console", "messenger:consume", "extract", "synthesize", "--time-limit=3600", "--memory-limit=512M"]
+        depends_on:
+            web: { condition: service_healthy }
+        healthcheck: { disable: true }
 
-  editor:
-    build: .
-    command: ["php", "bin/console", "messenger:consume", "edit", "--time-limit=3600", "--memory-limit=256M", "-vv"]
-    restart: unless-stopped
-    depends_on:
-      - web
-    env_file:
-      - path: .env.docker
-        required: false
-    environment:
-      DATABASE_URL: "sqlite:////app/var/data_prod.db"
-      DEFAULT_URI: "http://localhost:${CRIEUR_PORT:-8000}"
-      OLLAMA_HOST_URL: "${CRIEUR_DOCKER_OLLAMA_URL:-http://host.docker.internal:11434}"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - crieur_var:/app/var
+    # Rewrites the text for the ear with the speech editor.
+    editor:
+        <<: *app
+        command: ["php", "bin/console", "messenger:consume", "edit", "--time-limit=3600", "--memory-limit=256M"]
+        depends_on:
+            web: { condition: service_healthy }
+        healthcheck: { disable: true }
+        # Pulls Ministral 3 into Docker Model Runner at the first start (5 GB).
+        models: [ministral]
+
+    # Builds the browser extension into extension/dist: docker compose run --rm extension
+    extension:
+        image: node:22.12.0-alpine
+        profiles: [tools]
+        working_dir: /extension
+        volumes:
+            - ./extension:/extension
+        command: ["sh", "-c", "apk add --no-cache zip > /dev/null && node build.mjs && chown -R \"$$(stat -c %u:%g .)\" dist"]
+
+models:
+    ministral:
+        model: ai/ministral3:8B-Q4_K_M
+        context_size: 8192
 
 volumes:
-  crieur_var:
+    crieur_var:

@@ -11,3 +11,5 @@ graft
 extension
 tools/defuddle/build
 tools/defuddle/node_modules
+.env.docker.dist
+compose*.yaml

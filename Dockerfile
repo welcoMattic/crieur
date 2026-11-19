@@ -1,7 +1,6 @@
-# Crieur in one image: FrankenPHP serves the app, the same image runs the queue workers.
-# Phonon voices need Ollama on an Apple Silicon host (reached through host.docker.internal);
-# anywhere else, use docker/clever/Dockerfile (the Phonon servers of Gradium in the same image),
-# or set MISTRAL_API_KEY and CRIEUR_VOICE_ENGINE=voxtral.
+# Crieur in one image: FrankenPHP serves the app, the same image runs the queue workers (compose.yaml).
+# The voices come from Ollama on the host (Mac), from the Phonon servers of Gradium (compose.gradium.yaml)
+# or from Mistral AI; the speech editor from Docker Model Runner, or from Mistral AI.
 # The article extractor: Defuddle (the same release as the browser extension), compiled by Bun into
 # one binary, so the image needs no Node at runtime.
 FROM oven/bun:1.3.2 AS defuddle

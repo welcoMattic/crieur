@@ -1,0 +1,40 @@
+# Linux and Windows: the Phonon voices in Docker, served by the Phonon servers of Gradium, one per
+# language. The models download at the first start with HF_TOKEN (.env.docker).
+#   docker compose --file compose.yaml --file compose.gradium.yaml up --detach
+x-voices: &voices
+    environment:
+        CRIEUR_PHONON_SERVERS: fr=http://phonon-fr:8880,en=http://phonon-en:8880
+        CRIEUR_PHONON_MODEL: phonon:40m
+
+x-phonon: &phonon
+    image: ghcr.io/gradium-ai/ptts-openai-server:0.7.1@sha256:b4f46fb8bbd2dee326a012da6cc33ceadcbafe29e46b827d0e7b1bb01b1b053d
+    env_file:
+        - path: .env.docker
+          required: false
+    volumes:
+        - huggingface:/home/phonon/.cache/huggingface
+    restart: unless-stopped
+
+services:
+    web: *voices
+    worker: *voices
+    editor: *voices
+
+    phonon-fr:
+        <<: *phonon
+        environment:
+            PTTS_LANG: fr
+            PTTS_MODEL: hf://gradium/phonon-40m-fr@65b5b451d235a8c24245f51d2774ec9806a9443f
+            PTTS_QUANT: q8
+            PTTS_MAX_CONCURRENT_REQUESTS: 2
+
+    phonon-en:
+        <<: *phonon
+        environment:
+            PTTS_LANG: en
+            PTTS_MODEL: hf://gradium/phonon-40m-en@9b95393286eaeeebf1330b2ae90a14a2074c415d
+            PTTS_QUANT: q8
+            PTTS_MAX_CONCURRENT_REQUESTS: 2
+
+volumes:
+    huggingface:
