@@ -19,6 +19,8 @@
         {% block javascripts %}
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
+        {% set public_demo_head = public_demo().head ?? '' %}
+        {% if public_demo_head %}{{ public_demo_head|raw }}{% endif %}
     </head>
     <body>
         <a class="skip-link" href="#main">{{ 'nav.skip'|trans }}</a>

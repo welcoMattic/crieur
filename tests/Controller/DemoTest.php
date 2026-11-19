@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Demo\PublicDemo;
+use App\Twig\Demo;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpFoundation\RequestStack;
@@ -30,15 +31,19 @@ final class DemoTest extends ControllerTestCase
         self::assertSelectorTextContains('.notice--demo', 'Each visitor may add 2 articles an hour, of up to 400 characters.');
         self::assertSelectorTextContains('.site-footer__host', 'This demo is hosted by Clever Cloud: thank you!');
         self::assertSelectorExists('.site-footer__host a[href="https://www.clever-cloud.com"]');
+        self::assertStringContainsString('<script>window.demoAnalytics = true;</script>', (string) $this->client->getResponse()->getContent(), 'The head of the operator, on the demo only.');
     }
 
     public function testTheHomePageSaysNothingOutsideTheDemo(): void
     {
+        $this->client->disableReboot();
+        self::getContainer()->set(Demo::class, new Demo(self::getContainer()->get(PublicDemo::class), '<script>window.demoAnalytics = true;</script>'));
         $this->client->request('GET', '/');
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('.notice--demo');
         self::assertSelectorNotExists('.site-footer__host');
+        self::assertStringNotContainsString('demoAnalytics', (string) $this->client->getResponse()->getContent());
     }
 
     public function testAVisitorWhoAddedEnoughWaits(): void
@@ -74,7 +79,7 @@ final class DemoTest extends ControllerTestCase
         // The services of the demo stay for the whole test: no new kernel between two requests.
         $this->client->disableReboot();
         $storage = new InMemoryStorage();
-        self::getContainer()->set(PublicDemo::class, new PublicDemo(
+        self::getContainer()->set(PublicDemo::class, $demo = new PublicDemo(
             true,
             new RateLimiterFactory(['id' => 'demo_visitor', 'policy' => 'sliding_window', 'limit' => 2, 'interval' => '1 hour'], $storage),
             new RateLimiterFactory(['id' => 'demo_all', 'policy' => 'sliding_window', 'limit' => 30, 'interval' => '1 hour'], $storage),
@@ -83,6 +88,7 @@ final class DemoTest extends ControllerTestCase
             2,
             $maxCharacters,
         ));
+        self::getContainer()->set(Demo::class, new Demo($demo, '<script>window.demoAnalytics = true;</script>'));
     }
 
     private function post(): void
