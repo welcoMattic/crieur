@@ -28,6 +28,8 @@ final class DemoTest extends ControllerTestCase
         self::assertSelectorTextContains('.notice--demo', 'Public demo');
         self::assertSelectorTextContains('.notice--demo', 'next at 18:00 UTC (in 2 h 15 min)');
         self::assertSelectorTextContains('.notice--demo', 'Each visitor may add 2 articles an hour, of up to 400 characters.');
+        self::assertSelectorTextContains('.site-footer__host', 'This demo is hosted by Clever Cloud: thank you!');
+        self::assertSelectorExists('.site-footer__host a[href="https://www.clever-cloud.com"]');
     }
 
     public function testTheHomePageSaysNothingOutsideTheDemo(): void
@@ -36,6 +38,7 @@ final class DemoTest extends ControllerTestCase
 
         self::assertResponseIsSuccessful();
         self::assertSelectorNotExists('.notice--demo');
+        self::assertSelectorNotExists('.site-footer__host');
     }
 
     public function testAVisitorWhoAddedEnoughWaits(): void

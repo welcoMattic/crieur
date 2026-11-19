@@ -105,6 +105,10 @@ castor test           # PHPUnit, PHPStan, the tests of the extension
 
 **Public demo:** `APP_ENV=demo` runs Crieur as on <https://crieur.cleverapps.io>. Each visitor (IP address) may add 5 articles an hour, everyone together 30, of up to 25,000 characters each (parameters `crieur.demo.*` of `config/packages/crieur.yaml`). Its schedule (Symfony Scheduler, `messenger:consume scheduler_demo`, run by the all-in-one image) empties the library every six hours from midnight UTC, and the home page says when; `crieur:demo:reset` empties it at once.
 
+## Thanks
+
+The public demo is hosted by [Clever Cloud](https://www.clever-cloud.com): thank you!
+
 ## License
 
 MIT, see [LICENSE](LICENSE). The Phonon 40m voices are licensed CC BY-NC 4.0: personal and non-commercial use only.

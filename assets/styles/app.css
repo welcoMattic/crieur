@@ -332,6 +332,16 @@ code {
     margin-inline: var(--space-1);
 }
 
+.site-footer__host {
+    margin-top: var(--space-1);
+}
+
+.site-footer__host a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 html.has-player .site-footer {
     padding-bottom: calc(var(--player-height) + var(--space-8) + env(safe-area-inset-bottom));
 }

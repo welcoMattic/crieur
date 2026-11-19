@@ -48,6 +48,9 @@
         <footer class="site-footer">
             {% set engine = voice_engine() %}
             <p>{{ 'footer.voice'|trans({'%engine%': ('engine.' ~ engine.name ~ '.label')|trans}) }} <span class="site-footer__sep" aria-hidden="true">·</span> {{ engine.license }}{% if engine.license starts with 'CC BY-NC' %}, {{ 'footer.personal_use'|trans }}{% endif %}</p>
+            {% if public_demo() %}
+                <p class="site-footer__host">{{ 'footer.hosted_by'|trans({'%host%': '<a href="https://www.clever-cloud.com">Clever Cloud</a>'})|raw }}</p>
+            {% endif %}
         </footer>
 
         {{ include('components/_player.html.twig') }}

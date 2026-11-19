@@ -11,6 +11,7 @@ nav:
 footer:
     voice: "Voices: %engine%"
     personal_use: "personal use"
+    hosted_by: "This demo is hosted by %host%: thank you!"
 
 podcast:
     description: "The articles of your Crieur library, read aloud."
