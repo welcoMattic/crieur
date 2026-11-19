@@ -1,8 +1,40 @@
-# Crieur
+<p align="center">
+  <img src="public/icons/icon.svg" width="112" height="112" alt="">
+</p>
 
-**Your reading list, read aloud.** Paste a link, send it from the browser extension, or let your AI assistant send it over MCP: Crieur extracts the article, prepares it for the ear, and reads it with a natural voice, in French or in English, within seconds. Follow along with the highlighted transcript, or subscribe to your library as a private podcast.
+<h1 align="center">Crieur</h1>
+
+<p align="center"><strong>Your reading list, read aloud.</strong></p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Symfony-8.1-000000?logo=symfony" alt="Symfony 8.1">
+  <img src="https://img.shields.io/badge/Symfony%20AI-1.0-1f4f99" alt="Symfony AI 1.0">
+  <img src="https://img.shields.io/badge/MCP-server-1f4f99" alt="MCP server">
+  <img src="https://img.shields.io/badge/PHP-8.4-777bb4?logo=php&logoColor=white" alt="PHP 8.4">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT license">
+</p>
+
+<p align="center">
+  <a href="https://crieur.cleverapps.io"><strong>Live demo</strong></a> ·
+  <a href="#run-it-on-your-machine">Run it on your machine</a> ·
+  <a href="extension/">Browser extension</a> ·
+  <a href="#how-it-fits-together">How it fits together</a>
+</p>
+
+Paste a link, send it from the browser extension, or let your AI assistant send it over MCP: Crieur extracts the article, prepares it for the ear, and reads it with a natural voice, in French or in English, within seconds. Follow along with the highlighted transcript, or subscribe to your library as a private podcast.
 
 Built with Symfony 8.1 and Symfony AI. It runs on your machine in Docker (Phonon voices by Gradium, Ministral 3 by Mistral AI as speech editor), or in the cloud with a [Mistral AI](https://mistral.ai) key.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/home-dark.png">
+    <img src="docs/images/home-light.png" width="49%" alt="The library of Crieur: paste a link, the articles being synthesized or ready">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/article-dark.png">
+    <img src="docs/images/article-light.png" width="49%" alt="An article read aloud, with the passages the speech editor rewrote for the ear underlined">
+  </picture>
+</p>
 
 This repository holds the web app (PHP), the browser extension for Chrome and Firefox (`extension/`), the article extractor ([Defuddle](https://github.com/kepano/defuddle) compiled into one binary, `tools/defuddle/`) and the Docker images (`Dockerfile`, `docker/`).
 
