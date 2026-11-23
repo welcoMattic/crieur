@@ -153,6 +153,7 @@ player:
 reader:
     back: "Bibliothèque"
     open_original: "Ouvrir l’article d’origine"
+    install_extension: "Installer l’extension Crieur pour Chrome"
     detected: "détecté"
     voice_by: "Lu par %voice%"
     words: "un mot|%words% mots"

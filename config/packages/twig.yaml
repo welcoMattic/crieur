@@ -1,6 +1,10 @@
 twig:
     file_name_pattern: '*.twig'
     form_themes: ['form/theme.html.twig']
+    globals:
+        # The browser extension reads a page with the access of the listener, where a site turns
+        # the server of Crieur away.
+        crieur_chrome_extension_url: 'https://chromewebstore.google.com/detail/ehlfcjeimlncdjhiijbhcjboligpkkmh'
 
 when@test:
     twig:

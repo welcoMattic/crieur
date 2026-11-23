@@ -3,7 +3,7 @@ extraction:
     too_long_for_demo: "Cet article est trop long pour la démo publique : installez Crieur pour l’écouter."
     timeout: "Le site n’a pas répondu à temps."
     http_error: "Le site a refusé d’envoyer la page."
-    blocked: "Le site refuse les lecteurs automatiques : Crieur ne peut pas télécharger cette page."
+    blocked: "Le site refuse les lecteurs automatiques : Crieur ne peut pas télécharger cette page. L’extension Crieur pour Chrome la lit dans votre navigateur, sans être bloquée."
     not_html: "Cette adresse n’est pas une page web."
     no_text: "Aucun texte d’article n’a été trouvé sur cette page."
     network: "Le site est injoignable."

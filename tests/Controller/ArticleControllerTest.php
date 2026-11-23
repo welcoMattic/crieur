@@ -7,6 +7,7 @@ namespace App\Tests\Controller;
 use App\Entity\Article;
 use App\Enum\ArticleSource;
 use App\Enum\ArticleStatus;
+use App\Enum\LanguageSetting;
 use App\Enum\VoiceGender;
 use App\Message\ExtractArticle;
 use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
@@ -200,6 +201,26 @@ final class ArticleControllerTest extends ControllerTestCase
 
         $this->client->request('POST', $passages, ['positions' => 'all', 'removed' => '1', '_token' => 'csrf-token'], server: self::sameOrigin());
         self::assertResponseStatusCodeSame(400);
+    }
+
+    public function testAPageTheSiteKeepsFromCrieurPointsToTheExtension(): void
+    {
+        $blocked = new Article('https://example.org/news', LanguageSetting::Auto, VoiceGender::Female, 'phonon', ArticleSource::Web);
+        $blocked->fail('extraction.blocked');
+        $missing = new Article('https://example.org/missing', LanguageSetting::Auto, VoiceGender::Female, 'phonon', ArticleSource::Web);
+        $missing->fail('extraction.http_error');
+        $this->entityManager()->persist($blocked);
+        $this->entityManager()->persist($missing);
+        $this->entityManager()->flush();
+
+        $this->client->request('GET', \sprintf('/articles/%s', $blocked->getId()));
+        self::assertResponseIsSuccessful();
+        self::assertSelectorTextContains('.notice--error', 'The Crieur extension for Chrome reads it in your browser');
+        self::assertSelectorExists('.notice--error a[href="https://chromewebstore.google.com/detail/ehlfcjeimlncdjhiijbhcjboligpkkmh"]');
+
+        $this->client->request('GET', \sprintf('/articles/%s', $missing->getId()));
+        self::assertResponseIsSuccessful();
+        self::assertSelectorNotExists('.notice--error a[href^="https://chromewebstore.google.com/"]');
     }
 
     public function testDeletingAnArticleReturnsToTheLibrary(): void
