@@ -195,7 +195,7 @@ final class ArticleController extends AbstractController
             ?? throw new BadRequestHttpException('Expected the language "auto", "fr" or "en".');
 
         if ($setting !== $article->getLanguageSetting()) {
-            $this->queue->restart($article, $setting);
+            $this->restart($article, $setting);
         }
 
         return $this->backToArticle($article);
@@ -231,10 +231,23 @@ final class ArticleController extends AbstractController
     {
         $this->denyUnlessValidCsrf($request);
         if (ArticleStatus::Failed === $article->getStatus()) {
-            $this->queue->restart($article);
+            $this->restart($article);
         }
 
         return $this->backToArticle($article);
+    }
+
+    /**
+     * On the public demo, reading the page again counts as one more article: past the limit, the
+     * article stays as it was and its page says why.
+     */
+    private function restart(Article $article, ?LanguageSetting $language = null): void
+    {
+        try {
+            $this->queue->restart($article, $language);
+        } catch (TooManyArticles) {
+            $this->addFlash('refused', 'demo.too_many');
+        }
     }
 
     #[Route('/articles/{id}/delete', name: 'article_delete', requirements: ['id' => Requirement::UUID], methods: ['POST'])]

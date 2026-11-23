@@ -85,9 +85,19 @@ final readonly class ArticleQueue
     /**
      * Prepares the article again, for instance after a failure or with another language. An
      * article read in the browser keeps its text: the server could not fetch its page.
+     *
+     * The page is fetched and read again, so on the public demo it counts as one more article:
+     * a page that changes at each fetch would otherwise be synthesized again and again, beyond
+     * the audio already made.
+     *
+     * @throws TooManyArticles on the public demo, before anything changes
      */
     public function restart(Article $article, ?LanguageSetting $language = null): void
     {
+        if (ArticleSource::Extension !== $article->getSource()) {
+            $this->demo->consumeArticle();
+        }
+
         if (null !== $language) {
             $article->changeLanguageSetting($language, $this->clock->now());
             $this->articles->save($article);

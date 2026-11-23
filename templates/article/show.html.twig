@@ -135,6 +135,9 @@
                 </div>
                 <p class="reader__settings-hint">{{ 'reader.settings_hint'|trans }}</p>
             {% endif %}
+            {% for message in app.flashes('refused') %}
+                <p class="field-error" role="alert">{{ icon('alert') }}<span>{{ message|trans(domain: 'errors') }}</span></p>
+            {% endfor %}
         </header>
 
         {% if has_text %}

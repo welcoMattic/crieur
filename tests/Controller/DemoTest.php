@@ -5,10 +5,15 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Demo\PublicDemo;
+use App\Entity\Article;
+use App\Enum\ArticleSource;
+use App\Enum\LanguageSetting;
+use App\Enum\VoiceGender;
 use App\Twig\Demo;
 use Symfony\Component\Clock\MockClock;
 use Symfony\Component\HttpClient\MockHttpClient;
 use Symfony\Component\HttpFoundation\RequestStack;
+use Symfony\Component\Messenger\Transport\InMemory\InMemoryTransport;
 use Symfony\Component\RateLimiter\RateLimiterFactory;
 use Symfony\Component\RateLimiter\Storage\InMemoryStorage;
 
@@ -61,6 +66,46 @@ final class DemoTest extends ControllerTestCase
         self::assertGreaterThan(0, (int) $this->client->getResponse()->headers->get('Retry-After'));
         self::assertSame('demo.too_many', $this->json()['error']);
         self::assertStringContainsString('try again within the hour', (string) $this->json()['message']);
+    }
+
+    public function testReadingAPageAgainInAnotherLanguageCountsAsAnArticle(): void
+    {
+        $this->useDemo();
+        $article = $this->createArticle();
+        $language = \sprintf('/articles/%s/language', $article->getId());
+
+        // The queue of the workers is emptied before each request: what one request sent is counted at once.
+        foreach (['fr' => 1, 'en' => 1, 'auto' => 0] as $setting => $fetches) {
+            $this->client->request('POST', $language, ['language' => $setting, '_token' => 'csrf-token'], server: self::sameOrigin());
+            self::assertResponseRedirects(\sprintf('/articles/%s', $article->getId()), 303);
+            $transport = static::getContainer()->get('messenger.transport.extract');
+            self::assertInstanceOf(InMemoryTransport::class, $transport);
+            self::assertCount($fetches, $transport->getSent(), \sprintf('The page is fetched again for "%s".', $setting));
+        }
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.field-error', 'The public demo takes no more articles from you for now');
+        $this->entityManager()->clear();
+        self::assertSame(LanguageSetting::English, $this->entityManager()->find(Article::class, $article->getId())?->getLanguageSetting());
+    }
+
+    public function testTryingAFailedPageAgainCountsAsAnArticle(): void
+    {
+        $this->useDemo();
+        $article = new Article('https://example.org/down', LanguageSetting::Auto, VoiceGender::Female, 'phonon', ArticleSource::Web);
+        $article->fail('extraction.network');
+        $this->entityManager()->persist($article);
+        $this->entityManager()->flush();
+
+        foreach ([1, 1, 0] as $fetches) {
+            $this->client->request('POST', \sprintf('/articles/%s/retry', $article->getId()), ['_token' => 'csrf-token'], server: self::sameOrigin());
+            $transport = static::getContainer()->get('messenger.transport.extract');
+            self::assertInstanceOf(InMemoryTransport::class, $transport);
+            self::assertCount($fetches, $transport->getSent());
+        }
+
+        $this->client->followRedirect();
+        self::assertSelectorTextContains('.field-error', 'The public demo takes no more articles from you for now');
     }
 
     public function testAnArticleTooLongForTheDemoIsRefused(): void
