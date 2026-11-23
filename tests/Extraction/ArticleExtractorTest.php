@@ -52,6 +52,43 @@ final class ArticleExtractorTest extends TestCase
     }
 
     #[Test]
+    public function itAsksAgainAsCrieurWhenTheSiteAnswersTheBrowserWithAChallenge(): void
+    {
+        $agents = [];
+        $pages = [self::challenge(), (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html')];
+        $extractor = new ArticleExtractor(new MockHttpClient(static function (string $method, string $url, array $options) use (&$agents, $pages): MockResponse {
+            $agents[] = $options['normalized_headers']['user-agent'][0] ?? '';
+
+            return new MockResponse($pages[\count($agents) - 1] ?? '', ['response_headers' => ['content-type' => 'text/html; charset=utf-8']]);
+        }), allowPrivateNetworks: true);
+
+        static::assertSame('Why we read slower than we listen', $extractor->extract('https://example.org/essay')->title);
+        static::assertSame(['User-Agent: '.ArticleExtractor::BROWSER_USER_AGENT, 'User-Agent: '.ArticleExtractor::CRIEUR_USER_AGENT], $agents);
+    }
+
+    #[Test]
+    public function itSaysWhenTheSiteTurnsAutomatedReadersAway(): void
+    {
+        $extractor = new ArticleExtractor(new MockHttpClient([
+            new MockResponse('Your traffic has been identified as automated', ['http_code' => 402, 'response_headers' => ['content-type' => 'text/html']]),
+            new MockResponse(self::challenge(), ['response_headers' => ['content-type' => 'text/html']]),
+        ]), allowPrivateNetworks: true);
+
+        $this->expectExceptionObject(new ExtractionFailed(ExtractionFailed::BLOCKED, 'challenge page'));
+
+        $extractor->extract('https://example.org/news');
+    }
+
+    #[Test]
+    public function itReadsAnArticleThatQuotesTheMarkOfAChallenge(): void
+    {
+        $html = str_replace('The reason is not speed', 'Fastly serves its challenge from /_fs-ch-, and the reason is not speed', (string) file_get_contents(__DIR__.'/../Fixtures/extraction/article.html'));
+        $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse($html, ['response_headers' => ['content-type' => 'text/html']])), allowPrivateNetworks: true);
+
+        static::assertStringContainsString('/_fs-ch-', $extractor->extract('https://example.org/essay')->html);
+    }
+
+    #[Test]
     public function itRefusesWhatIsNotAPage(): void
     {
         $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse('%PDF-1.7', ['response_headers' => ['content-type' => 'application/pdf']])), allowPrivateNetworks: true);
@@ -124,5 +161,15 @@ final class ArticleExtractorTest extends TestCase
         }
         static::assertNull($extractor->defuddleVersion());
         static::assertSame('0.19.6', (new ArticleExtractor(new MockHttpClient()))->defuddleVersion());
+    }
+
+    /**
+     * The page Fastly sends instead of the article to a client it doubts is a browser.
+     */
+    private static function challenge(): string
+    {
+        return '<!doctype html><html lang="en"><head><link href="/_fs-ch-1T1wmsGaOgGaSxcX/assets/styles.css" rel="stylesheet" />'
+            .'<title>Client Challenge</title></head><body><noscript><p>JavaScript is disabled in your browser.</p>'
+            .'<p>Please enable JavaScript to proceed.</p></noscript></body></html>';
     }
 }

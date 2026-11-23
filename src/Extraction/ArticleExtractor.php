@@ -26,6 +26,13 @@ final readonly class ArticleExtractor
     public const int TIMEOUT_SECONDS = 20;
     public const int MAX_BYTES = 8_000_000;
     public const int EXTRACTION_SECONDS = 30;
+    public const string BROWSER_USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 Crieur/1.0';
+    public const string CRIEUR_USER_AGENT = 'Crieur/1.0';
+
+    /**
+     * The answers of a site that keeps automated readers out (402: Le Monde, 429: rate limits).
+     */
+    private const array BLOCKING_STATUSES = [401, 402, 403, 429];
 
     private HttpClientInterface $httpClient;
 
@@ -130,9 +137,30 @@ final readonly class ArticleExtractor
     }
 
     /**
+     * A page is asked for as a browser would, then, if the site turns that request away, once more
+     * as what Crieur is: bot protections (Fastly, Cloudflare, ...) check that a client calling
+     * itself a browser behaves like one and answer it with a challenge, while some of them let a
+     * client that says what it is through.
+     *
      * @return array{string, string} the final URL after redirects, and the HTML
      */
     private function fetch(string $url): array
+    {
+        try {
+            return $this->download($url, self::BROWSER_USER_AGENT);
+        } catch (ExtractionFailed $e) {
+            if (ExtractionFailed::BLOCKED !== $e->reason) {
+                throw $e;
+            }
+        }
+
+        return $this->download($url, self::CRIEUR_USER_AGENT);
+    }
+
+    /**
+     * @return array{string, string} the final URL after redirects, and the HTML
+     */
+    private function download(string $url, string $userAgent): array
     {
         try {
             $response = $this->httpClient->request('GET', $url, [
@@ -140,7 +168,7 @@ final readonly class ArticleExtractor
                 'max_duration' => self::TIMEOUT_SECONDS,
                 'max_redirects' => 5,
                 'headers' => [
-                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 15_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15 Crieur/1.0',
+                    'User-Agent' => $userAgent,
                     'Accept' => 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
                     'Accept-Language' => 'fr,en;q=0.8',
                 ],
@@ -152,6 +180,9 @@ final readonly class ArticleExtractor
             ]);
 
             $status = $response->getStatusCode();
+            if (\in_array($status, self::BLOCKING_STATUSES, true)) {
+                throw new ExtractionFailed(ExtractionFailed::BLOCKED, \sprintf('HTTP %d', $status));
+            }
             if ($status >= 400) {
                 throw new ExtractionFailed(ExtractionFailed::HTTP_ERROR, \sprintf('HTTP %d', $status));
             }
@@ -161,9 +192,14 @@ final readonly class ArticleExtractor
                 throw new ExtractionFailed(ExtractionFailed::NOT_HTML, $contentType);
             }
 
+            $html = $response->getContent();
+            if (self::isChallenge($html)) {
+                throw new ExtractionFailed(ExtractionFailed::BLOCKED, 'challenge page');
+            }
+
             $finalUrl = $response->getInfo('url');
 
-            return [\is_string($finalUrl) ? $finalUrl : $url, self::toUtf8($response->getContent(), $contentType)];
+            return [\is_string($finalUrl) ? $finalUrl : $url, self::toUtf8($html, $contentType)];
         } catch (TimeoutException $e) {
             throw new ExtractionFailed(ExtractionFailed::TIMEOUT, $e->getMessage(), $e);
         } catch (TransportException $e) {
@@ -175,6 +211,15 @@ final readonly class ArticleExtractor
         } catch (ExceptionInterface $e) {
             throw new ExtractionFailed(ExtractionFailed::NETWORK, $e->getMessage(), $e);
         }
+    }
+
+    /**
+     * A bot protection may answer 200 with a page that runs a script in the browser before it
+     * shows the article: Fastly loads it from /_fs-ch-..., Cloudflare sets window._cf_chl_opt.
+     */
+    private static function isChallenge(string $html): bool
+    {
+        return 1 === preg_match('~\s(?:src|href)=["\']?/_fs-ch-|window\._cf_chl_opt\b~i', $html);
     }
 
     /**
