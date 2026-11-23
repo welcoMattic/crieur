@@ -5,6 +5,7 @@ extraction:
     http_error: "Le site a refusé d’envoyer la page."
     blocked: "Le site refuse les lecteurs automatiques : Crieur ne peut pas télécharger cette page. L’extension Crieur pour Chrome la lit dans votre navigateur, sans être bloquée."
     not_html: "Cette adresse n’est pas une page web."
+    too_large: "Cette page est trop volumineuse pour être lue."
     no_text: "Aucun texte d’article n’a été trouvé sur cette page."
     network: "Le site est injoignable."
     private_network: "Les pages d’un réseau privé ne sont pas lues, par sécurité."

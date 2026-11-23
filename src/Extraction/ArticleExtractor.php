@@ -13,6 +13,7 @@ use Symfony\Component\Process\Exception\ProcessTimedOutException;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\Exception\ExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Symfony\Contracts\HttpClient\ResponseInterface;
 
 /**
  * Fetches a web page and extracts its article with Defuddle, the engine of Obsidian Web Clipper,
@@ -172,11 +173,8 @@ final readonly class ArticleExtractor
                     'Accept' => 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.5',
                     'Accept-Language' => 'fr,en;q=0.8',
                 ],
-                'on_progress' => static function (int $downloaded): void {
-                    if ($downloaded > self::MAX_BYTES) {
-                        throw new TransportException('The page is too large.');
-                    }
-                },
+                // The body is read and counted by body(), as it is decoded.
+                'buffer' => false,
             ]);
 
             $status = $response->getStatusCode();
@@ -192,7 +190,7 @@ final readonly class ArticleExtractor
                 throw new ExtractionFailed(ExtractionFailed::NOT_HTML, $contentType);
             }
 
-            $html = $response->getContent();
+            $html = $this->body($response);
             if (self::isChallenge($html)) {
                 throw new ExtractionFailed(ExtractionFailed::BLOCKED, 'challenge page');
             }
@@ -211,6 +209,25 @@ final readonly class ArticleExtractor
         } catch (ExceptionInterface $e) {
             throw new ExtractionFailed(ExtractionFailed::NETWORK, $e->getMessage(), $e);
         }
+    }
+
+    /**
+     * The body, counted as it is decoded: a compressed page may hold far more than what comes over
+     * the wire, up to a thousand times more (a "gzip bomb": 200 KB that unpack into 200 MB).
+     */
+    private function body(ResponseInterface $response): string
+    {
+        $body = '';
+        foreach ($this->httpClient->stream($response) as $chunk) {
+            $body .= $chunk->getContent();
+            if (\strlen($body) > self::MAX_BYTES) {
+                $response->cancel();
+
+                throw new ExtractionFailed(ExtractionFailed::TOO_LARGE, \sprintf('more than %d bytes', self::MAX_BYTES));
+            }
+        }
+
+        return $body;
     }
 
     /**

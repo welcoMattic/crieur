@@ -14,6 +14,7 @@ final class ExtractionFailed extends \RuntimeException
     public const string HTTP_ERROR = 'extraction.http_error';
     public const string BLOCKED = 'extraction.blocked';
     public const string NOT_HTML = 'extraction.not_html';
+    public const string TOO_LARGE = 'extraction.too_large';
     public const string NO_TEXT = 'extraction.no_text';
     public const string NETWORK = 'extraction.network';
     public const string PRIVATE_NETWORK = 'extraction.private_network';

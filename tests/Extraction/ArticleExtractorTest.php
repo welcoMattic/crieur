@@ -89,6 +89,18 @@ final class ArticleExtractorTest extends TestCase
     }
 
     #[Test]
+    public function itRefusesAPageLargerThanItsLimitOnceDecoded(): void
+    {
+        // The chunks are the decoded body: a compressed page counts for what it unpacks into.
+        $body = ['<html><body><article><p>', ...array_fill(0, 12, str_repeat('a ', 512 * 1024))];
+        $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse($body, ['response_headers' => ['content-type' => 'text/html']])), allowPrivateNetworks: true);
+
+        $this->expectExceptionObject(new ExtractionFailed(ExtractionFailed::TOO_LARGE, \sprintf('more than %d bytes', ArticleExtractor::MAX_BYTES)));
+
+        $extractor->extract('https://example.org/bomb');
+    }
+
+    #[Test]
     public function itRefusesWhatIsNotAPage(): void
     {
         $extractor = new ArticleExtractor(new MockHttpClient(new MockResponse('%PDF-1.7', ['response_headers' => ['content-type' => 'application/pdf']])), allowPrivateNetworks: true);
